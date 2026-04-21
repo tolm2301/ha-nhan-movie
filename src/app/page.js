@@ -1,5 +1,6 @@
 import Hero from '@/components/Hero/Hero';
 import MovieCarousel from '@/components/MovieCarousel/MovieCarousel';
+import RecentWatchedSection from '@/components/RecentWatchedSection/RecentWatchedSection';
 import { 
   allMovies,
   haNhanMovies,
@@ -15,6 +16,8 @@ export default function Home() {
   return (
     <>
       <Hero featuredMovie={featuredMovie} />
+
+      <RecentWatchedSection />
       
       {trendingMovies.length > 0 && (
         <MovieCarousel title="🔥 Mới cập nhật" movies={trendingMovies} />
@@ -41,7 +44,7 @@ export default function Home() {
       }}>
         <h2 style={{ fontSize: '2.5rem', fontWeight: 900, marginBottom: '10px' }}>HÀ NHÂN <span className="comic-text-yellow">MOVIE</span></h2>
         <p style={{ color: '#888', maxWidth: '600px', margin: '0 auto', fontSize: '1.1rem' }}>
-          Xem phim bựa, tóm tắt phim tu tiên, xuyên không chất lượng cao. 
+          Xem phim, tóm tắt phim tu tiên, xuyên không chất lượng cao.
           Không xem thì thôi, xem là nghiện. Đừng chửi AD, hãy chửi thằng làm phim!
         </p>
         <p style={{ marginTop: '40px', fontSize: '0.9rem', color: '#555' }}>
