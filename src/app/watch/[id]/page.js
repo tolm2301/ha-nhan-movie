@@ -1,5 +1,5 @@
 "use client";
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { allMovies } from '@/lib/data';
 import styles from './Watch.module.css';
@@ -49,23 +49,16 @@ export default function WatchPage() {
 
   const movieId = typeof routeParams?.id === 'string' ? routeParams.id : '';
   const movie = allMovies.find(m => m.id === movieId) || allMovies[0] || null;
-
-  if (!movie) {
-    return (
-      <div className={styles.watchLayout}>
-        <div className={styles.container}>
-          <p>Chua co du lieu phim de phat.</p>
-        </div>
-      </div>
-    );
-  }
+  const movieDisplayTitle = movie?.displayTitle || movie?.title;
   const shouldShowEpisodes = isSeriesMovie(movie);
 
-  const episodes = shouldShowEpisodes
-    ? allMovies
+  const episodes = useMemo(() => {
+    if (!movie || !shouldShowEpisodes) return [];
+
+    const movieSeriesKey = movie.seriesKey || normalizeSeriesKey(movie.title);
+    const related = allMovies
       .filter(item => {
         if (!isSeriesMovie(item)) return false;
-        const movieSeriesKey = movie.seriesKey || normalizeSeriesKey(movie.title);
         const itemSeriesKey = item.seriesKey || normalizeSeriesKey(item.title);
         return itemSeriesKey && itemSeriesKey === movieSeriesKey;
       })
@@ -76,11 +69,23 @@ export default function WatchPage() {
         if (aNum === null) return 1;
         if (bNum === null) return -1;
         return aNum - bNum;
-      })
-    : [];
+      });
 
-  if (shouldShowEpisodes && !episodes.some(item => item.id === movie.id)) {
-    episodes.unshift(movie);
+    if (!related.some(item => item.id === movie.id)) {
+      related.unshift(movie);
+    }
+
+    return related.slice(0, 40);
+  }, [movie, shouldShowEpisodes]);
+
+  if (!movie) {
+    return (
+      <div className={styles.watchLayout}>
+        <div className={styles.container}>
+          <p>Chua co du lieu phim de phat.</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -89,26 +94,24 @@ export default function WatchPage() {
         <button onClick={() => router.back()} className={styles.backBtn}>
           ← Quay lại
         </button>
-        
+
         <div className={styles.playerSection}>
-             <div className={styles.videoContainer}>
-                <iframe 
-                  className={styles.playerFrame}
-                  src={`https://www.youtube.com/embed/${movie.id}?autoplay=1&modestbranding=1&rel=0&iv_load_policy=3&controls=0&disablekb=1&fs=0&playsinline=1`} 
-                  title={movie.title} 
-                  frameBorder="0" 
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                  allowFullScreen
-                ></iframe>
-               {/* Advanced masking layers to hide YT branding */}
-               <div className={styles.playerMaskTop}></div>
-               <div className={styles.playerMaskBottom}></div>
-               <div className={styles.playerMaskLogo}></div>
-             </div>
+          <div className={styles.videoContainer}>
+            <iframe
+              className={styles.playerFrame}
+              src={`https://www.youtube.com/embed/${movie.id}?autoplay=1&controls=1&fs=1&rel=0&modestbranding=1&iv_load_policy=3&playsinline=1&disablekb=0`}
+              title={movieDisplayTitle}
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            ></iframe>
+            <div className={styles.playerMaskTop}></div>
+            <div className={styles.playerMaskLogo}></div>
+          </div>
         </div>
 
         <div className={styles.infoSection}>
-          <h1 className={styles.movieTitle}>{movie.title}</h1>
+          <h1 className={styles.movieTitle}>{movieDisplayTitle}</h1>
           <div className={styles.meta}>
             <span className={styles.stat}>👁 {movie.views}</span>
             <span className={styles.stat}>★ LƯỢT ĐÁNH GIÁ: {movie.rating || 'N/A'}</span>
@@ -125,11 +128,11 @@ export default function WatchPage() {
             <h3 className={styles.sectionTitle}>Chọn Tập Phim</h3>
             <div className={styles.episodeGrid}>
               {episodes.map(ep => (
-                <button 
-                  key={ep.id} 
+                <button
+                  key={ep.id}
                   className={`${styles.epBtn} ${ep.id === movie.id ? styles.activeEp : ''}`}
                   onClick={() => router.push(`/watch/${ep.id}`)}
-                  title={ep.title}
+                  title={ep.displayTitle || ep.title}
                 >
                   {getEpisodeLabel(ep)}
                 </button>

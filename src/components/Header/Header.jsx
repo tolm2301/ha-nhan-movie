@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { categoryMenu } from '@/lib/data';
 import styles from './Header.module.css';
 
 export default function Header() {
@@ -40,10 +41,15 @@ export default function Header() {
                  <button className={styles.closeMenu} onClick={() => setIsMobileOpen(false)}>×</button>
                )}
               <Link href="/" className={styles.active} onClick={() => setIsMobileOpen(false)}>Trang Chủ</Link>
-              <Link href="/category/tien-hiep" onClick={() => setIsMobileOpen(false)}>🎬 Tiên Hiệp 3D</Link>
-              <Link href="/category/he-thong" onClick={() => setIsMobileOpen(false)}>🎮 Hệ Thống</Link>
-              <Link href="/category/tau-hai" onClick={() => setIsMobileOpen(false)}>🐼 Tấu Hài</Link>
-              <Link href="/category/xuyen-khong" onClick={() => setIsMobileOpen(false)}>⚡ Xuyên Không</Link>
+              {categoryMenu.slice(0, 5).map(category => (
+                <Link
+                  key={category.slug}
+                  href={`/category/${category.slug}`}
+                  onClick={() => setIsMobileOpen(false)}
+                >
+                  🏷️ {category.tag}
+                </Link>
+              ))}
             </nav>
           </div>
           

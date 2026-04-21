@@ -83,6 +83,119 @@
   border-radius: 999px;
 }
 
+.controlsPanel {
+  margin-top: 16px;
+  border: 3px solid #000;
+  border-radius: 12px;
+  background: #0f1018;
+  box-shadow: 6px 6px 0 var(--color-accent-red);
+  padding: 16px;
+}
+
+.controlsTopRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.controlBtn {
+  border: 2px solid #000;
+  background: var(--color-accent-yellow);
+  color: #000;
+  border-radius: 6px;
+  font-weight: 800;
+  padding: 8px 12px;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 #000;
+}
+
+.controlBtn:hover {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 #000;
+}
+
+.progressWrap {
+  position: relative;
+}
+
+.progressInput {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: #2b2f3e;
+  appearance: none;
+  outline: none;
+}
+
+.progressInput::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--color-accent-red), var(--color-accent-yellow));
+}
+
+.progressInput::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #000;
+  margin-top: -5px;
+  cursor: pointer;
+}
+
+.progressInput::-moz-range-track {
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--color-accent-red), var(--color-accent-yellow));
+}
+
+.progressInput::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #000;
+  cursor: pointer;
+}
+
+.progressMeta {
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  color: #cfd5e6;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.previewTooltip {
+  position: absolute;
+  bottom: 28px;
+  transform: translateX(-50%);
+  width: 140px;
+  z-index: 5;
+  border: 2px solid #000;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #000;
+  color: #fff;
+  text-align: center;
+  font-weight: 700;
+}
+
+.previewThumb {
+  width: 100%;
+  height: 84px;
+  object-fit: cover;
+  display: block;
+}
+
+.previewTooltip span {
+  display: block;
+  padding: 6px 0;
+}
+
 .videoPlaceholder {
   position: absolute;
   top: 0;

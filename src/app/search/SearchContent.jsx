@@ -10,7 +10,12 @@ export default function SearchContent() {
   const router = useRouter();
 
   const results = query
-    ? allMovies.filter(m => m.title.toLowerCase().includes(query.toLowerCase()))
+    ? allMovies.filter(m => {
+      const normalizedQuery = query.toLowerCase();
+      const rawTitle = (m.title || '').toLowerCase();
+      const displayTitle = (m.displayTitle || '').toLowerCase();
+      return rawTitle.includes(normalizedQuery) || displayTitle.includes(normalizedQuery);
+    })
     : allMovies;
 
   return (

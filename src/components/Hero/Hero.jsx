@@ -7,6 +7,7 @@ import styles from './Hero.module.css';
 export default function Hero({ featuredMovie }) {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const router = useRouter();
+  const featuredTitle = featuredMovie?.displayTitle || featuredMovie?.title;
 
   const handleWatch = () => {
     if (featuredMovie) {
@@ -24,7 +25,7 @@ export default function Hero({ featuredMovie }) {
         <div className={styles.background}>
           <Image
             src={featuredMovie.thumbnail}
-            alt={featuredMovie.title}
+            alt={featuredTitle}
             fill
             className={styles.bgImage}
             priority
@@ -37,7 +38,7 @@ export default function Hero({ featuredMovie }) {
       <div className={styles.content}>
         <span className={styles.badge}>🔥 ĐANG HOT TOP 1 TÓM TẮT 🔥</span>
         <h1 className={styles.title} style={{ fontSize: '3.5rem' }}>
-          {featuredMovie ? featuredMovie.title : "Đang tải dữ liệu..."}
+          {featuredMovie ? featuredTitle : "Đang tải dữ liệu..."}
         </h1>
         <p className={styles.description}>
           Phim hay mới cập nhật từ hệ thống cào dữ liệu xịn sò nhất thế giới.

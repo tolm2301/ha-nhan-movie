@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Hanhan Movie
 
-## Getting Started
+Next.js movie site with automated YouTube crawling and Vercel deployment workflows.
 
-First, run the development server:
+## Local development
 
 ```bash
+npm ci
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Useful scripts:
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+- `npm run crawl`: run data crawler only (`scripts/crawl.mjs`)
+- `npm run dev:fresh`: crawl first, then run dev server
+- `npm run build`: standard Next.js production build
+- `npm run build:fresh`: crawl first, then build
+- `npm run lint`: run ESLint
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Batch crawl (daily)
 
-## Learn More
+Workflow: `.github/workflows/daily-crawl.yml`
 
-To learn more about Next.js, take a look at the following resources:
+- Runs every day at `02:00 UTC`
+- Can also be triggered manually via GitHub Actions (`workflow_dispatch`)
+- Crawls latest data and commits `src/lib/movies.json` if changed
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploy to Vercel
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Workflow: `.github/workflows/deploy-vercel.yml`
 
-## Deploy on Vercel
+- Auto-runs on push to `main`
+- Can also be triggered manually (`workflow_dispatch`)
+- Runs lint, builds Vercel artifacts, and deploys production
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Required GitHub repository secrets:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- `VERCEL_PROJECT_ID`
+
+You can get these from your Vercel project settings and Vercel CLI (`vercel link` / `.vercel/project.json`).
+
+## Recommended Vercel project setup
+
+- Framework preset: `Next.js`
+- Install command: `npm ci`
+- Build command: `npm run build`
+- Output directory: default (`.next`)
+
+This keeps crawling in the dedicated daily batch flow, instead of running it on every deployment.

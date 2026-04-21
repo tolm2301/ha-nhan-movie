@@ -2,39 +2,36 @@ import Hero from '@/components/Hero/Hero';
 import MovieCarousel from '@/components/MovieCarousel/MovieCarousel';
 import { 
   allMovies,
+  haNhanMovies,
   trendingMovies, 
-  tienHiepMovies, 
-  tauHaiMovies, 
-  xuyenKhongMovies, 
-  heThongMovies 
+  categoryMenu,
+  getCategoryBySlug,
 } from '@/lib/data';
 
 export default function Home() {
-  const featuredMovie = allMovies[0] || null;
+  const featuredMovie = haNhanMovies[0] || allMovies[0] || null;
+  const homeCategories = categoryMenu.slice(0, 4);
 
   return (
     <>
       <Hero featuredMovie={featuredMovie} />
       
       {trendingMovies.length > 0 && (
-        <MovieCarousel title="🔥 Trending Tấu Hài" movies={trendingMovies} />
-      )}
-      
-      {tienHiepMovies.length > 0 && (
-        <MovieCarousel title="🎬 Tiên Hiệp 3D" movies={tienHiepMovies} />
-      )}
-      
-      {xuyenKhongMovies.length > 0 && (
-        <MovieCarousel title="⚡ Xuyên Không Kỳ Truyện" movies={xuyenKhongMovies} />
-      )}
-      
-      {tauHaiMovies.length > 0 && (
-        <MovieCarousel title="🐼 Gấu Bựa Tấu Hài" movies={tauHaiMovies} />
+        <MovieCarousel title="🔥 Mới cập nhật" movies={trendingMovies} />
       )}
 
-      {heThongMovies.length > 0 && (
-        <MovieCarousel title="🎮 Hệ Thống Vô Đối" movies={heThongMovies} />
-      )}
+      {homeCategories.map(category => {
+        const categoryData = getCategoryBySlug(category.slug);
+        if (!categoryData || categoryData.movies.length === 0) return null;
+
+        return (
+          <MovieCarousel
+            key={category.slug}
+            title={`🏷️ ${category.tag}`}
+            movies={categoryData.movies.slice(0, 20)}
+          />
+        );
+      })}
 
       <footer style={{ 
         textAlign: 'center', 

@@ -3,9 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "crawl": "node scripts/crawl.mjs",
     "dev": "next dev",
-    "dev:fresh": "node scripts/crawl.mjs && next dev",
-    "build": "node scripts/crawl.mjs && next build",
+    "dev:fresh": "npm run crawl && next dev",
+    "build": "next build",
+    "build:fresh": "npm run crawl && next build",
     "start": "next start",
     "lint": "eslint"
   },

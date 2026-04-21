@@ -4,6 +4,38 @@ import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 
 const EPISODE_REGEX = /(tập|tap|episode|ep\.?|phần)\s*(\d{1,4})/i;
+const MIN_VIDEO_SECONDS = 600;
+const MAX_STORED_VIDEOS = 1000;
+const RETRY_TIMES = 3;
+
+const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+const CHARACTER_KEYWORDS = [
+  { keyword: 'liễu như yên', tag: '2D - Liễu Như Yên' },
+  { keyword: 'lieu nhu yen', tag: '2D - Liễu Như Yên' },
+  { keyword: 'diệp phàm', tag: '2D - Diệp Phàm' },
+  { keyword: 'diep pham', tag: '2D - Diệp Phàm' },
+  { keyword: 'tiêu viêm', tag: '2D - Tiêu Viêm' },
+  { keyword: 'tieu viem', tag: '2D - Tiêu Viêm' },
+  { keyword: 'thạch hạo', tag: '2D - Thạch Hạo' },
+  { keyword: 'thach hao', tag: '2D - Thạch Hạo' },
+  { keyword: 'hàn lập', tag: '2D - Hàn Lập' },
+  { keyword: 'han lap', tag: '2D - Hàn Lập' },
+  { keyword: 'vương lâm', tag: '2D - Vương Lâm' },
+  { keyword: 'vuong lam', tag: '2D - Vương Lâm' },
+];
+
+const TAG_RULES = [
+  ...CHARACTER_KEYWORDS,
+  { keyword: 'xuyên không', tag: 'Xuyên Không' },
+  { keyword: 'trọng sinh', tag: 'Xuyên Không' },
+  { keyword: 'hệ thống', tag: 'Hệ Thống' },
+  { keyword: 'tu tiên', tag: 'Tu Tiên' },
+  { keyword: 'tiên hiệp', tag: 'Tiên Hiệp' },
+  { keyword: 'phàm nhân', tag: 'Tiên Hiệp' },
+  { keyword: 'anime 2d', tag: 'Hoạt Hình 2D' },
+  { keyword: 'hoat hinh 2d', tag: 'Hoạt Hình 2D' },
+];
 
 function normalizeSeriesKey(title = '') {
   return title
@@ -15,18 +47,97 @@ function normalizeSeriesKey(title = '') {
     .trim();
 }
 
-function hasMainThemeKeyword(title = '') {
-  const themeWords = [
-    'xuyên không', 'trọng sinh', 'hệ thống', 'tu tiên',
-    'tiên hiệp', 'phàm nhân', 'hoạt hình', 'hoat hinh',
-    'review phim', 'vietsub', 'gấu', 'panda',
-  ];
+function classifyTag(title = '') {
+  for (const rule of TAG_RULES) {
+    if (title.includes(rule.keyword)) {
+      return rule.tag;
+    }
+  }
+  return 'Khác';
+}
 
-  return themeWords.some(word => title.includes(word));
+function isAllowedTheme(title = '') {
+  const requiredWords = [
+    'xuyên không', 'trọng sinh', 'hệ thống', 'tu tiên', 'tiên hiệp',
+    'phàm nhân', 'hoạt hình', 'hoat hinh', 'review phim',
+    'liễu như yên', 'lieu nhu yen', 'diệp phàm', 'diep pham',
+    'tiêu viêm', 'tieu viem', 'thạch hạo', 'thach hao',
+  ];
+  return requiredWords.some(word => title.includes(word));
+}
+
+function isBadVideoTitle(title = '') {
+  const badWords = [
+    '#marriage', 'tiktok', 'remix', 'music video', 'karaoke',
+    'hàn quốc', 'nhạc', 'live stream', 'vlog', 'podcast',
+    'kpop', 'k-pop', 'drama hàn', 'phim hàn', '#remembering', '#humor',
+    '#xuhuongyoutube', '#mukbang', 'shorts', 'trailer', 'teaser',
+    'reaction', 'highlight', 'clip ngắn', 'tin hot', 'news',
+    'gấu trúc', 'panda', 'tấu hài', 'gau hai',
+  ];
+  return badWords.some(word => title.includes(word));
+}
+
+function shouldKeepVideo(video, targetType, trustedAuthorWords) {
+  if (!video?.videoId) return false;
+  if (!video.seconds || video.seconds < MIN_VIDEO_SECONDS) return false;
+
+  const title = (video.title || '').toLowerCase();
+  if (isBadVideoTitle(title)) return false;
+  if (!isAllowedTheme(title)) return false;
+
+  const authorName = (video.author?.name || '').toLowerCase();
+  if (targetType === 'keyword' && authorName) {
+    const trusted = trustedAuthorWords.some(word => authorName.includes(word));
+    if (!trusted) return false;
+  }
+
+  return true;
+}
+
+function normalizeVideoData(video) {
+  const title = (video.title || '').toLowerCase();
+  const episodeMatch = title.match(EPISODE_REGEX);
+  const episodeNumber = episodeMatch ? Number(episodeMatch[2]) : null;
+  const type = episodeNumber ? 'series' : 'full';
+  const episodeLabel = episodeNumber ? `Tập ${episodeNumber}` : 'Full';
+
+  return {
+    id: video.videoId,
+    title: video.title,
+    episodes: episodeLabel,
+    episodeLabel,
+    episodeNumber,
+    type,
+    seriesKey: type === 'series' ? normalizeSeriesKey(video.title) : '',
+    views: video.views
+      ? (video.views > 1000000 ? `${(video.views / 1000000).toFixed(1)}M views` : `${Math.floor(video.views / 1000)}K views`)
+      : '?? views',
+    thumbnail: video.thumbnail,
+    tags: classifyTag(title),
+    rating: 'N/A',
+  };
+}
+
+async function searchWithRetry(query) {
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= RETRY_TIMES; attempt += 1) {
+    try {
+      return await ytSearch(query);
+    } catch (error) {
+      lastError = error;
+      if (attempt < RETRY_TIMES) {
+        await wait(300 * attempt);
+      }
+    }
+  }
+
+  throw lastError || new Error('Unknown crawl error');
 }
 
 async function crawlYouTube() {
-  console.log("Bat dau crawl du lieu tu Youtube (Che do Nho Giot)...");
+  console.log('Bat dau crawl du lieu tu Youtube (Che do Nho Giot)...');
 
   try {
     const outPath = path.resolve('src/lib/movies.json');
@@ -37,48 +148,33 @@ async function crawlYouTube() {
         const raw = readFileSync(outPath, 'utf8');
         oldData = JSON.parse(raw);
         console.log(`Phat hien list video cu: ${oldData.length} video.`);
-      } catch (e) {
-        console.log("File cu bi loi, se tao lai tu dau.");
+      } catch {
+        console.log('File cu bi loi, se tao lai tu dau.');
       }
     }
 
-    // ===================================================================
-    // DANH SÁCH MỤC TIÊU - Thêm/xoá kênh hoặc từ khoá tại đây
-    // Cột trái = target, cột phải = gợi ý tag ưu tiên
-    // ===================================================================
     const channelTargets = [
       '@HaNhanCartoon',
       '@Hanhansubchannel',
       '@keodeovietsub',
       '@Banhbaoreview2026',
       '@CibiiSub-01',
-      '@GauHaiHuoc',
-      '@GauHaiHuocOfficial',
       '@HoatHinhTrungQuoc-3D',
       '@ReviewPhim3DAI',
       '@HoatHinhReview',
     ];
 
-    // Từ khoá bổ sung để đánh sâu vào nhiều chủ đề -> tăng số lượng
     const keywordTargets = [
-      'Ha Nhan xuyen khong full',
-      'Ha Nhan he thong full',
-      'Ha Nhan cartoon full',
-      'Ha Nhan Sub full',
-      'phim hoat hinh trung quoc 3D full 2024',
-      'Pham Nhan Tu Tien full',
-      'hoat hinh tu tien vietsub full',
-      'tom tat xuyen khong hai',
-      'xuyen khong full bo vietsub',
-      'hoat hinh gau truc meme',
-      'gau hai huoc trung quoc',
-      'Ha Nhan panda cartoon',
-      'hoat hinh co trang full vietsub',
-      'phim he thong full bo',
-      'xuyen khong trong sinh vietsub',
-      'bua nhat trang full',
-      'keodeo vietsub full',
-      'Ha Nhan review phim full',
+      'Liễu Như Yên tập full vietsub',
+      'Diệp Phàm hoạt hình 2D',
+      'Tiêu Viêm hoạt hình 2D',
+      'Thạch Hạo hoạt hình vietsub',
+      'Hàn Lập tiên hiệp full',
+      'Vương Lâm tu tiên vietsub',
+      'xuyên không trọng sinh full bộ',
+      'hệ thống tu tiên review phim',
+      'phàm nhân tu tiên 2d vietsub',
+      'hoạt hình tiên hiệp 2d full',
     ];
 
     const searchTargets = [
@@ -87,109 +183,58 @@ async function crawlYouTube() {
     ];
 
     const trustedAuthorWords = [
-      'ha nhan', 'hà nhân', 'review phim', 'hoat hinh', 'vietsub', 'gau', 'gấu',
-    ];
-
-    // ===================================================================
-    // Blacklist - video có các tag/từ này sẽ bị loại thẳng
-    // ===================================================================
-    const badWords = [
-      '#marriage', 'tiktok', 'remix', 'music video', 'karaoke',
-      'hàn quốc', 'nhạc', 'live stream', 'vlog', 'podcast',
-      'kpop', 'k-pop', 'drama hàn', 'phim hàn', '#remembering', '#humor', '#xuhuongyoutube', '#mukbang',
-      'shorts', 'trailer', 'teaser', 'reaction', 'highlight', 'clip ngắn', 'tin hot', 'news'
+      'ha nhan', 'hà nhân', 'review phim', 'hoat hinh', 'hoạt hình', 'vietsub',
+      'anime', 'phim', 'cartoon',
     ];
 
     let fetchedResults = [];
 
-    for (let target of searchTargets) {
+    for (const target of searchTargets) {
       console.log(`Crawl: ${target.query}`);
       try {
-        const r = await ytSearch(target.query);
-
-        const filteredVideos = r.videos.filter(v => {
-          if (!v.videoId) return false;
-          if (v.seconds < 240) return false;
-
-          const t = v.title.toLowerCase();
-          for (let bw of badWords) {
-            if (t.includes(bw)) return false;
-          }
-
-          if (!hasMainThemeKeyword(t)) return false;
-
-          const authorName = (v.author?.name || '').toLowerCase();
-          if (target.type === 'keyword' && authorName) {
-            const trustedAuthor = trustedAuthorWords.some(word => authorName.includes(word));
-            if (!trustedAuthor) return false;
-          }
-
-          return true;
-        });
-
-        const videos = filteredVideos.map(v => {
-          const t = v.title.toLowerCase();
-          // Phân loại tag thông minh dựa trên nhiều từ khoá
-          let tag = 'Khác';
-          if (t.includes('3d') || t.includes('hoạt hình 3') || t.includes('phàm nhân') || t.includes('tiên hiệp')) {
-            tag = 'Tiên Hiệp 3D';
-          } else if (t.includes('gấu') || t.includes('panda') || t.includes('bựa') || t.includes('hài hước')) {
-            tag = 'Tấu Hài';
-          } else if (t.includes('xuyên không') || t.includes('trọng sinh') || t.includes('chuyển sinh')) {
-            tag = 'Xuyên Không';
-          } else if (t.includes('hệ thống') || t.includes('tu tiên')) {
-            tag = 'Hệ Thống';
-          }
-
-          const episodeMatch = t.match(EPISODE_REGEX);
-          const episodeNumber = episodeMatch ? Number(episodeMatch[2]) : null;
-          const type = episodeNumber ? 'series' : 'full';
-          const episodeLabel = episodeNumber ? `Tập ${episodeNumber}` : 'Full';
-
-          return {
-            id: v.videoId,
-            title: v.title,
-            episodes: episodeLabel,
-            episodeLabel,
-            episodeNumber,
-            type,
-            seriesKey: type === 'series' ? normalizeSeriesKey(v.title) : '',
-            views: v.views
-              ? (v.views > 1000000 ? (v.views / 1000000).toFixed(1) + 'M views' : Math.floor(v.views / 1000) + 'K views')
-              : '?? views',
-            thumbnail: v.thumbnail,
-            tags: tag,
-            rating: 'N/A',
-          };
-        });
-
+        const result = await searchWithRetry(target.query);
+        const filteredVideos = result.videos.filter(video => shouldKeepVideo(video, target.type, trustedAuthorWords));
+        const videos = filteredVideos.map(normalizeVideoData);
         fetchedResults = [...fetchedResults, ...videos];
-      } catch (e) {
-        console.log(`  -> Loi khi crawl ${target.query}: ${e.message}`);
+      } catch (error) {
+        console.log(`  -> Loi khi crawl ${target.query}: ${error?.message || 'undefined'}`);
       }
     }
 
-    // Dedup vs. old data
-    const oldIds = new Set(oldData.map(v => v.id));
+    const oldIds = new Set(oldData.map(video => video.id));
     const uniqueNewIds = new Set();
     const newVideos = [];
 
-    for (let v of fetchedResults) {
-      if (!oldIds.has(v.id) && !uniqueNewIds.has(v.id)) {
-        uniqueNewIds.add(v.id);
-        newVideos.push(v);
+    for (const video of fetchedResults) {
+      if (!oldIds.has(video.id) && !uniqueNewIds.has(video.id)) {
+        uniqueNewIds.add(video.id);
+        newVideos.push(video);
       }
     }
 
+    const keptOldVideos = oldData.filter(video => {
+      const fakeVideoLike = {
+        videoId: video.id,
+        title: video.title || '',
+        seconds: video.type === 'full' ? MIN_VIDEO_SECONDS : MIN_VIDEO_SECONDS + 1,
+        author: { name: 'trusted old data' },
+      };
+      return shouldKeepVideo(fakeVideoLike, 'channel', trustedAuthorWords);
+    });
+
     console.log(`===> Thu duoc ${newVideos.length} VIDEO MOI.`);
 
-    const finalData = [...newVideos, ...oldData].slice(0, 1000);
+    const finalData = [...newVideos, ...keptOldVideos]
+      .slice(0, MAX_STORED_VIDEOS)
+      .map(video => ({
+        ...video,
+        tags: video.tags || classifyTag((video.title || '').toLowerCase()),
+      }));
 
     await fs.writeFile(outPath, JSON.stringify(finalData, null, 2));
     console.log(`Xong! Tong he thong: ${finalData.length} video.`);
-
-  } catch (err) {
-    console.error("Loi:", err);
+  } catch (error) {
+    console.error('Loi:', error);
   }
 }
 
