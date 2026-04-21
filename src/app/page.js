@@ -1,6 +1,7 @@
 import Hero from '@/components/Hero/Hero';
 import MovieCarousel from '@/components/MovieCarousel/MovieCarousel';
 import { 
+  allMovies,
   trendingMovies, 
   tienHiepMovies, 
   tauHaiMovies, 
@@ -9,9 +10,11 @@ import {
 } from '@/lib/data';
 
 export default function Home() {
+  const featuredMovie = allMovies[0] || null;
+
   return (
     <>
-      <Hero />
+      <Hero featuredMovie={featuredMovie} />
       
       {trendingMovies.length > 0 && (
         <MovieCarousel title="🔥 Trending Tấu Hài" movies={trendingMovies} />

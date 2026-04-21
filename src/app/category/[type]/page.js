@@ -30,8 +30,9 @@ const CATEGORY_CONFIG = {
   },
 };
 
-export default function CategoryPage({ params }) {
-  const categoryType = params?.type || '';
+export default async function CategoryPage({ params }) {
+  const resolvedParams = await params;
+  const categoryType = resolvedParams?.type || '';
   const config = CATEGORY_CONFIG[categoryType];
 
   if (!config) {

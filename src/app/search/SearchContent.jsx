@@ -17,7 +17,7 @@ export default function SearchContent() {
     <main className={styles.page}>
       <h1 className={styles.heading}>
         {query
-          ? <>Kết quả cho: <span className="comic-text-yellow">"{query}"</span></>
+          ? <>Kết quả cho: <span className="comic-text-yellow">&quot;{query}&quot;</span></>
           : 'TẤT CẢ PHIM'}
       </h1>
       <p className={styles.count}>{results.length} bộ phim tìm được</p>
@@ -30,7 +30,7 @@ export default function SearchContent() {
         </div>
       ) : (
         <div className={styles.empty}>
-          <p>Không tìm thấy phim nào cho "<strong>{query}</strong>"</p>
+          <p>Không tìm thấy phim nào cho &quot;<strong>{query}</strong>&quot;</p>
           <button className="btn-secondary" onClick={() => router.push('/')}>Về Trang Chủ</button>
         </div>
       )}

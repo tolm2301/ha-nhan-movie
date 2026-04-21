@@ -1,14 +1,12 @@
 "use client";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { allMovies } from '@/lib/data';
+import Image from 'next/image';
 import styles from './Hero.module.css';
 
-export default function Hero() {
+export default function Hero({ featuredMovie }) {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const router = useRouter();
-
-  const featuredMovie = allMovies[0];
 
   const handleWatch = () => {
     if (featuredMovie) {
@@ -24,7 +22,14 @@ export default function Hero() {
     <section className={styles.hero}>
       {featuredMovie && (
         <div className={styles.background}>
-          <img src={featuredMovie.thumbnail} alt={featuredMovie.title} className={styles.bgImage} />
+          <Image
+            src={featuredMovie.thumbnail}
+            alt={featuredMovie.title}
+            fill
+            className={styles.bgImage}
+            priority
+            sizes="100vw"
+          />
           <div className={styles.overlay}></div>
         </div>
       )}

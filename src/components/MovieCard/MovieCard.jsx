@@ -1,12 +1,19 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import styles from './MovieCard.module.css';
 
 export default function MovieCard({ movie }) {
   return (
     <Link href={`/watch/${movie.id}`} className={styles.card} title={movie.title}>
       <div className={styles.imageContainer}>
-        <img src={movie.thumbnail} alt={movie.title} className={styles.image} />
+        <Image
+          src={movie.thumbnail}
+          alt={movie.title}
+          fill
+          className={styles.image}
+          sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 20vw"
+        />
         
         <div className={styles.overlay}>
           <button className={styles.playBtn}>▶</button>
