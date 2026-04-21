@@ -8,7 +8,6 @@ import styles from './Header.module.css';
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
 
@@ -57,7 +56,7 @@ export default function Header() {
             <div className={styles.search}>
               <input 
                 type="text" 
-                placeholder="Tìm phim bựa..." 
+                placeholder="Tìm phim..."
                 className={styles.searchInput}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -65,27 +64,9 @@ export default function Header() {
               />
               <button className={styles.searchBtn} onClick={() => handleSearch({key: 'Enter'})}>🔍</button>
             </div>
-            <button className={styles.loginBtn} onClick={() => setIsLoginOpen(true)}>Đăng nhập</button>
           </div>
         </div>
       </header>
-
-      {/* Login Modal Mock */}
-      {isLoginOpen && (
-        <div className={styles.modalOverlay} onClick={() => setIsLoginOpen(false)}>
-          <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
-            <button className={styles.modalClose} onClick={() => setIsLoginOpen(false)}>×</button>
-            <h2 className="comic-text-yellow" style={{fontSize: '2rem', marginBottom: '20px'}}>ĐĂNG NHẬP VÀO HỆ THỐNG</h2>
-            <p style={{marginBottom: '24px', color: '#ccc'}}>Vì bạn quá làm biếng nên hệ thống ép bạn phải đăng nhập!</p>
-            
-            <div style={{display: 'flex', flexDirection: 'column', gap: '16px'}}>
-              <input type="text" placeholder="Tên Đạo Hữu" style={{padding: '12px', borderRadius: '4px', border: '3px solid #000', background: '#333', color: '#fff'}} />
-              <input type="password" placeholder="Mật Khẩu Phá Án" style={{padding: '12px', borderRadius: '4px', border: '3px solid #000', background: '#333', color: '#fff'}} />
-              <button className="btn-primary" onClick={() => setIsLoginOpen(false)}>VÀO TRUYỆN MỚI</button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
