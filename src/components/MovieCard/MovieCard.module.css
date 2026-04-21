@@ -1,0 +1,122 @@
+.card {
+  width: 100%;
+  cursor: pointer;
+  group: hover;
+}
+
+.imageContainer {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  background: var(--color-surface);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.playBtn {
+  background: var(--color-accent-jade);
+  color: #000;
+  border: none;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(20px);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 0 20px rgba(0, 242, 254, 0.4);
+}
+
+.card:hover .image {
+  transform: scale(1.08);
+}
+
+.card:hover .overlay {
+  opacity: 1;
+}
+
+.card:hover .playBtn {
+  transform: translateY(0);
+}
+
+.card:hover .playBtn:hover {
+  box-shadow: 0 0 30px rgba(0, 242, 254, 0.8);
+  transform: scale(1.1);
+}
+
+.badges {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  justify-content: space-between;
+  z-index: 5;
+}
+
+.episodeBadge {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.ratingBadge {
+  background: rgba(255, 215, 0, 0.9);
+  color: #000;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.info {
+  padding: 0 4px;
+}
+
+.title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.3s ease;
+}
+
+.card:hover .title {
+  color: var(--color-accent-jade);
+}
+
+.views {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
