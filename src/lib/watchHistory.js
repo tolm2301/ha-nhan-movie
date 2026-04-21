@@ -23,6 +23,11 @@ function writeStorage(key, value) {
   }
 }
 
+function notifyWatchedHistoryUpdated() {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new Event('hanhan:watched-history-updated'));
+}
+
 export function getWatchedHistory(limit = 20) {
   const history = readStorage(WATCHED_HISTORY_KEY, []);
   if (!Array.isArray(history)) return [];
@@ -48,6 +53,7 @@ export function pushWatchedMovie(movie) {
   const deduped = safeHistory.filter(item => item?.id !== movie.id);
   const nextHistory = [nextItem, ...deduped].slice(0, 30);
   writeStorage(WATCHED_HISTORY_KEY, nextHistory);
+  notifyWatchedHistoryUpdated();
 }
 
 export function getWatchProgress(videoId) {
