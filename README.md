@@ -1,6 +1,6 @@
 # Hanhan Movie
 
-Next.js movie site with automated YouTube crawling and Vercel deployment workflows.
+Next.js movie site with automated YouTube crawling and Vercel Git-based deployment.
 
 ## Local development
 
@@ -25,21 +25,24 @@ Workflow: `.github/workflows/daily-crawl.yml`
 - Can also be triggered manually via GitHub Actions (`workflow_dispatch`)
 - Crawls latest data and commits `src/lib/movies.json` if changed
 
-## Deploy to Vercel
+## Deploy to Vercel (no token flow)
 
-Workflow: `.github/workflows/deploy-vercel.yml`
+Deployment is handled by Vercel Git Integration (no GitHub Actions token required):
 
-- Auto-runs on push to `main`
-- Can also be triggered manually (`workflow_dispatch`)
-- Runs lint, builds Vercel artifacts, and deploys production
+1. Connect this GitHub repository in Vercel.
+2. Set production branch to `main` (or `master`, depending on your repo).
+3. Every push to production branch is auto-deployed by Vercel.
 
-Required GitHub repository secrets:
+Because `daily-crawl.yml` commits updated `src/lib/movies.json`, each successful daily crawl will also trigger a fresh Vercel production deploy automatically.
 
-- `VERCEL_TOKEN`
-- `VERCEL_ORG_ID`
-- `VERCEL_PROJECT_ID`
+No `VERCEL_TOKEN`, `VERCEL_ORG_ID`, or `VERCEL_PROJECT_ID` secrets are required for this setup.
 
-You can get these from your Vercel project settings and Vercel CLI (`vercel link` / `.vercel/project.json`).
+## CI checks
+
+Workflow: `.github/workflows/ci.yml`
+
+- Runs lint on push and pull requests
+- Keeps code quality checks in GitHub Actions while deploy stays on Vercel
 
 ## Recommended Vercel project setup
 
