@@ -1,26 +1,52 @@
-import React from 'react';
+"use client";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { allMovies } from '@/lib/data';
 import styles from './Hero.module.css';
 
 export default function Hero() {
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const router = useRouter();
+
+  const featuredMovie = allMovies[0];
+
+  const handleWatch = () => {
+    if (featuredMovie) {
+      router.push(`/watch/${featuredMovie.id}`);
+    }
+  };
+
+  const handleBookmark = () => {
+    setIsBookmarked(!isBookmarked);
+  };
+
   return (
     <section className={styles.hero}>
-      <div className={styles.background}>
-        <img src="/images/hero.png" alt="Phàm Nhân Tu Tiên" className={styles.bgImage} />
-        <div className={styles.overlay}></div>
-      </div>
+      {featuredMovie && (
+        <div className={styles.background}>
+          <img src={featuredMovie.thumbnail} alt={featuredMovie.title} className={styles.bgImage} />
+          <div className={styles.overlay}></div>
+        </div>
+      )}
       
       <div className={styles.content}>
-        <span className={styles.badge}>Mới cập nhật Tập 85</span>
-        <h1 className={styles.title}>
-          Phàm Nhân <br/><span className="jade-text">Tu Tiên</span>
+        <span className={styles.badge}>🔥 ĐANG HOT TOP 1 TÓM TẮT 🔥</span>
+        <h1 className={styles.title} style={{ fontSize: '3.5rem' }}>
+          {featuredMovie ? featuredMovie.title : "Đang tải dữ liệu..."}
         </h1>
         <p className={styles.description}>
-          Hàn Lập, một thiếu niên bình thường xưng bá tu tiên giới. Từ một phàm nhân vươn lên trở thành cường giả đỉnh cao, đạp phá hư không, phi thăng tiên giới. Bộ hoạt hình 3D tu tiên đỉnh cao không thể bỏ lỡ.
+          Phim hay mới cập nhật từ hệ thống cào dữ liệu xịn sò nhất thế giới.
+          Click Cày Ngay để xem trọn vẹn bộ phim phá án, xuyên không, hệ thống cực chất!
         </p>
         
         <div className={styles.actions}>
-          <button className="btn-primary">▶ Xem Ngay</button>
-          <button className="btn-secondary">+ Thêm vào danh sách</button>
+          <button className="btn-primary" onClick={handleWatch}>▶ CÀY NGAY</button>
+          <button 
+            className={`btn-secondary ${isBookmarked ? styles.bookmarked : ''}`} 
+            onClick={handleBookmark}
+          >
+            {isBookmarked ? '✓ ĐÃ LƯU' : '+ BỎ TÚI'}
+          </button>
         </div>
       </div>
     </section>

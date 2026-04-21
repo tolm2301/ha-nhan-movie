@@ -1,9 +1,10 @@
 import React from 'react';
+import Link from 'next/link';
 import styles from './MovieCard.module.css';
 
 export default function MovieCard({ movie }) {
   return (
-    <div className={styles.card}>
+    <Link href={`/watch/${movie.id}`} className={styles.card} title={movie.title}>
       <div className={styles.imageContainer}>
         <img src={movie.thumbnail} alt={movie.title} className={styles.image} />
         
@@ -13,7 +14,7 @@ export default function MovieCard({ movie }) {
         
         <div className={styles.badges}>
           <span className={styles.episodeBadge}>{movie.episodes}</span>
-          <span className={styles.ratingBadge}>★ {movie.rating}</span>
+          <span className={styles.ratingBadge}>{movie.tags || movie.rating}</span>
         </div>
       </div>
       
@@ -21,6 +22,6 @@ export default function MovieCard({ movie }) {
         <h3 className={styles.title}>{movie.title}</h3>
         <p className={styles.views}>{movie.views}</p>
       </div>
-    </div>
+    </Link>
   );
 }

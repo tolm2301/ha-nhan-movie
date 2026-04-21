@@ -1,0 +1,41 @@
+.page {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 100px 24px 60px;
+  min-height: 100vh;
+}
+
+.heading {
+  font-size: 2.5rem;
+  font-weight: 900;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  text-shadow: 2px 2px 0 #000;
+}
+
+.count {
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  margin-bottom: 32px;
+  font-weight: 700;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 24px;
+}
+
+.empty {
+  text-align: center;
+  padding: 80px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.empty p {
+  font-size: 1.3rem;
+  color: var(--color-text-muted);
+}
