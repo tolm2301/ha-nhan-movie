@@ -29,3 +29,50 @@
 - Verification: Creator review complete: no extra docs or workflow gaps remain for the category cleanup.
 - Verification: Techlead review complete: category labels stay on one line and Tấu Hài is excluded from all derived category menus.
 - Risks: Narrow mobile drawers may still need spacing tweaks if more long labels are added later.
+
+## 2026-04-22
+- Scope: Fix watch-page fullscreen behavior and redesign popup interaction for better playback UX.
+- Acceptance criteria: fullscreen button enters real browser/window fullscreen when available (not just in-page pseudo fullscreen); popup action is no longer abrupt and follows common streaming UX with clear display options.
+- Actions: Techlead triaged request and delegated flow designer -> developer -> creator -> techlead. Designer chose a compact view-options menu pattern; developer implemented fullscreen API-first behavior and menu-based popup/miniplayer controls.
+- Evidence: Updated `src/app/watch/[id]/page.js` to request native fullscreen on the player section (with pseudo-fullscreen fallback), added menu open/close behavior via outside click + Escape, and separated mini-player/system-popout actions. Updated `src/app/watch/[id]/Watch.module.css` for the new menu UI.
+- Verification: Developer check complete: `npm.cmd run lint` passed; `npm.cmd run build` passed; no new compile/runtime errors observed in build output.
+- Verification: Creator check complete: release-ready with graceful fallback for browsers lacking Document Picture-in-Picture support.
+- Risks: Native fullscreen remains browser/gesture-policy dependent; on unsupported/blocked environments the player uses pseudo fullscreen fallback.
+- Scope: Standardize team working rules so techlead remains planner/orchestrator and execution stays with designer/developer/creator.
+- Acceptance criteria: publish clear SOP with role boundaries, lifecycle, handoff contract, quality gates, verification minimum, and Definition of Done; wire these rules into workplace references.
+- Actions: Techlead opened governance task; creator prepared SOP pack and synced references across workplace docs/inboxes.
+- Evidence: Added `.opencode/workplace/WORKING_RULES.md`; updated `.opencode/workplace/README.md` and `AGENTS.md` to enforce SOP usage; appended rollout notes in all role inbox files.
+- Verification: Creator governance check complete: policy artifacts are in place and linked from canonical docs.
+- Verification: Techlead review complete: role boundary is explicit (`techlead` orchestrates, execution delegated to worker roles).
+- Risks: Process quality depends on continuous enforcement during future task intake/handoffs.
+- Scope: Fix popup playback failure (Error 153) observed in floating window mode.
+- Acceptance criteria: popup playback opens without YouTube configuration error; returning from popup restores in-page timeline/state; no regressions in lint/build.
+- Actions: Switched popup implementation from Document Picture-in-Picture iframe relocation to dedicated `/watch-popout` route window with state sync.
+- Evidence: Updated `src/app/watch/[id]/page.js` to open popup via `window.open`, pass `id/time/playing/quality`, and restore with `postMessage` + localStorage sync key.
+- Verification: Developer check complete: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Verification: Creator check complete: popout flow is release-ready with clear fallback if popup is blocked by browser policy.
+- Risks: Users with strict popup blockers may need to allow popups for full popout behavior.
+- Scope: Refine popup to match Netflix/FPTPlay behavior: in-page floating popup only, draggable, and remembers last position.
+- Acceptance criteria: popup no longer opens browser window; user can drag popup via toolbar; popup position is restored on next open/page reload; lint/build remain green.
+- Actions: Replaced route-based browser popout behavior with in-page popup state; added drag handlers and viewport clamping; persisted coordinates to localStorage.
+- Evidence: Updated `src/app/watch/[id]/page.js` with pointer drag flow (`pointermove`/`pointerup`), persisted key `hanhan:watch-popup-position`, and inline style positioning. Updated `src/app/watch/[id]/Watch.module.css` with drag cursor states.
+- Verification: Developer check complete: `npm.cmd run lint` passed and `npm.cmd run build` passed after draggable popup changes.
+- Risks: On browsers/users that disable localStorage, popup still works but always starts at default bottom-right position.
+- Scope: Align popup with multitasking expectation: pinned always-on-top window popup and fullscreen with auto-hidden control bar.
+- Acceptance criteria: popup opens in Document Picture-in-Picture pinned window (not regular browser window); returning from popup restores playback state in-page; fullscreen controls fade out after short inactivity and reappear on movement/keyboard.
+- Actions: Replaced in-page popup mode with Document PiP player instantiation in the PiP window, added state sync/restore logic, and implemented idle-based control-bar auto-hide behavior for fullscreen modes.
+- Evidence: Updated `src/app/watch/[id]/page.js` to spin up a second YouTube player inside `documentPictureInPicture.requestWindow`, sync time/play state, and handback to the main player. Updated `src/app/watch/[id]/Watch.module.css` with `inVideoControlsHidden` + `videoContainerUiHidden` styles for fullscreen idle UI hiding.
+- Verification: Developer check complete: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: Document Picture-in-Picture support is browser-dependent; fallback currently switches to mini mode when unsupported or blocked.
+- Scope: Hotfix player regression where video flickers/turns black after the popup/fullscreen update.
+- Acceptance criteria: main watch player initializes once per movie change (no rapid re-create loop), video renders stably, and lint/build remain green.
+- Actions: Adjusted watch-player initialization effect to depend on `movie` only, removing `isReady` from dependency to stop repeated destroy/re-init cycles.
+- Evidence: Updated `src/app/watch/[id]/page.js` effect dependency from `[movie, isReady]` to `[movie]`.
+- Verification: Developer check complete: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: Runtime validation still needed on user's browser/GPU combination to fully confirm no black-frame behavior.
+- Scope: Resolve remaining user-reported playback UX defects: incorrect fullscreen scope, popup Error 153, and return-to-web time reset.
+- Acceptance criteria: fullscreen is scoped to player and fills viewport (not the full page layout); pinned popup plays successfully; returning from popup resumes near prior timestamp instead of 00:00.
+- Actions: Switched native fullscreen target from `document.documentElement` back to player section with dedicated native-fullscreen styling; updated Document PiP player host/vars; hardened popout restore logic to reuse last valid time when popout time is invalid.
+- Evidence: Updated `src/app/watch/[id]/page.js` and `src/app/watch/[id]/Watch.module.css` (`playerSectionNativeFullscreen` + restored playback fallback logic + popout player config changes).
+- Verification: Developer check complete: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: Browser-provided fullscreen helper strip ("To exit full screen, press Esc") cannot be removed by app code; OS taskbar visibility is controlled by browser + OS fullscreen implementation.

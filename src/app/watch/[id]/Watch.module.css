@@ -41,6 +41,20 @@
   margin-bottom: 0;
 }
 
+.playerSectionPopup {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: min(780px, 92vw);
+  z-index: 1400;
+  margin-bottom: 0;
+}
+
+.playerSectionPopup .videoContainer {
+  border-width: 3px;
+  box-shadow: 8px 8px 0 var(--color-accent-blue);
+}
+
 .playerSectionPseudoFullscreen {
   position: fixed;
   inset: 0;
@@ -55,6 +69,14 @@
   justify-content: center;
 }
 
+.playerSectionNativeFullscreen {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  background: #000;
+}
+
 .videoContainer {
   width: 100%;
   aspect-ratio: 16 / 9;
@@ -66,12 +88,59 @@
   border: 4px solid #000;
 }
 
+.popupToolbar {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  z-index: 7;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.66);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  padding: 6px 8px;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.popupToolbarDragging {
+  cursor: grabbing;
+}
+
+.popupCloseBtn {
+  border: 0;
+  background: rgba(247, 208, 56, 0.96);
+  color: #000;
+  border-radius: 6px;
+  padding: 5px 8px;
+  cursor: pointer;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
 .playerSectionMini .videoContainer {
   border-width: 3px;
   box-shadow: 6px 6px 0 var(--color-accent-blue);
 }
 
 .playerSectionPseudoFullscreen .videoContainer {
+  width: 100vw;
+  height: 100vh;
+  max-height: none;
+  aspect-ratio: auto;
+  border-radius: 0;
+  border-width: 0;
+  box-shadow: none;
+}
+
+.playerSectionNativeFullscreen .videoContainer {
   width: 100vw;
   height: 100vh;
   max-height: none;
@@ -157,6 +226,17 @@
   z-index: 6;
   padding: 10px 12px 12px;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 0.66), transparent);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.inVideoControlsHidden {
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+}
+
+.videoContainerUiHidden {
+  cursor: none;
 }
 
 .seekRow {
@@ -232,6 +312,46 @@
 
 .rightControls {
   justify-content: flex-end;
+}
+
+.viewMenuWrap {
+  position: relative;
+}
+
+.menuTriggerBtn {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.viewMenu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 10px);
+  min-width: 210px;
+  background: rgba(20, 20, 20, 0.96);
+  border: 2px solid #000;
+  border-radius: 10px;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.45);
+  padding: 8px;
+  display: grid;
+  gap: 6px;
+}
+
+.viewMenuItem {
+  border: 0;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.viewMenuItem:hover {
+  background: rgba(247, 208, 56, 0.95);
+  color: #000;
 }
 
 .controlBtn {
@@ -371,6 +491,11 @@
     flex: 1;
   }
 
+  .viewMenu {
+    right: -48px;
+    min-width: 190px;
+  }
+
 }
 
 @media (max-width: 700px) {
@@ -378,6 +503,12 @@
     width: min(340px, calc(100vw - 20px));
     right: 10px;
     bottom: 10px;
+  }
+
+  .playerSectionPopup {
+    width: min(96vw, 460px);
+    right: 8px;
+    bottom: 8px;
   }
 
   .container {

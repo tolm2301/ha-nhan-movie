@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { allMovies } from '@/lib/data';
 import { getWatchProgress, pushWatchedMovie, setWatchProgress } from '@/lib/watchHistory';
@@ -45,6 +45,32 @@ function loadYouTubeApi() {
   });
 
   return youtubeApiPromise;
+}
+
+function loadYouTubeApiInWindow(targetWindow) {
+  if (!targetWindow) return Promise.resolve();
+  if (targetWindow.YT?.Player) return Promise.resolve();
+  if (targetWindow.__hanhanYoutubeApiPromise) return targetWindow.__hanhanYoutubeApiPromise;
+
+  targetWindow.__hanhanYoutubeApiPromise = new Promise(resolve => {
+    const existing = targetWindow.document.querySelector('script[src="https://www.youtube.com/iframe_api"]');
+    if (!existing) {
+      const script = targetWindow.document.createElement('script');
+      script.src = 'https://www.youtube.com/iframe_api';
+      script.async = true;
+      targetWindow.document.body.appendChild(script);
+    }
+
+    const previous = targetWindow.onYouTubeIframeAPIReady;
+    targetWindow.onYouTubeIframeAPIReady = () => {
+      if (typeof previous === 'function') previous();
+      resolve();
+    };
+
+    if (targetWindow.YT?.Player) resolve();
+  });
+
+  return targetWindow.__hanhanYoutubeApiPromise;
 }
 
 function normalizeSeriesKey(title = '') {
@@ -111,12 +137,20 @@ function getFullscreenElement() {
 export default function WatchPage() {
   const router = useRouter();
   const routeParams = useParams();
+  const playerSectionRef = useRef(null);
   const playerMountRef = useRef(null);
+  const viewMenuRef = useRef(null);
   const playerRef = useRef(null);
+  const pipWindowRef = useRef(null);
+  const pipPlayerRef = useRef(null);
+  const popoutSyncTimerRef = useRef(null);
+  const hideControlsTimerRef = useRef(null);
   const resumeAppliedRef = useRef(false);
   const selectedQualityRef = useRef('auto');
   const qualityEnforceUntilRef = useRef(0);
   const qualityReloadAttemptedRef = useRef(false);
+  const lastKnownTimeRef = useRef(0);
+  const lastKnownPlayingRef = useRef(true);
 
   const [isReady, setIsReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -129,7 +163,11 @@ export default function WatchPage() {
   const [selectedQuality, setSelectedQuality] = useState('auto');
   const [isMiniMode, setIsMiniMode] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isNativePlayerFullscreen, setIsNativePlayerFullscreen] = useState(false);
   const [isPseudoFullscreen, setIsPseudoFullscreen] = useState(false);
+  const [isSystemPopout, setIsSystemPopout] = useState(false);
+  const [isViewMenuOpen, setIsViewMenuOpen] = useState(false);
+  const [isControlsVisible, setIsControlsVisible] = useState(true);
 
   const movieId = typeof routeParams?.id === 'string' ? routeParams.id : '';
   const movie = allMovies.find(m => m.id === movieId) || allMovies[0] || null;
@@ -161,6 +199,70 @@ export default function WatchPage() {
 
     return related.slice(0, 40);
   }, [movie, shouldShowEpisodes]);
+
+  const clearHideControlsTimer = useCallback(() => {
+    if (hideControlsTimerRef.current) {
+      window.clearTimeout(hideControlsTimerRef.current);
+      hideControlsTimerRef.current = null;
+    }
+  }, []);
+
+  const armControlsAutoHide = useCallback(() => {
+    setIsControlsVisible(true);
+    clearHideControlsTimer();
+    hideControlsTimerRef.current = window.setTimeout(() => setIsControlsVisible(false), 2200);
+  }, [clearHideControlsTimer]);
+
+  const restoreFromSystemPopout = (closeWindow = true) => {
+    const mainPlayer = playerRef.current;
+    const popoutPlayer = pipPlayerRef.current;
+    const popoutWindow = pipWindowRef.current;
+
+    let playbackTime = Number(popoutPlayer?.getCurrentTime?.() || lastKnownTimeRef.current || currentTime || 0);
+    if (playbackTime < 1 && lastKnownTimeRef.current > 1) {
+      playbackTime = Number(lastKnownTimeRef.current);
+    }
+    const shouldPlay = Number(popoutPlayer?.getPlayerState?.() || 2) === 1 || lastKnownPlayingRef.current;
+
+    if (popoutSyncTimerRef.current) {
+      window.clearInterval(popoutSyncTimerRef.current);
+      popoutSyncTimerRef.current = null;
+    }
+
+    if (popoutPlayer) {
+      try {
+        popoutPlayer.destroy();
+      } catch {
+        // Ignore popout destroy errors.
+      }
+      pipPlayerRef.current = null;
+    }
+
+    if (closeWindow && popoutWindow && !popoutWindow.closed) {
+      popoutWindow.close();
+    }
+
+    pipWindowRef.current = null;
+
+    if (mainPlayer && isReady) {
+      mainPlayer.seekTo(playbackTime, true);
+      if (shouldPlay) {
+        mainPlayer.playVideo();
+        setIsPlaying(true);
+      } else {
+        mainPlayer.pauseVideo();
+        setIsPlaying(false);
+      }
+      setCurrentTime(playbackTime);
+      lastKnownTimeRef.current = playbackTime;
+      lastKnownPlayingRef.current = shouldPlay;
+    }
+
+    setIsViewMenuOpen(false);
+    setIsControlsVisible(true);
+    clearHideControlsTimer();
+    setIsSystemPopout(false);
+  };
 
   useEffect(() => {
     if (!movie) return;
@@ -263,7 +365,9 @@ export default function WatchPage() {
           },
           onStateChange: event => {
             if (isCancelled) return;
-            setIsPlaying(event.data === window.YT.PlayerState.PLAYING);
+            const playing = event.data === window.YT.PlayerState.PLAYING;
+            setIsPlaying(playing);
+            lastKnownPlayingRef.current = playing;
           },
         },
       });
@@ -272,15 +376,19 @@ export default function WatchPage() {
         const player = playerRef.current;
         if (!player || typeof player.getCurrentTime !== 'function') return;
 
-        setCurrentTime(Number(player.getCurrentTime() || 0));
+        const now = Number(player.getCurrentTime() || 0);
+        setCurrentTime(now);
+        lastKnownTimeRef.current = now;
         setDuration(Number(player.getDuration?.() || 0));
         setVolume(Number(player.getVolume?.() || 0));
         setIsMuted(Boolean(player.isMuted?.()));
+
         const levels = buildQualityLevels(player.getAvailableQualityLevels?.() || []);
         setQualityLevels(previous => {
           if (previous.join('|') === levels.join('|')) return previous;
           return levels;
         });
+
         const actualQuality = normalizeQualityValue(player.getPlaybackQuality?.());
         setCurrentQuality(actualQuality);
 
@@ -292,10 +400,9 @@ export default function WatchPage() {
           const confirmed = normalizeQualityValue(player.getPlaybackQuality?.());
           if (confirmed !== desiredQuality && !qualityReloadAttemptedRef.current) {
             qualityReloadAttemptedRef.current = true;
-            const current = Number(player.getCurrentTime() || 0);
             player.loadVideoById({
               videoId: movie.id,
-              startSeconds: current,
+              startSeconds: now,
               suggestedQuality: desiredQuality,
             });
           }
@@ -326,15 +433,45 @@ export default function WatchPage() {
         playerRef.current.destroy();
         playerRef.current = null;
       }
+
+      if (popoutSyncTimerRef.current) {
+        window.clearInterval(popoutSyncTimerRef.current);
+        popoutSyncTimerRef.current = null;
+      }
+
+      if (pipPlayerRef.current) {
+        try {
+          pipPlayerRef.current.destroy();
+        } catch {
+          // Ignore popout destroy errors.
+        }
+        pipPlayerRef.current = null;
+      }
+
+      if (pipWindowRef.current && !pipWindowRef.current.closed) {
+        pipWindowRef.current.close();
+      }
+
+      pipWindowRef.current = null;
+      setIsSystemPopout(false);
     };
   }, [movie]);
 
   useEffect(() => {
     const onFullscreenChange = () => {
-      const active = Boolean(getFullscreenElement());
+      const activeElement = getFullscreenElement();
+      const active = Boolean(activeElement);
       setIsFullscreen(active);
+      setIsNativePlayerFullscreen(activeElement === playerSectionRef.current);
       if (active && isPseudoFullscreen) {
         setIsPseudoFullscreen(false);
+      }
+
+      if (active) {
+        armControlsAutoHide();
+      } else if (!isPseudoFullscreen) {
+        setIsControlsVisible(true);
+        clearHideControlsTimer();
       }
     };
 
@@ -347,18 +484,28 @@ export default function WatchPage() {
       document.removeEventListener('webkitfullscreenchange', onFullscreenChange);
       document.removeEventListener('msfullscreenchange', onFullscreenChange);
     };
-  }, [isPseudoFullscreen]);
+  }, [armControlsAutoHide, clearHideControlsTimer, isPseudoFullscreen]);
 
   useEffect(() => {
     const onKeyDown = event => {
       if (event.key === 'Escape' && isPseudoFullscreen) {
         setIsPseudoFullscreen(false);
+        setIsControlsVisible(true);
+        clearHideControlsTimer();
+      }
+
+      if (event.key === 'Escape') {
+        setIsViewMenuOpen(false);
+      }
+
+      if (isFullscreen || isPseudoFullscreen) {
+        armControlsAutoHide();
       }
     };
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isPseudoFullscreen]);
+  }, [armControlsAutoHide, clearHideControlsTimer, isFullscreen, isPseudoFullscreen]);
 
   useEffect(() => {
     if (!isPseudoFullscreen) return;
@@ -369,7 +516,22 @@ export default function WatchPage() {
     return () => {
       document.body.style.overflow = prevOverflow;
     };
-  }, [isPseudoFullscreen]);
+  }, [isFullscreen, isPseudoFullscreen]);
+
+  useEffect(() => {
+    if (!isViewMenuOpen) return;
+
+    const handlePointerDown = event => {
+      if (!viewMenuRef.current?.contains(event.target)) {
+        setIsViewMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('pointerdown', handlePointerDown);
+    return () => {
+      window.removeEventListener('pointerdown', handlePointerDown);
+    };
+  }, [isViewMenuOpen]);
 
   const handleTogglePlay = () => {
     const player = playerRef.current;
@@ -378,9 +540,11 @@ export default function WatchPage() {
     if (isPlaying) {
       player.pauseVideo();
       setIsPlaying(false);
+      lastKnownPlayingRef.current = false;
     } else {
       player.playVideo();
       setIsPlaying(true);
+      lastKnownPlayingRef.current = true;
     }
   };
 
@@ -391,6 +555,7 @@ export default function WatchPage() {
     const next = Number(value);
     player.seekTo(next, true);
     setCurrentTime(next);
+    lastKnownTimeRef.current = next;
   };
 
   const handleVolumeChange = value => {
@@ -457,10 +622,140 @@ export default function WatchPage() {
       });
     }
 
-    if (typeof player.setPlaybackQualityRange === 'function') {
-      player.setPlaybackQualityRange(value);
-    }
     setCurrentQuality(normalizeQualityValue(player.getPlaybackQuality?.()));
+  };
+
+  const handlePopout = () => {
+    if (isSystemPopout) {
+      restoreFromSystemPopout(true);
+      return;
+    }
+
+    setIsViewMenuOpen(false);
+    setIsPseudoFullscreen(false);
+    setIsMiniMode(false);
+  };
+
+  const startSystemPopout = async () => {
+    if (!window.documentPictureInPicture?.requestWindow) {
+      return false;
+    }
+
+    const player = playerRef.current;
+    if (!player || !movie || !isReady) return false;
+
+    try {
+      const startAt = Number(player.getCurrentTime?.() || 0);
+      const shouldPlay = Number(player.getPlayerState?.() || 2) === 1;
+      const desiredQuality = selectedQualityRef.current || 'auto';
+
+      const pipWindow = await window.documentPictureInPicture.requestWindow({ width: 500, height: 320 });
+      pipWindowRef.current = pipWindow;
+
+      pipWindow.document.body.innerHTML = '';
+      pipWindow.document.body.style.margin = '0';
+      pipWindow.document.body.style.background = '#000';
+      pipWindow.document.body.style.overflow = 'hidden';
+
+      const toolbar = pipWindow.document.createElement('div');
+      toolbar.style.display = 'flex';
+      toolbar.style.justifyContent = 'flex-end';
+      toolbar.style.padding = '8px';
+      toolbar.style.background = '#111';
+
+      const backBtn = pipWindow.document.createElement('button');
+      backBtn.textContent = 'Quay lại web';
+      backBtn.style.border = '0';
+      backBtn.style.background = '#f7d038';
+      backBtn.style.color = '#000';
+      backBtn.style.fontWeight = '700';
+      backBtn.style.padding = '7px 11px';
+      backBtn.style.borderRadius = '6px';
+      backBtn.style.cursor = 'pointer';
+      backBtn.onclick = () => restoreFromSystemPopout(true);
+      toolbar.appendChild(backBtn);
+
+      const mount = pipWindow.document.createElement('div');
+      mount.style.width = '100%';
+      mount.style.height = 'calc(100% - 46px)';
+      mount.style.background = '#000';
+
+      pipWindow.document.body.appendChild(toolbar);
+      pipWindow.document.body.appendChild(mount);
+
+      await loadYouTubeApiInWindow(pipWindow);
+
+      pipPlayerRef.current = new pipWindow.YT.Player(mount, {
+        host: 'https://www.youtube.com',
+        videoId: movie.id,
+        playerVars: {
+          autoplay: shouldPlay ? 1 : 0,
+          controls: 1,
+          fs: 0,
+          rel: 0,
+          modestbranding: 1,
+          iv_load_policy: 3,
+          playsinline: 1,
+          enablejsapi: 1,
+        },
+        events: {
+          onReady: event => {
+            event.target.seekTo(startAt, true);
+            if (desiredQuality !== 'auto') {
+              event.target.setPlaybackQualityRange?.(desiredQuality);
+              event.target.setPlaybackQuality(desiredQuality);
+            }
+            if (shouldPlay) event.target.playVideo();
+          },
+        },
+      });
+
+      if (popoutSyncTimerRef.current) window.clearInterval(popoutSyncTimerRef.current);
+      popoutSyncTimerRef.current = window.setInterval(() => {
+        const pipPlayer = pipPlayerRef.current;
+        if (!pipPlayer) return;
+        const now = Number(pipPlayer.getCurrentTime?.() || 0);
+        const playingNow = Number(pipPlayer.getPlayerState?.() || 2) === 1;
+        setCurrentTime(now);
+        setIsPlaying(playingNow);
+        lastKnownTimeRef.current = now;
+        lastKnownPlayingRef.current = playingNow;
+      }, 700);
+
+      pipWindow.addEventListener('pagehide', () => restoreFromSystemPopout(false));
+
+      player.pauseVideo();
+      setIsPlaying(false);
+      setIsSystemPopout(true);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const requestElementFullscreen = async element => {
+    if (!element) return false;
+
+    try {
+      if (typeof element.requestFullscreen === 'function') {
+        await element.requestFullscreen();
+        return true;
+      }
+
+      if (typeof element.webkitRequestFullscreen === 'function') {
+        element.webkitRequestFullscreen();
+        return true;
+      }
+
+      if (typeof element.msRequestFullscreen === 'function') {
+        element.msRequestFullscreen();
+        return true;
+      }
+    } catch {
+      return false;
+    }
+
+    return false;
   };
 
   const exitFullscreen = async () => {
@@ -487,11 +782,52 @@ export default function WatchPage() {
 
     if (hasNativeFullscreen) {
       await exitFullscreen();
+      setIsControlsVisible(true);
+      clearHideControlsTimer();
       return;
     }
 
     setIsMiniMode(false);
-    setIsPseudoFullscreen(value => !value);
+    setIsViewMenuOpen(false);
+
+    const enteredNative = await requestElementFullscreen(playerSectionRef.current);
+    if (enteredNative) {
+      setIsPseudoFullscreen(false);
+      armControlsAutoHide();
+      return;
+    }
+
+    const nextPseudo = !isPseudoFullscreen;
+    setIsPseudoFullscreen(nextPseudo);
+    if (nextPseudo) {
+      armControlsAutoHide();
+    } else {
+      setIsControlsVisible(true);
+      clearHideControlsTimer();
+    }
+  };
+
+  const handleToggleMiniMode = () => {
+    if (isSystemPopout) {
+      restoreFromSystemPopout(true);
+    }
+
+    setIsPseudoFullscreen(false);
+    setIsViewMenuOpen(false);
+    setIsMiniMode(value => !value);
+  };
+
+  const handleToggleSystemPopout = async () => {
+    setIsViewMenuOpen(false);
+    if (isSystemPopout) {
+      restoreFromSystemPopout(true);
+      return;
+    }
+
+    const opened = await startSystemPopout();
+    if (!opened) {
+      setIsMiniMode(true);
+    }
   };
 
   const handleVideoAreaClick = () => {
@@ -516,9 +852,16 @@ export default function WatchPage() {
         </button>
 
         <div
-          className={`${styles.playerSection} ${isMiniMode ? styles.playerSectionMini : ''} ${isPseudoFullscreen ? styles.playerSectionPseudoFullscreen : ''}`}
+          ref={playerSectionRef}
+          className={`${styles.playerSection} ${isMiniMode ? styles.playerSectionMini : ''} ${isPseudoFullscreen ? styles.playerSectionPseudoFullscreen : ''} ${isNativePlayerFullscreen ? styles.playerSectionNativeFullscreen : ''}`}
         >
-          <div className={styles.videoContainer}>
+          <div
+            className={`${styles.videoContainer} ${(isFullscreen || isPseudoFullscreen) && !isControlsVisible ? styles.videoContainerUiHidden : ''}`}
+            onPointerMove={() => {
+              if (!(isFullscreen || isPseudoFullscreen)) return;
+              armControlsAutoHide();
+            }}
+          >
             <div ref={playerMountRef} className={styles.playerFrame}></div>
             <button
               type="button"
@@ -531,7 +874,7 @@ export default function WatchPage() {
             <div className={styles.playerMaskTop}></div>
             <div className={styles.playerMaskLogo}></div>
 
-            <div className={styles.inVideoControls}>
+            <div className={`${styles.inVideoControls} ${(isFullscreen || isPseudoFullscreen) && !isControlsVisible ? styles.inVideoControlsHidden : ''}`}>
               <div className={styles.seekRow}>
                 <span>{formatTime(currentTime)}</span>
                 <input
@@ -580,9 +923,27 @@ export default function WatchPage() {
                       </option>
                     ))}
                   </select>
-                  <button className={styles.controlBtn} onClick={() => setIsMiniMode(value => !value)}>
-                    {isMiniMode ? '🔼' : '🗗'}
-                  </button>
+                  <div ref={viewMenuRef} className={styles.viewMenuWrap}>
+                    <button
+                      className={`${styles.controlBtn} ${styles.menuTriggerBtn}`}
+                      onClick={() => setIsViewMenuOpen(value => !value)}
+                      aria-haspopup="menu"
+                      aria-expanded={isViewMenuOpen}
+                      title="Tuỳ chọn hiển thị"
+                    >
+                      ⋯
+                    </button>
+                    {isViewMenuOpen && (
+                      <div className={styles.viewMenu} role="menu" aria-label="Tuỳ chọn hiển thị trình phát">
+                        <button type="button" className={styles.viewMenuItem} onClick={handleToggleMiniMode} role="menuitem">
+                          {isMiniMode ? 'Tắt mini player' : 'Mini player trong trang'}
+                        </button>
+                        <button type="button" className={styles.viewMenuItem} onClick={handleToggleSystemPopout} role="menuitem">
+                          {isSystemPopout ? 'Tắt popup nổi' : 'Popup nổi (pin trên màn hình)'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                   <button className={styles.controlBtn} onClick={handleFullscreen}>
                     {isFullscreen || isPseudoFullscreen ? '🡽' : '⛶'}
                   </button>
