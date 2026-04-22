@@ -21,6 +21,9 @@ const QUALITY_LABELS = {
   auto: 'Tự động',
 };
 
+const POPOUT_RETURN_TYPE = 'HANHAN_POPOUT_RETURN';
+const POPOUT_SYNC_KEY = 'hanhan:popout-sync';
+
 function loadYouTubeApi() {
   if (typeof window === 'undefined') return Promise.resolve();
   if (window.YT?.Player) return Promise.resolve();
@@ -45,32 +48,6 @@ function loadYouTubeApi() {
   });
 
   return youtubeApiPromise;
-}
-
-function loadYouTubeApiInWindow(targetWindow) {
-  if (!targetWindow) return Promise.resolve();
-  if (targetWindow.YT?.Player) return Promise.resolve();
-  if (targetWindow.__hanhanYoutubeApiPromise) return targetWindow.__hanhanYoutubeApiPromise;
-
-  targetWindow.__hanhanYoutubeApiPromise = new Promise(resolve => {
-    const existing = targetWindow.document.querySelector('script[src="https://www.youtube.com/iframe_api"]');
-    if (!existing) {
-      const script = targetWindow.document.createElement('script');
-      script.src = 'https://www.youtube.com/iframe_api';
-      script.async = true;
-      targetWindow.document.body.appendChild(script);
-    }
-
-    const previous = targetWindow.onYouTubeIframeAPIReady;
-    targetWindow.onYouTubeIframeAPIReady = () => {
-      if (typeof previous === 'function') previous();
-      resolve();
-    };
-
-    if (targetWindow.YT?.Player) resolve();
-  });
-
-  return targetWindow.__hanhanYoutubeApiPromise;
 }
 
 function normalizeSeriesKey(title = '') {
@@ -142,8 +119,7 @@ export default function WatchPage() {
   const viewMenuRef = useRef(null);
   const playerRef = useRef(null);
   const pipWindowRef = useRef(null);
-  const pipPlayerRef = useRef(null);
-  const popoutSyncTimerRef = useRef(null);
+  const popoutWatchTimerRef = useRef(null);
   const hideControlsTimerRef = useRef(null);
   const resumeAppliedRef = useRef(false);
   const selectedQualityRef = useRef('auto');
@@ -213,29 +189,30 @@ export default function WatchPage() {
     hideControlsTimerRef.current = window.setTimeout(() => setIsControlsVisible(false), 2200);
   }, [clearHideControlsTimer]);
 
-  const restoreFromSystemPopout = (closeWindow = true) => {
+  const restoreFromSystemPopout = useCallback((closeWindow = true) => {
     const mainPlayer = playerRef.current;
-    const popoutPlayer = pipPlayerRef.current;
     const popoutWindow = pipWindowRef.current;
+    let syncPayload = null;
 
-    let playbackTime = Number(popoutPlayer?.getCurrentTime?.() || lastKnownTimeRef.current || currentTime || 0);
+    try {
+      const raw = window.localStorage.getItem(POPOUT_SYNC_KEY);
+      syncPayload = raw ? JSON.parse(raw) : null;
+    } catch {
+      syncPayload = null;
+    }
+
+    let playbackTime = Number(syncPayload?.time ?? mainPlayer?.getCurrentTime?.() ?? lastKnownTimeRef.current ?? currentTime ?? 0);
     if (playbackTime < 1 && lastKnownTimeRef.current > 1) {
       playbackTime = Number(lastKnownTimeRef.current);
     }
-    const shouldPlay = Number(popoutPlayer?.getPlayerState?.() || 2) === 1 || lastKnownPlayingRef.current;
+    const shouldPlay =
+      typeof syncPayload?.playing === 'boolean'
+        ? syncPayload.playing
+        : Number(mainPlayer?.getPlayerState?.() || 2) === 1 || lastKnownPlayingRef.current;
 
-    if (popoutSyncTimerRef.current) {
-      window.clearInterval(popoutSyncTimerRef.current);
-      popoutSyncTimerRef.current = null;
-    }
-
-    if (popoutPlayer) {
-      try {
-        popoutPlayer.destroy();
-      } catch {
-        // Ignore popout destroy errors.
-      }
-      pipPlayerRef.current = null;
+    if (popoutWatchTimerRef.current) {
+      window.clearInterval(popoutWatchTimerRef.current);
+      popoutWatchTimerRef.current = null;
     }
 
     if (closeWindow && popoutWindow && !popoutWindow.closed) {
@@ -262,12 +239,32 @@ export default function WatchPage() {
     setIsControlsVisible(true);
     clearHideControlsTimer();
     setIsSystemPopout(false);
-  };
+  }, [clearHideControlsTimer, currentTime, isReady]);
 
   useEffect(() => {
     if (!movie) return;
     pushWatchedMovie(movie);
   }, [movie]);
+
+  useEffect(() => {
+    const handlePopoutSync = event => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== POPOUT_RETURN_TYPE) return;
+      if (!['return', 'close'].includes(event.data?.action)) return;
+
+      const payload = event.data.payload || null;
+      if (payload?.videoId && payload.videoId !== movie?.id) {
+        return;
+      }
+
+      restoreFromSystemPopout(false);
+    };
+
+    window.addEventListener('message', handlePopoutSync);
+    return () => {
+      window.removeEventListener('message', handlePopoutSync);
+    };
+  }, [movie?.id, restoreFromSystemPopout]);
 
   useEffect(() => {
     if (!movie || !playerMountRef.current) return;
@@ -434,18 +431,9 @@ export default function WatchPage() {
         playerRef.current = null;
       }
 
-      if (popoutSyncTimerRef.current) {
-        window.clearInterval(popoutSyncTimerRef.current);
-        popoutSyncTimerRef.current = null;
-      }
-
-      if (pipPlayerRef.current) {
-        try {
-          pipPlayerRef.current.destroy();
-        } catch {
-          // Ignore popout destroy errors.
-        }
-        pipPlayerRef.current = null;
+      if (popoutWatchTimerRef.current) {
+        window.clearInterval(popoutWatchTimerRef.current);
+        popoutWatchTimerRef.current = null;
       }
 
       if (pipWindowRef.current && !pipWindowRef.current.closed) {
@@ -533,9 +521,26 @@ export default function WatchPage() {
     };
   }, [isViewMenuOpen]);
 
+  useEffect(() => {
+    if (!isSystemPopout) return;
+
+    const enforcePause = () => {
+      const player = playerRef.current;
+      if (!player || typeof player.pauseVideo !== 'function') return;
+      player.pauseVideo();
+      setIsPlaying(false);
+      lastKnownPlayingRef.current = false;
+    };
+
+    const timer = window.setInterval(enforcePause, 700);
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [isSystemPopout]);
+
   const handleTogglePlay = () => {
     const player = playerRef.current;
-    if (!player || !isReady) return;
+    if (!player || !isReady || isSystemPopout) return;
 
     if (isPlaying) {
       player.pauseVideo();
@@ -550,7 +555,7 @@ export default function WatchPage() {
 
   const handleSeek = value => {
     const player = playerRef.current;
-    if (!player || !isReady) return;
+    if (!player || !isReady || isSystemPopout) return;
 
     const next = Number(value);
     player.seekTo(next, true);
@@ -560,7 +565,7 @@ export default function WatchPage() {
 
   const handleVolumeChange = value => {
     const player = playerRef.current;
-    if (!player || !isReady) return;
+    if (!player || !isReady || isSystemPopout) return;
 
     const next = Number(value);
     player.setVolume(next);
@@ -576,7 +581,7 @@ export default function WatchPage() {
 
   const handleToggleMute = () => {
     const player = playerRef.current;
-    if (!player || !isReady) return;
+    if (!player || !isReady || isSystemPopout) return;
 
     if (isMuted) {
       player.unMute();
@@ -594,7 +599,7 @@ export default function WatchPage() {
 
   const handleQualityChange = value => {
     const player = playerRef.current;
-    if (!player || !isReady) return;
+    if (!player || !isReady || isSystemPopout) return;
 
     setSelectedQuality(value);
     selectedQualityRef.current = value;
@@ -637,95 +642,44 @@ export default function WatchPage() {
   };
 
   const startSystemPopout = async () => {
-    if (!window.documentPictureInPicture?.requestWindow) {
+    if (typeof window.open !== 'function' || !movie?.id || !playerRef.current) {
       return false;
     }
 
     const player = playerRef.current;
-    if (!player || !movie || !isReady) return false;
+    if (!player || !isReady) return false;
 
     try {
       const startAt = Number(player.getCurrentTime?.() || 0);
       const shouldPlay = Number(player.getPlayerState?.() || 2) === 1;
-      const desiredQuality = selectedQualityRef.current || 'auto';
+      const quality = selectedQualityRef.current || 'auto';
 
-      const pipWindow = await window.documentPictureInPicture.requestWindow({ width: 500, height: 320 });
-      pipWindowRef.current = pipWindow;
+      const url = new URL('/watch-popout', window.location.origin);
+      url.searchParams.set('id', movie.id);
+      url.searchParams.set('t', String(Math.max(0, Math.floor(startAt))));
+      url.searchParams.set('playing', shouldPlay ? '1' : '0');
+      url.searchParams.set('q', quality);
 
-      pipWindow.document.body.innerHTML = '';
-      pipWindow.document.body.style.margin = '0';
-      pipWindow.document.body.style.background = '#000';
-      pipWindow.document.body.style.overflow = 'hidden';
+      const width = 420;
+      const height = 300;
+      const left = Math.max(0, window.screenX + window.outerWidth - width - 30);
+      const top = Math.max(0, window.screenY + window.outerHeight - height - 90);
+      const features = `popup=yes,width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=no`;
 
-      const toolbar = pipWindow.document.createElement('div');
-      toolbar.style.display = 'flex';
-      toolbar.style.justifyContent = 'flex-end';
-      toolbar.style.padding = '8px';
-      toolbar.style.background = '#111';
+      const popup = window.open(url.toString(), 'hanhan-mini-web', features);
+      if (!popup) return false;
 
-      const backBtn = pipWindow.document.createElement('button');
-      backBtn.textContent = 'Quay lại web';
-      backBtn.style.border = '0';
-      backBtn.style.background = '#f7d038';
-      backBtn.style.color = '#000';
-      backBtn.style.fontWeight = '700';
-      backBtn.style.padding = '7px 11px';
-      backBtn.style.borderRadius = '6px';
-      backBtn.style.cursor = 'pointer';
-      backBtn.onclick = () => restoreFromSystemPopout(true);
-      toolbar.appendChild(backBtn);
-
-      const mount = pipWindow.document.createElement('div');
-      mount.style.width = '100%';
-      mount.style.height = 'calc(100% - 46px)';
-      mount.style.background = '#000';
-
-      pipWindow.document.body.appendChild(toolbar);
-      pipWindow.document.body.appendChild(mount);
-
-      await loadYouTubeApiInWindow(pipWindow);
-
-      pipPlayerRef.current = new pipWindow.YT.Player(mount, {
-        host: 'https://www.youtube.com',
-        videoId: movie.id,
-        playerVars: {
-          autoplay: shouldPlay ? 1 : 0,
-          controls: 1,
-          fs: 0,
-          rel: 0,
-          modestbranding: 1,
-          iv_load_policy: 3,
-          playsinline: 1,
-          enablejsapi: 1,
-        },
-        events: {
-          onReady: event => {
-            event.target.seekTo(startAt, true);
-            if (desiredQuality !== 'auto') {
-              event.target.setPlaybackQualityRange?.(desiredQuality);
-              event.target.setPlaybackQuality(desiredQuality);
-            }
-            if (shouldPlay) event.target.playVideo();
-          },
-        },
-      });
-
-      if (popoutSyncTimerRef.current) window.clearInterval(popoutSyncTimerRef.current);
-      popoutSyncTimerRef.current = window.setInterval(() => {
-        const pipPlayer = pipPlayerRef.current;
-        if (!pipPlayer) return;
-        const now = Number(pipPlayer.getCurrentTime?.() || 0);
-        const playingNow = Number(pipPlayer.getPlayerState?.() || 2) === 1;
-        setCurrentTime(now);
-        setIsPlaying(playingNow);
-        lastKnownTimeRef.current = now;
-        lastKnownPlayingRef.current = playingNow;
-      }, 700);
-
-      pipWindow.addEventListener('pagehide', () => restoreFromSystemPopout(false));
+      pipWindowRef.current = popup;
+      if (popoutWatchTimerRef.current) window.clearInterval(popoutWatchTimerRef.current);
+      popoutWatchTimerRef.current = window.setInterval(() => {
+        if (!pipWindowRef.current || pipWindowRef.current.closed) {
+          restoreFromSystemPopout(false);
+        }
+      }, 800);
 
       player.pauseVideo();
       setIsPlaying(false);
+
       setIsSystemPopout(true);
       return true;
     } catch {

@@ -76,3 +76,27 @@
 - Evidence: Updated `src/app/watch/[id]/page.js` and `src/app/watch/[id]/Watch.module.css` (`playerSectionNativeFullscreen` + restored playback fallback logic + popout player config changes).
 - Verification: Developer check complete: `npm.cmd run lint` passed; `npm.cmd run build` passed.
 - Risks: Browser-provided fullscreen helper strip ("To exit full screen, press Esc") cannot be removed by app code; OS taskbar visibility is controlled by browser + OS fullscreen implementation.
+- Scope: Fix persistent black/error popup in Document Picture-in-Picture on production domain.
+- Acceptance criteria: popup playback initializes without dead black state for supported environments; on popup init/playback error, user gets graceful fallback instead of unusable popup.
+- Actions: Switched popup player bootstrap to reuse the main-window YouTube API instance, restored origin/referrer playerVars, and added hard fallback (`restore + mini mode`) in popup player `onError` path.
+- Evidence: Updated `src/app/watch/[id]/page.js` (`startSystemPopout`) to create `window.YT.Player` against the PiP mount, set iframe allow/referrer attributes on ready, and auto-fallback when popup init fails.
+- Verification: Developer check complete: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: Some browser/video combinations may still reject YouTube playback inside Document PiP due provider policy constraints; fallback now avoids stuck black popup.
+- Scope: Enforce strict popup behavior: open pinned popup window and return to the same in-page playback session when closing popup.
+- Acceptance criteria: clicking popup moves playback to pinned Document PiP window; closing popup returns to page with ongoing timeline/state (not reset); no forced fallback when popup opens successfully.
+- Actions: Reworked popup pipeline to transfer the existing active YouTube iframe (single player instance) into the PiP window instead of instantiating a second player there.
+- Evidence: Updated `src/app/watch/[id]/page.js` (`startSystemPopout` + `restoreFromSystemPopout`) to move iframe between `playerMountRef` and PiP mount, preserve current time/play state, and reattach the same iframe back on close.
+- Verification: Developer check complete: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: Behavior depends on Document PiP support; unsupported browsers cannot provide true pinned popup window mode.
+- Scope: Replace unstable pinned-PiP popup with mini web popup window as requested.
+- Acceptance criteria: clicking popup opens a mini web window for playback; closing/returning from popup resumes in-page video near the current timeline; no black-screen dead state.
+- Actions: Replaced Document PiP popup flow in watch page with `window.open('/watch-popout')` flow, passed movie/time/play/quality params, added `message` sync listener + closed-window watcher, and restored timeline/playback from sync payload.
+- Evidence: Updated `src/app/watch/[id]/page.js` to use `POPOUT_RETURN_TYPE` / `POPOUT_SYNC_KEY` handshake with `src/app/watch-popout/page.js`.
+- Verification: Developer check complete: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: Browser popup blockers can block mini web window until user grants permission.
+- Scope: Complete popup behavior requests: keep main player paused while popup is active and provide practical pin-on-top capability.
+- Acceptance criteria: main page does not auto-resume while popup runs; always-on-top behavior is available through a supported auxiliary tool.
+- Actions: Updated popout sync protocol so only explicit `return/close` messages restore main playback (periodic sync no longer auto-restores). Added Windows topmost helper script and standardized popup title for reliable targeting.
+- Evidence: Updated `src/app/watch/[id]/page.js`, `src/app/watch-popout/page.js`, added `tools/window-pin/PinHanhanPopup.ps1` + `tools/window-pin/README.md`.
+- Verification: Developer check complete: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: Always-on-top helper is OS-specific (Windows) and must be run by user; pure browser JS still cannot force topmost across all windows.

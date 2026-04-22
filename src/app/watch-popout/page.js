@@ -44,11 +44,15 @@ function PopoutContent() {
   const quality = searchParams.get('q') || 'auto';
 
   useEffect(() => {
+    document.title = 'Hanhan Mini Popup';
+  }, []);
+
+  useEffect(() => {
     if (!videoId || !mountRef.current) return;
 
     let cancelled = false;
 
-    const sendSync = () => {
+    const saveSync = () => {
       const player = playerRef.current;
       if (!player) return;
 
@@ -64,9 +68,25 @@ function PopoutContent() {
       } catch {
         // Ignore storage error.
       }
+    };
+
+    const notifyReturn = action => {
+      const player = playerRef.current;
+      const payload = {
+        videoId,
+        time: Number(player?.getCurrentTime?.() || 0),
+        playing: Number(player?.getPlayerState?.() || 2) === 1,
+        updatedAt: Date.now(),
+      };
+
+      try {
+        window.localStorage.setItem(SYNC_KEY, JSON.stringify(payload));
+      } catch {
+        // Ignore storage error.
+      }
 
       if (window.opener && !window.opener.closed) {
-        window.opener.postMessage({ type: RETURN_TYPE, payload }, window.location.origin);
+        window.opener.postMessage({ type: RETURN_TYPE, action, payload }, window.location.origin);
       }
     };
 
@@ -103,9 +123,9 @@ function PopoutContent() {
         },
       });
 
-      syncTimerRef.current = window.setInterval(sendSync, 700);
-      window.addEventListener('beforeunload', sendSync);
-      window.addEventListener('pagehide', sendSync);
+      syncTimerRef.current = window.setInterval(saveSync, 700);
+      window.addEventListener('beforeunload', () => notifyReturn('close'));
+      window.addEventListener('pagehide', () => notifyReturn('close'));
     });
 
     return () => {
@@ -116,16 +136,7 @@ function PopoutContent() {
       const player = playerRef.current;
       if (player) {
         try {
-          const payload = {
-            videoId,
-            time: Number(player.getCurrentTime?.() || 0),
-            playing: Number(player.getPlayerState?.() || 2) === 1,
-            updatedAt: Date.now(),
-          };
-          window.localStorage.setItem(SYNC_KEY, JSON.stringify(payload));
-          if (window.opener && !window.opener.closed) {
-            window.opener.postMessage({ type: RETURN_TYPE, payload }, window.location.origin);
-          }
+          notifyReturn('close');
         } catch {
           // Ignore storage/postMessage issues.
         }
@@ -152,7 +163,7 @@ function PopoutContent() {
     }
 
     if (window.opener && !window.opener.closed) {
-      window.opener.postMessage({ type: RETURN_TYPE, payload }, window.location.origin);
+      window.opener.postMessage({ type: RETURN_TYPE, action: 'return', payload }, window.location.origin);
     }
 
     window.close();
