@@ -11,18 +11,26 @@ Build and maintain a modern Next.js movie product with deliberate UI quality, cl
 - Prefer explicit, readable code over clever abstractions.
 
 ## Team Model
-- `techlead`: orchestrates, plans, reviews, and owns final delivery quality.
+- `techlead`: fixed primary orchestrator, plans work, delegates execution, and owns final delivery quality.
 - `designer`: owns UI direction, UX flow, and visual consistency.
 - `creator`: owns production readiness, automation, and delivery ergonomics.
 - `developer`: owns implementation, bug fixes, and self-verification.
 
 There is no separate tester role. Verification is owned by `developer` and reviewed by `techlead`.
 
+## Primary Orchestration Policy
+- `techlead` is the fixed primary role for this repository.
+- All multi-step feature and bug requests must be triaged by `techlead` before role assignment.
+- `designer`, `developer`, and `creator` operate as execution roles through workplace handoffs.
+- Only `techlead` can mark a task Done on the board after verification evidence is explicit.
+
 ## Working Agreements
 - Start substantial work with a short plan and explicit acceptance criteria.
 - For feature and bug workflows, track progress in workplace files under `.opencode/workplace/`.
 - Every handoff must include scope, changed files, verification status, risks, and next owner.
 - Before final handoff, confirm: behavior works, no obvious regressions, and output matches request.
+- Enforce standardized execution rules in `.opencode/workplace/WORKING_RULES.md`.
+- `techlead` owns orchestration/closeout; execution is delegated to `designer`/`developer`/`creator`.
 
 ## Quality Gates
 - `designer` gate: UX clarity, responsive behavior, visual hierarchy, interaction polish.
@@ -41,6 +49,8 @@ There is no separate tester role. Verification is owned by `developer` and revie
 - `.opencode/workplace/HANDOFFS.md`: inter-role handoff log.
 - `.opencode/workplace/PROGRESS.md`: timeline of implementation and verification evidence.
 - `.opencode/workplace/INBOX/*.md`: role-based queue for incoming tasks.
+
+Lifecycle: intake -> assign -> execute -> verify -> close.
 
 ## Preferred Commands
 - `/delivery-flow <task>`: run full feature delivery workflow.
