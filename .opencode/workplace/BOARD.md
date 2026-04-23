@@ -11,6 +11,11 @@
 
 ## Done
 - [ ] (template) Task title | Owner: techlead | Finished: YYYY-MM-DD
+- [x] Add Windows topmost helper tool for mini popup window pinning | Owner: creator | Finished: 2026-04-22
+- [x] Fix popup sync handshake so main player stays paused until popup closes | Owner: developer | Finished: 2026-04-22
+- [x] Switch popup mode to mini web window with reliable return sync | Owner: developer | Finished: 2026-04-22
+- [x] Make pinned popup stable by transferring active iframe and restoring in-place playback | Owner: developer | Finished: 2026-04-22
+- [x] Stabilize pinned popup playback on production domain and add safe fallback | Owner: developer | Finished: 2026-04-22
 - [x] Fix fullscreen element scope, popout Error 153, and popup return time restore | Owner: developer | Finished: 2026-04-22
 - [x] Fix watch player flicker/black screen regression after popup-fullscreen changes | Owner: developer | Finished: 2026-04-22
 - [x] Re-enable pinned window popup mode and auto-hide controls in fullscreen | Owner: developer | Finished: 2026-04-22
