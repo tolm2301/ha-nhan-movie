@@ -33,7 +33,7 @@ export default function Header() {
               ☰
             </button>
             <Link href="/" className={styles.logo}>
-              Hà Nhân <span className="comic-text-red">Cartoon</span>
+              Hà Nhân <span className="comic-text-red">Movie</span>
             </Link>
             <nav className={`${styles.nav} ${isMobileOpen ? styles.navOpen : ''}`}>
                {isMobileOpen && (

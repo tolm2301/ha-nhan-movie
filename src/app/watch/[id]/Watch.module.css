@@ -175,6 +175,7 @@
   background: transparent;
   pointer-events: auto;
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 .centerPlayHint {

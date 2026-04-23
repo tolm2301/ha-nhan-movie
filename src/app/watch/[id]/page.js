@@ -134,6 +134,20 @@ function getFullscreenElement() {
   return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement || null;
 }
 
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function isInteractiveKeyboardTarget(target) {
+  if (!(target instanceof Element)) return false;
+
+  return Boolean(
+    target.closest(
+      'input, textarea, select, button, a[href], [contenteditable="true"], [contenteditable=""], [contenteditable="plaintext-only"], [role="button"], [role="menuitem"], [role="slider"]',
+    ),
+  );
+}
+
 export default function WatchPage() {
   const router = useRouter();
   const routeParams = useParams();
@@ -145,6 +159,8 @@ export default function WatchPage() {
   const pipPlayerRef = useRef(null);
   const popoutSyncTimerRef = useRef(null);
   const hideControlsTimerRef = useRef(null);
+  const videoAreaClickTimerRef = useRef(null);
+  const suppressNextVideoAreaClickRef = useRef(false);
   const resumeAppliedRef = useRef(false);
   const selectedQualityRef = useRef('auto');
   const qualityEnforceUntilRef = useRef(0);
@@ -204,6 +220,13 @@ export default function WatchPage() {
     if (hideControlsTimerRef.current) {
       window.clearTimeout(hideControlsTimerRef.current);
       hideControlsTimerRef.current = null;
+    }
+  }, []);
+
+  const clearVideoAreaClickTimer = useCallback(() => {
+    if (videoAreaClickTimerRef.current) {
+      window.clearTimeout(videoAreaClickTimerRef.current);
+      videoAreaClickTimerRef.current = null;
     }
   }, []);
 
@@ -487,27 +510,6 @@ export default function WatchPage() {
   }, [armControlsAutoHide, clearHideControlsTimer, isPseudoFullscreen]);
 
   useEffect(() => {
-    const onKeyDown = event => {
-      if (event.key === 'Escape' && isPseudoFullscreen) {
-        setIsPseudoFullscreen(false);
-        setIsControlsVisible(true);
-        clearHideControlsTimer();
-      }
-
-      if (event.key === 'Escape') {
-        setIsViewMenuOpen(false);
-      }
-
-      if (isFullscreen || isPseudoFullscreen) {
-        armControlsAutoHide();
-      }
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [armControlsAutoHide, clearHideControlsTimer, isFullscreen, isPseudoFullscreen]);
-
-  useEffect(() => {
     if (!isPseudoFullscreen) return;
 
     const prevOverflow = document.body.style.overflow;
@@ -533,6 +535,8 @@ export default function WatchPage() {
     };
   }, [isViewMenuOpen]);
 
+  useEffect(() => () => clearVideoAreaClickTimer(), [clearVideoAreaClickTimer]);
+
   const handleTogglePlay = () => {
     const player = playerRef.current;
     if (!player || !isReady) return;
@@ -552,7 +556,7 @@ export default function WatchPage() {
     const player = playerRef.current;
     if (!player || !isReady) return;
 
-    const next = Number(value);
+    const next = clamp(Number(value), 0, Number(duration || 0));
     player.seekTo(next, true);
     setCurrentTime(next);
     lastKnownTimeRef.current = next;
@@ -562,7 +566,7 @@ export default function WatchPage() {
     const player = playerRef.current;
     if (!player || !isReady) return;
 
-    const next = Number(value);
+    const next = clamp(Number(value), 0, 100);
     player.setVolume(next);
     if (next === 0) {
       player.mute();
@@ -591,6 +595,83 @@ export default function WatchPage() {
     player.mute();
     setIsMuted(true);
   };
+
+  const handleSeekByOffset = useCallback(offsetSeconds => {
+    const player = playerRef.current;
+    if (!player || !isReady) return;
+
+    const current = Number(player.getCurrentTime?.() || 0);
+    const durationValue = Number(player.getDuration?.() || 0);
+    const next = clamp(current + offsetSeconds, 0, durationValue > 0 ? durationValue : Infinity);
+
+    player.seekTo(next, true);
+    setCurrentTime(next);
+    lastKnownTimeRef.current = next;
+  }, [isReady]);
+
+  const handleVolumeByOffset = useCallback(offsetAmount => {
+    const player = playerRef.current;
+    if (!player || !isReady) return;
+
+    const currentVolume = clamp(Number(player.getVolume?.() || 0), 0, 100);
+    const next = clamp(currentVolume + offsetAmount, 0, 100);
+
+    player.setVolume(next);
+    if (next === 0) {
+      player.mute();
+      setIsMuted(true);
+    } else {
+      if (player.isMuted?.()) {
+        player.unMute();
+      }
+      setIsMuted(false);
+    }
+
+    setVolume(next);
+  }, [isReady]);
+
+  useEffect(() => {
+    const onKeyDown = event => {
+      if (isFullscreen || isPseudoFullscreen) {
+        armControlsAutoHide();
+      }
+
+      if (event.key === 'Escape' && isPseudoFullscreen) {
+        setIsPseudoFullscreen(false);
+        setIsControlsVisible(true);
+        clearHideControlsTimer();
+      }
+
+      if (event.key === 'Escape') {
+        setIsViewMenuOpen(false);
+      }
+
+      if (isInteractiveKeyboardTarget(event.target)) {
+        return;
+      }
+
+      if (event.ctrlKey || event.metaKey || event.altKey) {
+        return;
+      }
+
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        handleSeekByOffset(-15);
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        handleSeekByOffset(15);
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        handleVolumeByOffset(5);
+      } else if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        handleVolumeByOffset(-5);
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [armControlsAutoHide, clearHideControlsTimer, handleSeekByOffset, handleVolumeByOffset, isFullscreen, isPseudoFullscreen]);
 
   const handleQualityChange = value => {
     const player = playerRef.current;
@@ -830,7 +911,46 @@ export default function WatchPage() {
     }
   };
 
-  const handleVideoAreaClick = () => {
+  const handleVideoAreaClick = event => {
+    if (suppressNextVideoAreaClickRef.current) return;
+    if (event.detail > 1) return;
+
+    clearVideoAreaClickTimer();
+    videoAreaClickTimerRef.current = window.setTimeout(() => {
+      handleTogglePlay();
+      videoAreaClickTimerRef.current = null;
+    }, 300);
+  };
+
+  const handleVideoAreaDoubleClick = event => {
+    if (suppressNextVideoAreaClickRef.current) return;
+
+    clearVideoAreaClickTimer();
+
+    const target = event.currentTarget;
+    const bounds = target.getBoundingClientRect();
+    const isLeftHalf = event.clientX < bounds.left + bounds.width / 2;
+    const player = playerRef.current;
+    if (!player || !isReady) return;
+
+    const current = Number(player.getCurrentTime?.() || currentTime || 0);
+    const durationValue = Number(player.getDuration?.() || duration || 0);
+    const offset = isLeftHalf ? -15 : 15;
+    const next = Math.min(Math.max(current + offset, 0), durationValue || Infinity);
+
+    player.seekTo(next, true);
+    setCurrentTime(next);
+    lastKnownTimeRef.current = next;
+  };
+
+  const handleVideoAreaPointerUp = event => {
+    if (event.pointerType !== 'touch' && event.pointerType !== 'pen') return;
+
+    suppressNextVideoAreaClickRef.current = true;
+    window.setTimeout(() => {
+      suppressNextVideoAreaClickRef.current = false;
+    }, 350);
+
     handleTogglePlay();
   };
 
@@ -867,7 +987,9 @@ export default function WatchPage() {
               type="button"
               className={styles.interactionBlocker}
               aria-label={isPlaying ? 'Tạm dừng video' : 'Phát video'}
+              onPointerUp={handleVideoAreaPointerUp}
               onClick={handleVideoAreaClick}
+              onDoubleClick={handleVideoAreaDoubleClick}
             >
               {!isPlaying && <span className={styles.centerPlayHint}>▶</span>}
             </button>

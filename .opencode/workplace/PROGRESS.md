@@ -121,6 +121,13 @@
 - Verification: Documentation updated; no app code changed in this pass.
 - Risks: None.
 
+## 2026-04-23 (feature intake)
+- Scope: Add double-click seek controls to the watch player overlay.
+- Acceptance criteria: single click/tap still toggles play/pause; left-half double click seeks backward ~10-15 seconds; right-half double click seeks forward ~10-15 seconds; mobile/fullscreen remain stable.
+- Actions: Logged a new developer handoff for the interaction change.
+- Verification: Pending developer implementation and runtime check.
+- Risks: Need to avoid accidental single-click pause when the user intends to double-click seek.
+
 ## 2026-04-23 (verification restore)
 - Scope: Restore local dev/verification setup for the watch-mask task.
 - Acceptance criteria: `npm.cmd run lint` and `npm.cmd run build` execute successfully in the repo environment.
@@ -136,3 +143,26 @@
 - Evidence: `playerMaskTop` now uses a 40px solid overlay; `playerMaskLogo` is a compact opaque pill.
 - Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
 - Risks: If YouTube changes its overlay layout, the tighter mask could expose a small branding edge.
+
+## 2026-04-23 (feature intake 2)
+- Scope: Add keyboard arrow controls to the watch player.
+- Acceptance criteria: left/right arrows seek backward/forward ~15 seconds; up/down arrows decrease/increase volume by a small step; shortcuts should not interfere with text inputs or fullscreen playback.
+- Actions: Logged a new developer handoff for the keyboard shortcut change.
+- Verification: Pending developer implementation and runtime check.
+- Risks: Browser key handling may vary if focus is inside interactive controls.
+
+## 2026-04-23 (double-click seek implementation)
+- Scope: Add left/right double-click seek zones on the watch overlay while preserving single-click/tap play-pause behavior.
+- Acceptance criteria: single click/tap still toggles play/pause; double-click on the left half rewinds ~12s; double-click on the right half fast-forwards ~12s; mobile/fullscreen controls stay stable.
+- Actions: Updated the watch overlay button in `src/app/watch/[id]/page.js` to delay mouse single-click toggles briefly, cancel them on double-click, and seek based on click position; added a tiny `touch-action` CSS tweak in `Watch.module.css`.
+- Evidence: Mouse double-clicks now resolve through `onDoubleClick` with left/right half detection; touch/pen taps toggle immediately via pointer-up handling.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: The single-click action is delayed briefly on mouse to disambiguate double-clicks; browser touch/click synthesis can vary slightly by device.
+
+## 2026-04-23 (keyboard controls implementation)
+- Scope: Add arrow-key shortcuts to the watch player without disrupting existing click, double-click, fullscreen, mobile, or overlay controls.
+- Acceptance criteria: left/right arrows seek ~15 seconds; up/down arrows adjust volume in small steps; shortcuts are ignored inside inputs/selects/textareas/other interactive controls; lint/build remain green.
+- Actions: Added a guarded window `keydown` handler in `src/app/watch/[id]/page.js` with 15s seek and 5-point volume steps, plus shared clamping helpers for seek/volume updates.
+- Evidence: Arrow shortcuts now call the active YouTube player directly and keep fullscreen control auto-hide behavior intact; interactive descendants are excluded via a target-guard helper.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: Browser-level focus handling can still vary slightly around embedded controls, but the target guard prevents hijacking standard form/interactive elements.
