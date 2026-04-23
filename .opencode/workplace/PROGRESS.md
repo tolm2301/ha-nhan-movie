@@ -76,3 +76,63 @@
 - Evidence: Updated `src/app/watch/[id]/page.js` and `src/app/watch/[id]/Watch.module.css` (`playerSectionNativeFullscreen` + restored playback fallback logic + popout player config changes).
 - Verification: Developer check complete: `npm.cmd run lint` passed; `npm.cmd run build` passed.
 - Risks: Browser-provided fullscreen helper strip ("To exit full screen, press Esc") cannot be removed by app code; OS taskbar visibility is controlled by browser + OS fullscreen implementation.
+
+## 2026-04-23
+- Scope: Tighten the YouTube title-cover mask on the watch player so fullscreen no longer feels washed out at the top edge.
+- Acceptance criteria: the title/logo cover still hides YouTube branding, but it no longer uses a soft gradient that darkens a larger portion of the frame; fullscreen playback should feel crisp.
+- Actions: Adjusted `src/app/watch/[id]/Watch.module.css` to make the title and logo covers more compact and opaque.
+- Evidence: `playerMaskTop` now uses a shorter solid overlay, and `playerMaskLogo` is smaller with a fully opaque background.
+- Verification: Pending manual/runtime check and final techlead review.
+- Risks: If YouTube surfaces longer branding text in some states, the smaller mask may reveal a small edge.
+
+## 2026-04-23 (handoff)
+- Scope: Send the watch title-mask refinement to developer for implementation.
+- Acceptance criteria: developer updates only the mask/overlay treatment; fullscreen top edge stays crisp while branding remains covered.
+- Actions: Added a precise implementation brief to `INBOX/developer.md` and recorded the handoff in `HANDOFFS.md`.
+- Verification: Pending developer implementation.
+- Risks: Keep the change narrow so player behavior, controls, and fullscreen logic remain untouched.
+
+## 2026-04-23 (implementation)
+- Scope: Apply the title-mask refinement after user confirmation.
+- Acceptance criteria: remove the soft gradient washout, keep branding covered, and avoid touching player behavior.
+- Actions: Updated `src/app/watch/[id]/Watch.module.css` so the top mask is a shorter solid overlay and the logo cover is smaller/fully opaque.
+- Evidence: `playerMaskTop` now uses a 40px solid black bar; `playerMaskLogo` is a tighter opaque pill.
+- Verification: `npm.cmd run build` could not complete because `next` is not installed in the current environment; prior `npm.cmd run lint` also failed for the same reason.
+- Risks: The tighter cover may expose a small edge of branding if YouTube changes the overlay layout.
+
+## 2026-04-23 (environment)
+- Scope: Restore local verification capability for the watch-mask task.
+- Acceptance criteria: dev environment can run `npm.cmd run lint` and `npm.cmd run build` without missing-command errors.
+- Actions: Sent developer a self-setup instruction to restore missing dependencies.
+- Verification: Pending developer environment repair.
+- Risks: If package lock or node modules are missing/corrupted, setup may need a clean reinstall.
+
+## 2026-04-23 (ownership)
+- Scope: Hand watch-mask work back to developer for execution after environment repair.
+- Acceptance criteria: developer owns the fix, verifies locally, and returns with evidence.
+- Actions: Updated handoff log to mark active developer ownership.
+- Verification: Pending developer action.
+- Risks: None beyond the existing dependency/setup blocker.
+
+## 2026-04-23 (docs)
+- Scope: Make the developer workflow clearer for Next.js work.
+- Acceptance criteria: developer guidance explicitly says to restore dependencies first, respect App Router boundaries, and verify with lint/build.
+- Actions: Added a Next.js workflow reminder to `INBOX/developer.md`.
+- Verification: Documentation updated; no app code changed in this pass.
+- Risks: None.
+
+## 2026-04-23 (verification restore)
+- Scope: Restore local dev/verification setup for the watch-mask task.
+- Acceptance criteria: `npm.cmd run lint` and `npm.cmd run build` execute successfully in the repo environment.
+- Actions: Ran `npm.cmd install` to restore missing local dependencies and recreate `node_modules`.
+- Evidence: `next` and `eslint` were unavailable before install because local dependencies were missing; install completed successfully.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: `npm install` reported 4 high severity vulnerabilities in transitive deps; not addressed because the request was to restore verification only.
+
+## 2026-04-23 (watch mask implementation)
+- Scope: Tighten the watch-page title mask so fullscreen video stays crisp while YouTube branding remains covered.
+- Acceptance criteria: remove the soft gradient washout, preserve branding cover, and avoid layout/routing/playback changes.
+- Actions: Kept the fix CSS-only in `src/app/watch/[id]/Watch.module.css` by shortening the top overlay and making the logo cover smaller and opaque.
+- Evidence: `playerMaskTop` now uses a 40px solid overlay; `playerMaskLogo` is a compact opaque pill.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: If YouTube changes its overlay layout, the tighter mask could expose a small branding edge.
