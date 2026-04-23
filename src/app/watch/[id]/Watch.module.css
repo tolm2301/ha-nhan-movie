@@ -175,6 +175,7 @@
   background: transparent;
   pointer-events: auto;
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 .centerPlayHint {
@@ -205,16 +206,16 @@
   top: 0;
   left: 0;
   width: 100%;
-  height: 58px;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.96), rgba(0, 0, 0, 0.62) 55%, transparent);
+  height: 40px;
+  background: rgba(0, 0, 0, 0.98);
 }
 
 .playerMaskLogo {
   right: 10px;
-  top: 10px;
-  width: 150px;
-  height: 42px;
-  background: rgba(0, 0, 0, 0.92);
+  top: 6px;
+  width: 132px;
+  height: 28px;
+  background: rgba(0, 0, 0, 0.98);
   border-radius: 999px;
 }
 

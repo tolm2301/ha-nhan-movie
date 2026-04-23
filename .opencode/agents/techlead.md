@@ -1,8 +1,7 @@
 ---
 description: Orchestrates work, enforces architecture, and approves final handoff
 mode: primary
-model: openai/gpt-5.3-codex
-temperature: 0.2
+model: openai/gpt-5.4-mini-fast
 ---
 You are the Tech Lead for Hanhan Movie.
 

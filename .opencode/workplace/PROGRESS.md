@@ -76,27 +76,93 @@
 - Evidence: Updated `src/app/watch/[id]/page.js` and `src/app/watch/[id]/Watch.module.css` (`playerSectionNativeFullscreen` + restored playback fallback logic + popout player config changes).
 - Verification: Developer check complete: `npm.cmd run lint` passed; `npm.cmd run build` passed.
 - Risks: Browser-provided fullscreen helper strip ("To exit full screen, press Esc") cannot be removed by app code; OS taskbar visibility is controlled by browser + OS fullscreen implementation.
-- Scope: Fix persistent black/error popup in Document Picture-in-Picture on production domain.
-- Acceptance criteria: popup playback initializes without dead black state for supported environments; on popup init/playback error, user gets graceful fallback instead of unusable popup.
-- Actions: Switched popup player bootstrap to reuse the main-window YouTube API instance, restored origin/referrer playerVars, and added hard fallback (`restore + mini mode`) in popup player `onError` path.
-- Evidence: Updated `src/app/watch/[id]/page.js` (`startSystemPopout`) to create `window.YT.Player` against the PiP mount, set iframe allow/referrer attributes on ready, and auto-fallback when popup init fails.
-- Verification: Developer check complete: `npm.cmd run lint` passed; `npm.cmd run build` passed.
-- Risks: Some browser/video combinations may still reject YouTube playback inside Document PiP due provider policy constraints; fallback now avoids stuck black popup.
-- Scope: Enforce strict popup behavior: open pinned popup window and return to the same in-page playback session when closing popup.
-- Acceptance criteria: clicking popup moves playback to pinned Document PiP window; closing popup returns to page with ongoing timeline/state (not reset); no forced fallback when popup opens successfully.
-- Actions: Reworked popup pipeline to transfer the existing active YouTube iframe (single player instance) into the PiP window instead of instantiating a second player there.
-- Evidence: Updated `src/app/watch/[id]/page.js` (`startSystemPopout` + `restoreFromSystemPopout`) to move iframe between `playerMountRef` and PiP mount, preserve current time/play state, and reattach the same iframe back on close.
-- Verification: Developer check complete: `npm.cmd run lint` passed; `npm.cmd run build` passed.
-- Risks: Behavior depends on Document PiP support; unsupported browsers cannot provide true pinned popup window mode.
-- Scope: Replace unstable pinned-PiP popup with mini web popup window as requested.
-- Acceptance criteria: clicking popup opens a mini web window for playback; closing/returning from popup resumes in-page video near the current timeline; no black-screen dead state.
-- Actions: Replaced Document PiP popup flow in watch page with `window.open('/watch-popout')` flow, passed movie/time/play/quality params, added `message` sync listener + closed-window watcher, and restored timeline/playback from sync payload.
-- Evidence: Updated `src/app/watch/[id]/page.js` to use `POPOUT_RETURN_TYPE` / `POPOUT_SYNC_KEY` handshake with `src/app/watch-popout/page.js`.
-- Verification: Developer check complete: `npm.cmd run lint` passed; `npm.cmd run build` passed.
-- Risks: Browser popup blockers can block mini web window until user grants permission.
-- Scope: Complete popup behavior requests: keep main player paused while popup is active and provide practical pin-on-top capability.
-- Acceptance criteria: main page does not auto-resume while popup runs; always-on-top behavior is available through a supported auxiliary tool.
-- Actions: Updated popout sync protocol so only explicit `return/close` messages restore main playback (periodic sync no longer auto-restores). Added Windows topmost helper script and standardized popup title for reliable targeting.
-- Evidence: Updated `src/app/watch/[id]/page.js`, `src/app/watch-popout/page.js`, added `tools/window-pin/PinHanhanPopup.ps1` + `tools/window-pin/README.md`.
-- Verification: Developer check complete: `npm.cmd run lint` passed; `npm.cmd run build` passed.
-- Risks: Always-on-top helper is OS-specific (Windows) and must be run by user; pure browser JS still cannot force topmost across all windows.
+
+## 2026-04-23
+- Scope: Tighten the YouTube title-cover mask on the watch player so fullscreen no longer feels washed out at the top edge.
+- Acceptance criteria: the title/logo cover still hides YouTube branding, but it no longer uses a soft gradient that darkens a larger portion of the frame; fullscreen playback should feel crisp.
+- Actions: Adjusted `src/app/watch/[id]/Watch.module.css` to make the title and logo covers more compact and opaque.
+- Evidence: `playerMaskTop` now uses a shorter solid overlay, and `playerMaskLogo` is smaller with a fully opaque background.
+- Verification: Pending manual/runtime check and final techlead review.
+- Risks: If YouTube surfaces longer branding text in some states, the smaller mask may reveal a small edge.
+
+## 2026-04-23 (handoff)
+- Scope: Send the watch title-mask refinement to developer for implementation.
+- Acceptance criteria: developer updates only the mask/overlay treatment; fullscreen top edge stays crisp while branding remains covered.
+- Actions: Added a precise implementation brief to `INBOX/developer.md` and recorded the handoff in `HANDOFFS.md`.
+- Verification: Pending developer implementation.
+- Risks: Keep the change narrow so player behavior, controls, and fullscreen logic remain untouched.
+
+## 2026-04-23 (implementation)
+- Scope: Apply the title-mask refinement after user confirmation.
+- Acceptance criteria: remove the soft gradient washout, keep branding covered, and avoid touching player behavior.
+- Actions: Updated `src/app/watch/[id]/Watch.module.css` so the top mask is a shorter solid overlay and the logo cover is smaller/fully opaque.
+- Evidence: `playerMaskTop` now uses a 40px solid black bar; `playerMaskLogo` is a tighter opaque pill.
+- Verification: `npm.cmd run build` could not complete because `next` is not installed in the current environment; prior `npm.cmd run lint` also failed for the same reason.
+- Risks: The tighter cover may expose a small edge of branding if YouTube changes the overlay layout.
+
+## 2026-04-23 (environment)
+- Scope: Restore local verification capability for the watch-mask task.
+- Acceptance criteria: dev environment can run `npm.cmd run lint` and `npm.cmd run build` without missing-command errors.
+- Actions: Sent developer a self-setup instruction to restore missing dependencies.
+- Verification: Pending developer environment repair.
+- Risks: If package lock or node modules are missing/corrupted, setup may need a clean reinstall.
+
+## 2026-04-23 (ownership)
+- Scope: Hand watch-mask work back to developer for execution after environment repair.
+- Acceptance criteria: developer owns the fix, verifies locally, and returns with evidence.
+- Actions: Updated handoff log to mark active developer ownership.
+- Verification: Pending developer action.
+- Risks: None beyond the existing dependency/setup blocker.
+
+## 2026-04-23 (docs)
+- Scope: Make the developer workflow clearer for Next.js work.
+- Acceptance criteria: developer guidance explicitly says to restore dependencies first, respect App Router boundaries, and verify with lint/build.
+- Actions: Added a Next.js workflow reminder to `INBOX/developer.md`.
+- Verification: Documentation updated; no app code changed in this pass.
+- Risks: None.
+
+## 2026-04-23 (feature intake)
+- Scope: Add double-click seek controls to the watch player overlay.
+- Acceptance criteria: single click/tap still toggles play/pause; left-half double click seeks backward ~10-15 seconds; right-half double click seeks forward ~10-15 seconds; mobile/fullscreen remain stable.
+- Actions: Logged a new developer handoff for the interaction change.
+- Verification: Pending developer implementation and runtime check.
+- Risks: Need to avoid accidental single-click pause when the user intends to double-click seek.
+
+## 2026-04-23 (verification restore)
+- Scope: Restore local dev/verification setup for the watch-mask task.
+- Acceptance criteria: `npm.cmd run lint` and `npm.cmd run build` execute successfully in the repo environment.
+- Actions: Ran `npm.cmd install` to restore missing local dependencies and recreate `node_modules`.
+- Evidence: `next` and `eslint` were unavailable before install because local dependencies were missing; install completed successfully.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: `npm install` reported 4 high severity vulnerabilities in transitive deps; not addressed because the request was to restore verification only.
+
+## 2026-04-23 (watch mask implementation)
+- Scope: Tighten the watch-page title mask so fullscreen video stays crisp while YouTube branding remains covered.
+- Acceptance criteria: remove the soft gradient washout, preserve branding cover, and avoid layout/routing/playback changes.
+- Actions: Kept the fix CSS-only in `src/app/watch/[id]/Watch.module.css` by shortening the top overlay and making the logo cover smaller and opaque.
+- Evidence: `playerMaskTop` now uses a 40px solid overlay; `playerMaskLogo` is a compact opaque pill.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: If YouTube changes its overlay layout, the tighter mask could expose a small branding edge.
+
+## 2026-04-23 (feature intake 2)
+- Scope: Add keyboard arrow controls to the watch player.
+- Acceptance criteria: left/right arrows seek backward/forward ~15 seconds; up/down arrows decrease/increase volume by a small step; shortcuts should not interfere with text inputs or fullscreen playback.
+- Actions: Logged a new developer handoff for the keyboard shortcut change.
+- Verification: Pending developer implementation and runtime check.
+- Risks: Browser key handling may vary if focus is inside interactive controls.
+
+## 2026-04-23 (double-click seek implementation)
+- Scope: Add left/right double-click seek zones on the watch overlay while preserving single-click/tap play-pause behavior.
+- Acceptance criteria: single click/tap still toggles play/pause; double-click on the left half rewinds ~12s; double-click on the right half fast-forwards ~12s; mobile/fullscreen controls stay stable.
+- Actions: Updated the watch overlay button in `src/app/watch/[id]/page.js` to delay mouse single-click toggles briefly, cancel them on double-click, and seek based on click position; added a tiny `touch-action` CSS tweak in `Watch.module.css`.
+- Evidence: Mouse double-clicks now resolve through `onDoubleClick` with left/right half detection; touch/pen taps toggle immediately via pointer-up handling.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: The single-click action is delayed briefly on mouse to disambiguate double-clicks; browser touch/click synthesis can vary slightly by device.
+
+## 2026-04-23 (keyboard controls implementation)
+- Scope: Add arrow-key shortcuts to the watch player without disrupting existing click, double-click, fullscreen, mobile, or overlay controls.
+- Acceptance criteria: left/right arrows seek ~15 seconds; up/down arrows adjust volume in small steps; shortcuts are ignored inside inputs/selects/textareas/other interactive controls; lint/build remain green.
+- Actions: Added a guarded window `keydown` handler in `src/app/watch/[id]/page.js` with 15s seek and 5-point volume steps, plus shared clamping helpers for seek/volume updates.
+- Evidence: Arrow shortcuts now call the active YouTube player directly and keep fullscreen control auto-hide behavior intact; interactive descendants are excluded via a target-guard helper.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: Browser-level focus handling can still vary slightly around embedded controls, but the target guard prevents hijacking standard form/interactive elements.

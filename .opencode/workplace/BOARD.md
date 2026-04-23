@@ -4,6 +4,10 @@
 - [ ] (template) Task title | Owner: techlead | Priority: medium
 
 ## In Progress
+- [ ] Fix watch video title mask so fullscreen top edge stays crisp | Owner: developer | Priority: medium
+- [ ] Restore local lint/build environment for watch verification | Owner: techlead | Priority: high
+- [ ] Implement watch-player double-click seek interaction | Owner: creator | Priority: medium
+- [ ] Add keyboard arrow controls to watch player | Owner: creator | Priority: medium
 
 ## Done
 - [ ] (template) Task title | Owner: techlead | Finished: YYYY-MM-DD
