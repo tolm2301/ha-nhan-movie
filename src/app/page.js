@@ -1,17 +1,14 @@
 import Hero from '@/components/Hero/Hero';
 import MovieCarousel from '@/components/MovieCarousel/MovieCarousel';
 import RecentWatchedSection from '@/components/RecentWatchedSection/RecentWatchedSection';
-import { 
-  allMovies,
-  haNhanMovies,
-  trendingMovies, 
-  categoryMenu,
-  getCategoryBySlug,
-} from '@/lib/data';
+import { getMovieCatalog } from '@/lib/data';
 
-export default function Home() {
-  const featuredMovie = haNhanMovies[0] || allMovies[0] || null;
-  const homeCategories = categoryMenu.slice(0, 4);
+export const dynamic = 'force-dynamic';
+
+export default async function Home() {
+  const catalog = await getMovieCatalog();
+  const featuredMovie = catalog.featuredMovie;
+  const homeCategories = catalog.categoryMenu.slice(0, 4);
 
   return (
     <>
@@ -19,12 +16,12 @@ export default function Home() {
 
       <RecentWatchedSection />
       
-      {trendingMovies.length > 0 && (
-        <MovieCarousel title="🔥 Mới cập nhật" movies={trendingMovies} />
+      {catalog.trendingMovies.length > 0 && (
+        <MovieCarousel title="🔥 Mới cập nhật" movies={catalog.trendingMovies} />
       )}
 
       {homeCategories.map(category => {
-        const categoryData = getCategoryBySlug(category.slug);
+        const categoryData = catalog.getCategoryBySlug(category.slug);
         if (!categoryData || categoryData.movies.length === 0) return null;
 
         return (

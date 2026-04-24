@@ -2,10 +2,12 @@ import { getCategoryBySlug } from '@/lib/data';
 import MovieCard from '@/components/MovieCard/MovieCard';
 import styles from './Category.module.css';
 
+export const dynamic = 'force-dynamic';
+
 export default async function CategoryPage({ params }) {
   const resolvedParams = await params;
   const categoryType = resolvedParams?.type || '';
-  const category = getCategoryBySlug(categoryType);
+  const category = await getCategoryBySlug(categoryType);
 
   if (!category) {
     return <main style={{ padding: '100px 24px', textAlign: 'center' }}>

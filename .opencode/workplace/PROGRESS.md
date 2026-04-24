@@ -1,5 +1,119 @@
 # Progress Timeline
 
+## 2026-04-25 (developer Vercel Cron migration)
+- Scope: Move the daily crawl trigger from GitHub Actions to a Vercel Cron-compatible route so scheduling no longer depends on GitHub.
+- Actions: Extracted the crawler into a reusable server module, added `/api/cron/crawl` with Vercel Cron header validation plus optional `CRON_SECRET` manual access, wired `vercel.json` cron scheduling, and retired the GitHub Actions schedule in favor of a manual fallback workflow note.
+- Evidence: `node --check scripts/crawl.mjs` passed; `node --check src/lib/crawl.server.js` passed; `node --check src/app/api/cron/crawl/route.js` passed; `npm.cmd run lint` passed; `npm.cmd run build` passed; `npm.cmd run crawl:dry` passed; manual route invocation with `x-cron-secret` and `?dryRun=1` returned `status 200` and `trigger":"manual"` without writing to Postgres.
+- Verification: Passed locally.
+- Risks: Real Postgres writes still depend on a configured `DATABASE_URL` in the Vercel runtime, and the manual access path should remain secret-protected.
+
+## 2026-04-25 (developer Postgres migration)
+- Scope: Move crawl persistence and runtime reads from `src/lib/movies.json` to Postgres/Supabase-compatible storage.
+- Actions: Added a small Postgres storage layer with schema creation, JSON backfill, and full replace-on-crawl persistence; switched crawler writes to the database; updated home/category/watch/search/header read paths to load through the server API/database; kept `movies.json` only as a migration source and dry-run fallback.
+- Evidence: `npm.cmd run lint` passed; `npm.cmd run build` passed; `npm.cmd run migrate:movies -- --dry-run` passed and reported 169 source movies; `npm.cmd run crawl:dry` passed and completed a full crawl pass without writing to Postgres.
+- Verification: Passed locally, with real Postgres writes still pending a configured `DATABASE_URL`.
+- Risks: Actual DB write verification could not be exercised here because no Supabase connection string was available in the environment.
+
+## 2026-04-25 (developer 30-video crawl floor)
+- Scope: Keep the crawl going until at least 30 kept videos are collected or all safe tiers are exhausted.
+- Actions: Split crawl discovery into ordered tiers (primary exact Ha Nhân anchors, secondary Ha Nhân theme/format groups, then curated fallback channels and broad keywords); added tier-entry logs with remaining-needed counts plus explicit fallback-expansion messages; preserved the existing retry and strict rejection logic.
+- Evidence: `node --check scripts/crawl.mjs` passed; `npm.cmd run lint` passed; `npm.cmd run build` passed; `npm.cmd run crawl` completed cleanly, reached 30 kept items in the primary tier, and `src/lib/movies.json` was reverted after verification.
+- Verification: Passed locally.
+- Risks: Fallback tiers were not entered in this run because the primary tier already met the 30-item floor, so fallback activation is verified by code path/logging but not exercised at runtime.
+
+## 2026-04-24 (developer transient crawl retry)
+- Scope: Make crawl resilient to transient target failures without aborting the full run.
+- Actions: Added small backoff retries for transient network/DNS/5xx-style search failures in `scripts/crawl.mjs`; when retries are exhausted, the crawler now logs and skips only the affected target/query instead of throwing the whole crawl.
+- Evidence: `node --check scripts/crawl.mjs` passed; `npm.cmd run lint` passed; `npm.cmd run build` passed; `npm.cmd run crawl` completed cleanly and kept running through the remaining targets.
+- Verification: Passed locally.
+- Risks: Upstream YouTube/search instability can still cause individual targets to be skipped, but the run now records the failure reason and continues.
+
+## 2026-04-24 (developer theme-filter refinement)
+- Scope: Keep the crawl Ha Nhân-first while making theme rejection logs more specific and preventing broad fallback words from driving acceptance.
+- Actions: Reworked the theme decision path in `scripts/crawl.mjs` so exact Ha Nhân anchors and strong character signals are the primary keep buckets, secondary theme words only support those buckets, and broad words stay fallback-only; updated rejection reasons to name the missing bucket instead of a generic theme warning.
+- Evidence: `node --check scripts/crawl.mjs` passed; `npm.cmd run crawl` completed successfully, and the logs now show concrete rejects such as `missing primary Ha Nhan anchor or strong character signal` and `broad fallback terms are not enough on their own`.
+- Verification: Passed locally.
+- Risks: The filter remains intentionally strict, so some long videos will still be rejected unless they clearly match the curated Ha Nhân taxonomy.
+
+## 2026-04-24 (developer crawl logging hardening)
+- Scope: Make crawl failures obvious, preserve actionable evidence, and keep the Ha Nhân-first small-batch crawl behavior.
+- Actions: Added timestamped structured crawl logs for run start, query order, keep/reject decisions, target summaries, and error objects/stack traces; upgraded target failure handling so all-target failures now surface as real run failures; added GitHub Actions crawl-log artifact upload so workflow output is reviewable after the job finishes.
+- Evidence: `node --check scripts/crawl.mjs` passed; `npm.cmd run crawl` completed twice during verification and printed timestamped structured logs with explicit keep/reject reasons and no `undefined` errors; the generated `src/lib/movies.json` refresh was reverted after verification.
+- Verification: Passed locally.
+- Risks: The crawl still depends on upstream YouTube search results, so source availability can still change day to day; workflow artifacts are only available after CI runs.
+
+## 2026-04-24 (developer taxonomy implementation)
+- Scope: Apply the approved Ha Nhân taxonomy to crawler discovery order and weighting.
+- Actions: Reordered crawl discovery so exact Ha Nhân text anchors are queried first, then character/theme combinations, then format helpers; kept broad standalone terms as fallback-only queries.
+- Evidence: `node --check scripts/crawl.mjs` passed; `npm run crawl` completed and queried `Hà Nhân` first, keeping the crawl small-drip while still producing 5 new videos.
+- Verification: Passed locally.
+- Risks: Broad fallback terms are still available if the primary batch is thin, so occasional noisy hits remain possible; the strict author/theme filter can still reject some long videos.
+
+## 2026-04-24 (taxonomy handoff to developer)
+- Scope: Hand the approved Ha Nhân taxonomy to developer for crawler weighting/order changes.
+- Acceptance criteria: exact Ha Nhân anchors are prioritized, character/theme combinations come next, and broad standalone terms remain low-weight fallback queries.
+- Actions: Recorded the new developer task and handoff entry.
+- Verification: Pending developer implementation.
+- Risks: Broad terms like `phim`, `tu tiên`, `xuyên không`, and `trọng sinh` must stay capped so crawl noise does not spike.
+
+## 2026-04-24 (creator taxonomy proposal)
+- Scope: Curate a controlled Ha Nhân-related search/tag taxonomy for crawl discovery.
+- Acceptance criteria: provide grouped discovery terms beyond direct channel crawling, keep the list practical for crawler queries, and flag broad/risky terms.
+- Actions: Prepared a compact taxonomy recommendation centered on core Ha Nhân, character-specific, theme-specific, and format-specific phrases.
+- Verification: Pending techlead review; no implementation changes made.
+- Risks: Over-broad fantasy/romance terms can pull unrelated content if not kept as secondary or disabled queries.
+
+## 2026-04-24 (creator taxonomy request)
+- Scope: Ask creator to expand the Ha Nhân search/tag taxonomy.
+- Acceptance criteria: include more Ha Nhân-related discovery terms (phim, Liễu Như Yên, tu tiên, xuyên không, trọng sinh variants) so the crawl can reach related content beyond direct YouTube channel crawling.
+- Actions: Added a creator task and recorded the handoff.
+- Verification: Pending creator review.
+- Risks: Keep the taxonomy broad enough to discover related content, but not so broad that unrelated videos flood the crawl.
+
+## 2026-04-24 (developer implementation)
+- Scope: Rebuild crawl logging and keep the crawl Ha Nhân-first with a narrow fallback.
+- Actions: Split crawl targets into primary Ha Nhân sources and fallback broad discovery; added per-video rejection logs for missing ID/duration, short clips, low-quality titles, missing theme keywords, and untrusted keyword-search authors; formatted thrown crawl errors so target failures no longer print `undefined`.
+- Evidence: `node --check scripts/crawl.mjs` passed; `npm run crawl` completed and printed explicit keep/reject reasons per video, plus phase gating that skipped fallback because the primary Ha Nhân batch was already large enough.
+- Verification: Passed locally.
+- Risks: The allowed-theme filter is still intentionally strict, so some long videos will continue to be rejected when their titles do not clearly match the curated theme list.
+
+## 2026-04-24 (developer assignment)
+- Scope: Re-open the crawl task as a developer implementation item.
+- Acceptance criteria: detailed rejection logs, Ha Nhân-first crawl ordering, and fallback to broader discovery only when the batch is thin.
+- Actions: Updated board + handoff log and confirmed the developer inbox entry for the crawl work.
+- Verification: Pending developer implementation.
+- Risks: Keep the change narrow and avoid re-expanding the crawler aggressively.
+
+## 2026-04-24 (rollback + reassignment)
+- Scope: Roll back the techlead-side crawler experiment and hand the crawl work to developer.
+- Actions: Reverted `scripts/crawl.mjs` to the last stable state; prepared a fresh developer assignment focused on visible crawl failures and Ha Nhân-first small-batch behavior.
+- Verification: Rollback complete; implementation now pending developer.
+- Risks: The crawler still needs better diagnostics and content prioritization, but that work should be done by the developer role.
+
+## 2026-04-24 (crawl reprioritization)
+- Scope: Make crawler small-batch and Ha Nhân-first.
+- Acceptance criteria: prioritize Ha Nhân-related sources first, stop early when the batch is already healthy, and only fall back to broader discovery when the Ha Nhân batch is thin.
+- Actions: Split targets into priority and secondary groups, capped per-target output, and added early-stop logic once the batch reaches the desired size.
+- Evidence: `node --check scripts/crawl.mjs` passed; `npm run crawl` completed without `undefined` errors and produced 7 new items on the current dataset.
+- Verification: Passed locally.
+- Risks: If Ha Nhân sources are sparse on a given day, the batch may still stay small; that is expected under the small-drip policy.
+
+## 2026-04-24
+- Scope: Investigate reported crawl failures and production cronjob behavior.
+- Actions: Reviewed `scripts/crawl.mjs`, `src/lib/data.js`, `package.json`, `README.md`, `.github/workflows/daily-crawl.yml`, and `vercel.json`; ran `npm run crawl` locally.
+- Evidence: Local crawl completed successfully and refreshed `src/lib/movies.json` with 25 new videos.
+- Verification: Pending final report.
+- Risks: The crawler swallows per-target search errors and still exits 0, so a broken upstream search can look like a “successful” crawl; production has no Vercel cron route/config, only a GitHub Actions daily workflow.
+
+## 2026-04-24 (crawler hardening)
+- Scope: Increase crawl yield and make failures visible.
+- Acceptance criteria: each crawl run should reliably discover a much larger set of candidates (targeting 20–30+ new items when available), avoid silent all-target failure, and keep previously curated data intact.
+- Actions: Expanded discovery targets with broader thematic queries, replaced binary keep/reject logic with scored candidate ranking, added per-target hit logging, and made the job fail if every target errors.
+- Actions: Added structured crawl error formatting so target failures print the real thrown value instead of `undefined`.
+- Evidence: Verified with `npm run crawl`; first full verification pass produced 78 new videos, and a subsequent pass after the dataset refreshed still completed successfully.
+- Verification: `npm run crawl` passed after the crawler changes.
+- Risks: Crawl runtime is longer because more search targets are queried sequentially; the production cron gap is still separate from crawler logic.
+
 ## YYYY-MM-DD
 - Scope: Review UI and crawled data flow optimization.
 - Actions: Created task board entry; sent designer review context; started evidence trail.

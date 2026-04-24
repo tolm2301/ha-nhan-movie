@@ -2,6 +2,10 @@
 
 Next.js movie site with automated YouTube crawling and Vercel Git-based deployment.
 
+## Postgres data
+
+Runtime movie data now lives in Postgres (Supabase-compatible). Set `DATABASE_URL` in the server environment for app reads and crawler writes.
+
 ## Local development
 
 ```bash
@@ -11,7 +15,9 @@ npm run dev
 
 Useful scripts:
 
-- `npm run crawl`: run data crawler only (`scripts/crawl.mjs`)
+- `npm run crawl`: run data crawler and persist the refreshed dataset to Postgres
+- `npm run crawl:dry`: run the crawler without writing to Postgres
+- `npm run migrate:movies`: backfill `src/lib/movies.json` into Postgres
 - `npm run dev:fresh`: crawl first, then run dev server
 - `npm run build`: standard Next.js production build
 - `npm run build:fresh`: crawl first, then build
@@ -19,11 +25,21 @@ Useful scripts:
 
 ## Batch crawl (daily)
 
-Workflow: `.github/workflows/daily-crawl.yml`
+Vercel Cron: `/api/cron/crawl`
 
 - Runs every day at `02:00 UTC`
-- Can also be triggered manually via GitHub Actions (`workflow_dispatch`)
-- Crawls latest data and commits `src/lib/movies.json` if changed
+- Invokes the server-side crawl route and writes refreshed data to Postgres
+- Optional manual access can use `CRON_SECRET` with `x-cron-secret` or `?secret=`
+
+GitHub Actions workflow: `.github/workflows/daily-crawl.yml`
+
+- Retained only as a manual fallback
+- No longer owns the daily schedule
+
+Required secret/env vars:
+
+- `DATABASE_URL`: Supabase Postgres connection string for server-side reads/writes
+- `CRON_SECRET` (optional): manual-access secret for the cron route
 
 ## Deploy to Vercel (no token flow)
 
@@ -33,7 +49,7 @@ Deployment is handled by Vercel Git Integration (no GitHub Actions token require
 2. Set production branch to `main` (or `master`, depending on your repo).
 3. Every push to production branch is auto-deployed by Vercel.
 
-Because `daily-crawl.yml` commits updated `src/lib/movies.json`, each successful daily crawl will also trigger a fresh Vercel production deploy automatically.
+Because the crawler now writes to Postgres, deployment refreshes should be driven by the app reading that database instead of repo commits.
 
 No `VERCEL_TOKEN`, `VERCEL_ORG_ID`, or `VERCEL_PROJECT_ID` secrets are required for this setup.
 
