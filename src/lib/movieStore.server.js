@@ -4,23 +4,71 @@ import { Pool } from 'pg';
 
 const MOVIES_JSON_PATH = path.resolve('src/lib/movies.json');
 const BATCH_SIZE = 100;
+const DATABASE_URL_ENV_KEYS = [
+  'POSTGRES_URL_NON_POOLING',
+  'DATABASE_URL',
+  'SUPABASE_DATABASE_URL',
+  'POSTGRES_URL',
+  'POSTGRES_CONNECTION_STRING',
+];
 
 let pool;
 
+function getDatabaseConfig() {
+  for (const envKey of DATABASE_URL_ENV_KEYS) {
+    const connectionString = process.env[envKey];
+    if (connectionString) {
+      return { envKey, connectionString };
+    }
+  }
+
+  return null;
+}
+
+function isSupabaseHost(hostname = '') {
+  const normalizedHost = String(hostname || '').toLowerCase();
+  return normalizedHost.includes('supabase');
+}
+
+export function describeDatabaseTarget() {
+  const databaseConfig = getDatabaseConfig();
+  if (!databaseConfig) return null;
+
+  try {
+    const url = new URL(databaseConfig.connectionString);
+    const sslmode = String(url.searchParams.get('sslmode') || '').toLowerCase() || null;
+
+    return {
+      envKey: databaseConfig.envKey,
+      host: url.hostname,
+      port: url.port || (url.protocol.startsWith('postgres') ? '5432' : ''),
+      sslmode,
+      isSupabase: isSupabaseHost(url.hostname),
+      isPooled: url.searchParams.get('pgbouncer') === 'true' || url.port === '6543',
+      isDirect: /non_pooling/i.test(databaseConfig.envKey) || url.port === '5432',
+    };
+  } catch {
+    return {
+      envKey: databaseConfig.envKey,
+      host: null,
+      port: null,
+      sslmode: null,
+      isSupabase: null,
+      isPooled: null,
+      isDirect: null,
+    };
+  }
+}
+
 function getDatabaseUrl() {
-  return process.env.POSTGRES_URL_NON_POOLING
-    || process.env.DATABASE_URL
-    || process.env.SUPABASE_DATABASE_URL
-    || process.env.POSTGRES_URL
-    || process.env.POSTGRES_CONNECTION_STRING
-    || '';
+  return getDatabaseConfig()?.connectionString || '';
 }
 
 function getPoolConfig(connectionString) {
   try {
     const url = new URL(connectionString);
     const sslMode = String(url.searchParams.get('sslmode') || '').toLowerCase();
-    const requiresTls = ['require', 'verify-ca', 'verify-full', 'prefer'].includes(sslMode);
+    const requiresTls = ['require', 'verify-ca', 'verify-full', 'prefer'].includes(sslMode) || isSupabaseHost(url.hostname);
     const config = {
       connectionString,
       max: 3,
@@ -30,7 +78,7 @@ function getPoolConfig(connectionString) {
       return config;
     }
 
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === 'production' && !isSupabaseHost(url.hostname)) {
       return config;
     }
 
@@ -138,7 +186,7 @@ async function ensureSchema(client) {
 async function withClient(work) {
   const connectionPool = getPool();
   if (!connectionPool) {
-    throw new Error('Database connection is not configured. Set DATABASE_URL for Postgres access.');
+    throw new Error('Database connection is not configured. Set POSTGRES_URL_NON_POOLING or DATABASE_URL for Postgres access.');
   }
 
   const client = await connectionPool.connect();
@@ -166,7 +214,7 @@ export async function loadPersistedMovies({ allowJsonFallback = true } = {}) {
       return readMoviesFromJsonFile();
     }
 
-    throw new Error('Database connection is not configured. Set DATABASE_URL for Postgres access.');
+    throw new Error('Database connection is not configured. Set POSTGRES_URL_NON_POOLING or DATABASE_URL for Postgres access.');
   }
 
   return withClient(async client => {

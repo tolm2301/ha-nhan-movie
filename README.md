@@ -4,7 +4,7 @@ Next.js movie site with automated YouTube crawling and Vercel Git-based deployme
 
 ## Postgres data
 
-Runtime movie data now lives in Postgres (Supabase-compatible). Set `POSTGRES_URL_NON_POOLING` (preferred on Vercel) or `DATABASE_URL` in the server environment for app reads and crawler writes.
+Runtime movie data now lives in Postgres (Supabase-compatible). Set the direct Supabase URL in `POSTGRES_URL_NON_POOLING` on Vercel (preferred) or `DATABASE_URL` if that is your server-only direct URL.
 
 ## Local development
 
@@ -16,9 +16,9 @@ npm run dev
 ### Local env for DB-backed testing
 
 - Copy or edit `.env.local` for local-only settings.
-- Set `POSTGRES_URL_NON_POOLING` (preferred on Vercel) or `DATABASE_URL` to a local Postgres or Supabase connection string to exercise the DB-backed crawl/runtime path.
-- For Supabase on Vercel, use the non-pooling direct URL to avoid pooled SSL certificate-chain errors during server-side rendering.
-- If `DATABASE_URL` is left blank, the app falls back to `src/lib/movies.json` for runtime reads and the crawl can still run in `--dry-run` mode.
+- Set `POSTGRES_URL_NON_POOLING` (preferred on Vercel) or `DATABASE_URL` to a direct Postgres or Supabase connection string to exercise the DB-backed crawl/runtime path.
+- Use the direct/non-pooled Supabase URL for SSR on Vercel; pooled URLs are kept as a legacy fallback and are not the primary runtime path.
+- If the DB connection fails, the app logs the failure and falls back to `src/lib/movies.json` for runtime reads; the crawl can still run in `--dry-run` mode.
 - The crawl and migration scripts also load `.env.local`, so the same file can drive `npm run crawl` and `npm run migrate:movies` locally.
 - Keep real credentials out of git; `.env.local` is ignored by default.
 
@@ -47,7 +47,7 @@ GitHub Actions workflow: `.github/workflows/daily-crawl.yml`
 
 Required secret/env vars:
 
-- `POSTGRES_URL_NON_POOLING` (preferred on Vercel) or `DATABASE_URL`: Supabase Postgres connection string for server-side reads/writes
+- `POSTGRES_URL_NON_POOLING` (preferred on Vercel) or `DATABASE_URL`: direct Supabase Postgres connection string for server-side reads/writes
 - `CRON_SECRET` (optional): manual-access secret for the cron route
 
 ## Deploy to Vercel (no token flow)
