@@ -13,6 +13,14 @@ npm ci
 npm run dev
 ```
 
+### Local env for DB-backed testing
+
+- Copy or edit `.env.local` for local-only settings.
+- Set `DATABASE_URL` (or `SUPABASE_DATABASE_URL` / `POSTGRES_URL` / `POSTGRES_CONNECTION_STRING`) to a local Postgres or Supabase connection string to exercise the DB-backed crawl/runtime path.
+- If `DATABASE_URL` is left blank, the app falls back to `src/lib/movies.json` for runtime reads and the crawl can still run in `--dry-run` mode.
+- The crawl and migration scripts also load `.env.local`, so the same file can drive `npm run crawl` and `npm run migrate:movies` locally.
+- Keep real credentials out of git; `.env.local` is ignored by default.
+
 Useful scripts:
 
 - `npm run crawl`: run data crawler and persist the refreshed dataset to Postgres
