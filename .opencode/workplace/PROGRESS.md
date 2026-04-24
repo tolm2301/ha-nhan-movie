@@ -1,5 +1,12 @@
 # Progress Timeline
 
+## 2026-04-25 (developer DB-primary SSR restore)
+- Scope: Restore DB-backed runtime as the primary path for Vercel/Supabase while keeping JSON as fallback only when the DB path fails.
+- Actions: Switched the shared catalog loader back to Postgres-first reads, added a structured DB-failure log before JSON fallback, and updated the Postgres pool setup to prefer the direct Supabase URL on Vercel while handling the Supabase SSL chain safely.
+- Evidence: `npm.cmd run lint` passed; `npm.cmd run build` passed; direct URL smoke test reported `{"envKey":"POSTGRES_URL_NON_POOLING","host":"db.project.supabase.co","port":"5432","sslmode":"require","isSupabase":true,"isPooled":false,"isDirect":true}`; pooled URL smoke test reported `{"envKey":"DATABASE_URL","host":"aws-0-us-east-1.pooler.supabase.com","port":"6543","sslmode":"require","isSupabase":true,"isPooled":true,"isDirect":false}`; DB-less catalog smoke test logged `movie_catalog_db_failed` and fell back to 172 JSON movies.
+- Verification: Passed locally; no live Supabase connection was available in this environment.
+- Risks: JSON fallback remains available when DB access is missing or broken; production should use the direct non-pooled Supabase URL on Vercel.
+
 ## 2026-04-25 (developer JSON-first runtime fallback)
 - Scope: Temporarily stop production 500s from the DB certificate error by making the JSON file the primary runtime source again while keeping DB/cron failures visible.
 - Actions: Switched the shared catalog loader to read `src/lib/movies.json` directly; made the crawl runner use the JSON file as its existing-data source; wrapped Postgres persistence so a DB failure is logged and the crawl returns a JSON-fallback result instead of crashing.

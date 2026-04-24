@@ -4,7 +4,6 @@
 - [ ] (template) Task title | Owner: techlead | Priority: medium
 
 ## In Progress
-- [ ] Fix Vercel Supabase production SSL handling for SSR DB access | Owner: developer | Priority: high
 - [ ] Fix watch video title mask so fullscreen top edge stays crisp | Owner: developer | Priority: medium
 - [ ] Restore local lint/build environment for watch verification | Owner: techlead | Priority: high
 - [ ] Implement watch-player double-click seek interaction | Owner: creator | Priority: medium
@@ -14,6 +13,7 @@
 - [ ] Enforce 30-video floor with tiered crawl fallback | Owner: developer | Priority: high
 
 ## Review
+- [ ] Fix Vercel Supabase production SSL handling for SSR DB access | Owner: developer | Priority: high
 - [ ] Temporary JSON-first runtime fallback for DB certificate failures | Owner: developer | Priority: high
 - [ ] Create local env setup for DB-backed crawl/runtime and ignore local env files | Owner: developer | Priority: high
 - [ ] Move daily crawl trigger from GitHub Actions to Vercel Cron | Owner: developer | Priority: high
