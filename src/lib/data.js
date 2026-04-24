@@ -1,5 +1,5 @@
 import { cache } from 'react';
-import { loadPersistedMovies } from './movieStore.server.js';
+import { readMoviesFromJsonFile } from './movieStore.server.js';
 
 const HIDDEN_CATEGORY_TAGS = new Set(['Tấu Hài']);
 const HA_NHAN_CATEGORY = {
@@ -185,7 +185,7 @@ export function buildMovieCatalog(movies = []) {
   };
 }
 
-const getLoadedCatalog = cache(async () => buildMovieCatalog(await loadPersistedMovies({ allowJsonFallback: true })));
+const getLoadedCatalog = cache(async () => buildMovieCatalog(await readMoviesFromJsonFile()));
 
 export async function getMovieCatalog() {
   return getLoadedCatalog();
