@@ -67,6 +67,9 @@
   cursor: pointer;
   transition: color 0.3s ease;
   margin-left: 12px;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
 }
 
 .viewAll:hover {

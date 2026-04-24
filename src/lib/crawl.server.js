@@ -1,12 +1,12 @@
 import ytSearch from 'yt-search';
 import { readMoviesFromJsonFile, replacePersistedMovies } from './movieStore.server.js';
+import { getCategoryDefinitionBySlug, normalizeMovieCategory, resolveMovieCategory } from './movieCategories.js';
 
 const EPISODE_REGEX = /(t\u1eadp|tap|episode|ep\.?|ph\u1ea7n)\s*(\d{1,4})/i;
 const MIN_VIDEO_SECONDS = 600;
 const MAX_STORED_VIDEOS = 1000;
 const RETRY_TIMES = 3;
 const RETRY_BASE_DELAY_MS = 250;
-const MIN_KEPT_VIDEOS = 30;
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -97,36 +97,59 @@ function isTransientCrawlError(error) {
   return message.includes('socket hang up') || message.includes('timeout') || message.includes('network error');
 }
 
-const CHARACTER_KEYWORDS = [
-  { keyword: 'li\u1ec5u nh\u01b0 y\u00ean', tag: '2D - Li\u1ec5u Nh\u01b0 Y\u00ean' },
-  { keyword: 'lieu nhu yen', tag: '2D - Li\u1ec5u Nh\u01b0 Y\u00ean' },
-  { keyword: 'di\u1ec7p ph\u00e0m', tag: '2D - Di\u1ec7p Ph\u00e0m' },
-  { keyword: 'diep pham', tag: '2D - Di\u1ec7p Ph\u00e0m' },
-  { keyword: 'ti\u00eau vi\u00eam', tag: '2D - Ti\u00eau Vi\u00eam' },
-  { keyword: 'tieu viem', tag: '2D - Ti\u00eau Vi\u00eam' },
-  { keyword: 'th\u1ea1ch h\u1ea1o', tag: '2D - Th\u1ea1ch H\u1ea1o' },
-  { keyword: 'thach hao', tag: '2D - Th\u1ea1ch H\u1ea1o' },
-  { keyword: 'h\u00e0n l\u1eadp', tag: '2D - H\u00e0n L\u1eadp' },
-  { keyword: 'han lap', tag: '2D - H\u00e0n L\u1eadp' },
-  { keyword: 'v\u01b0\u01a1ng l\u00e2m', tag: '2D - V\u01b0\u01a1ng L\u00e2m' },
-  { keyword: 'vuong lam', tag: '2D - V\u01b0\u01a1ng L\u00e2m' },
-];
+const CATEGORY_BATCH_LIMIT = 5;
+const CATEGORY_TRUSTED_AUTHOR_WORDS = ['ha nhan', 'h\u00e0 nh\u00e2n', 'review phim', 'hoat hinh', 'ho\u1ea1t h\u00ecnh', 'vietsub', 'anime', 'phim', 'cartoon'];
+const SHARED_SOURCE_ANCHORS = ['@keodeovietsub'];
+const SHARED_SOURCE_TARGETS = channelTargets(SHARED_SOURCE_ANCHORS);
 
-const PRIMARY_HA_NHAN_ANCHORS = ['h\u00e0 nh\u00e2n phim', 'ha nhan phim', 'h\u00e0 nh\u00e2n', 'ha nhan'];
-const STRONG_CHARACTER_SIGNALS = ['li\u1ec5u nh\u01b0 y\u00ean', 'lieu nhu yen', 'di\u1ec7p ph\u00e0m', 'diep pham', 'ti\u00eau vi\u00eam', 'tieu viem', 'th\u1ea1ch h\u1ea1o', 'thach hao', 'h\u00e0n l\u1eadp', 'han lap', 'v\u01b0\u01a1ng l\u00e2m', 'vuong lam'];
-const SUPPORTING_THEME_SIGNALS = ['tu ti\u00ean', 'tien hiep', 'ti\u00ean hi\u1ec7p', 'xuy\u00ean kh\u00f4ng', 'xuyen khong', 'tr\u1ecdng sinh', 'trong sinh', 'h\u1ec7 th\u1ed1ng', 'he thong', 'ph\u00e0m nh\u00e2n', 'pham nhan'];
-const FALLBACK_THEME_SIGNALS = ['phim', 'review phim', 'ho\u1ea1t h\u00ecnh', 'hoat hinh', 'anime 2d', 'full', 'series', 't\u1eadp', 'tap', 'vietsub'];
+function keywordTargets(queries = []) {
+  return queries.map(query => ({ query, type: 'keyword' }));
+}
 
-const TAG_RULES = [
-  ...CHARACTER_KEYWORDS,
-  { keyword: 'xuy\u00ean kh\u00f4ng', tag: 'Xuy\u00ean Kh\u00f4ng' },
-  { keyword: 'tr\u1ecdng sinh', tag: 'Xuy\u00ean Kh\u00f4ng' },
-  { keyword: 'h\u1ec7 th\u1ed1ng', tag: 'H\u1ec7 Th\u1ed1ng' },
-  { keyword: 'tu ti\u00ean', tag: 'Tu Ti\u00ean' },
-  { keyword: 'ti\u00ean hi\u1ec7p', tag: 'Ti\u00ean Hi\u1ec7p' },
-  { keyword: 'ph\u00e0m nh\u00e2n', tag: 'Ti\u00ean Hi\u1ec7p' },
-  { keyword: 'anime 2d', tag: 'Ho\u1ea1t H\u00ecnh 2D' },
-  { keyword: 'hoat hinh 2d', tag: 'Ho\u1ea1t H\u00ecnh 2D' },
+function channelTargets(queries = []) {
+  return queries.map(query => ({ query, type: 'channel' }));
+}
+
+const CATEGORY_CRAWL_PLANS = [
+  {
+    slug: 'ha-nhan',
+    reason: 'seed the day with Ha Nhan-owned and legacy Ha Nhan content first',
+    targets: [
+      ...keywordTargets(['H\u00e0 Nh\u00e2n', 'Ha Nhan', 'H\u00e0 Nh\u00e2n phim', 'Ha Nhan phim', 'H\u00e0 Nh\u00e2n full', 'Ha Nhan full', 'H\u00e0 Nh\u00e2n series', 'Ha Nhan series', 'H\u00e0 Nh\u00e2n t\u1eadp', 'Ha Nhan tap', 'H\u00e0 Nh\u00e2n vietsub', 'Ha Nhan vietsub']),
+      ...channelTargets(['@HaNhanCartoon', '@Hanhansubchannel']),
+    ],
+  },
+  {
+    slug: 'xuyen-khong',
+    reason: 'pull the Xuyen Khong batch separately from the Ha Nhan bucket',
+    targets: keywordTargets(['Xuy\u00ean Kh\u00f4ng', 'xuyen khong', 'H\u00e0 Nh\u00e2n xuy\u00ean kh\u00f4ng', 'Ha Nhan xuyen khong']),
+  },
+  {
+    slug: 'trong-sinh',
+    reason: 'pull the Trong Sinh batch separately from other story types',
+    targets: keywordTargets(['Tr\u1ecdng Sinh', 'trong sinh', 'H\u00e0 Nh\u00e2n tr\u1ecdng sinh', 'Ha Nhan trong sinh']),
+  },
+  {
+    slug: 'lieu-nhu-yen',
+    reason: 'keep Li\u1ec5u Nh\u01b0 Y\u00ean content in its own daily batch',
+    targets: keywordTargets(['Li\u1ec5u Nh\u01b0 Y\u00ean', 'lieu nhu yen', 'H\u00e0 Nh\u00e2n Li\u1ec5u Nh\u01b0 Y\u00ean', 'Ha Nhan Lieu Nhu Yen']),
+  },
+  {
+    slug: 'he-thong',
+    reason: 'seed AI Chinese animated / short-form story content with trusted anchors first',
+    targets: [
+      ...SHARED_SOURCE_TARGETS,
+      ...keywordTargets(['Hệ Thống', 'he thong', 'system', 'xuyen khong he thong', 'trong sinh he thong']),
+    ],
+  },
+  {
+    slug: 'khac',
+    reason: 'use broad fallback discovery only for uncategorized leftovers',
+    targets: [
+      ...SHARED_SOURCE_TARGETS,
+      ...keywordTargets(['phim hoat hinh', 'anime 2d', 'vietsub', 'series', 'full', 'review phim']),
+    ],
+  },
 ];
 
 function normalizeSeriesKey(title = '') {
@@ -137,31 +160,6 @@ function normalizeSeriesKey(title = '') {
     .replace(/[^a-z0-9\s]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
-}
-
-function classifyTag(title = '') {
-  for (const rule of TAG_RULES) {
-    if (title.includes(rule.keyword)) {
-      return rule.tag;
-    }
-  }
-  return 'Kh\u00e1c';
-}
-
-function collectThemeSignals(title = '') {
-  const normalizedTitle = title.toLowerCase();
-  const collectMatches = keywords => keywords.filter(keyword => normalizedTitle.includes(keyword));
-
-  return {
-    primaryAnchors: collectMatches(PRIMARY_HA_NHAN_ANCHORS),
-    characterSignals: collectMatches(STRONG_CHARACTER_SIGNALS),
-    supportingSignals: collectMatches(SUPPORTING_THEME_SIGNALS),
-    fallbackSignals: collectMatches(FALLBACK_THEME_SIGNALS),
-  };
-}
-
-function describeSignalList(signals) {
-  return signals.length > 0 ? signals.join(', ') : 'none';
 }
 
 function isBadVideoTitle(title = '') {
@@ -195,33 +193,6 @@ function explainVideoDecision(video, targetType, trustedAuthorWords) {
     return { keep: false, reason: 'blocked by low-quality title keyword' };
   }
 
-  const themeSignals = collectThemeSignals(title);
-  const hasPrimaryAnchor = themeSignals.primaryAnchors.length > 0;
-  const hasCharacterSignal = themeSignals.characterSignals.length > 0;
-  const hasSupportingSignal = themeSignals.supportingSignals.length > 0;
-  const hasFallbackSignal = themeSignals.fallbackSignals.length > 0;
-
-  if (!hasPrimaryAnchor && !hasCharacterSignal) {
-    if (hasSupportingSignal) {
-      return {
-        keep: false,
-        reason: `missing primary Ha Nhan anchor or strong character signal (supporting signals only: ${describeSignalList(themeSignals.supportingSignals)})`,
-      };
-    }
-
-    if (hasFallbackSignal) {
-      return {
-        keep: false,
-        reason: `broad fallback terms are not enough on their own (${describeSignalList(themeSignals.fallbackSignals)})`,
-      };
-    }
-
-    return {
-      keep: false,
-      reason: 'missing primary Ha Nhan anchor or strong character signal',
-    };
-  }
-
   const authorName = (video.author?.name || '').toLowerCase();
   if (targetType === 'keyword' && authorName) {
     const trusted = trustedAuthorWords.some(word => authorName.includes(word));
@@ -233,7 +204,7 @@ function explainVideoDecision(video, targetType, trustedAuthorWords) {
   return { keep: true, reason: 'accepted' };
 }
 
-function normalizeVideoData(video) {
+function normalizeVideoData(video, category) {
   const title = (video.title || '').toLowerCase();
   const episodeMatch = title.match(EPISODE_REGEX);
   const episodeNumber = episodeMatch ? Number(episodeMatch[2]) : null;
@@ -252,7 +223,8 @@ function normalizeVideoData(video) {
       ? (video.views > 1000000 ? `${(video.views / 1000000).toFixed(1)}M views` : `${Math.floor(video.views / 1000)}K views`)
       : '?? views',
     thumbnail: video.thumbnail,
-    tags: classifyTag(title),
+    tags: category?.tag || 'Kh\u00e1c',
+    categorySlug: category?.slug || 'khac',
     rating: 'N/A',
   };
 }
@@ -295,97 +267,72 @@ async function searchWithRetry(query, context = {}) {
 
 export async function runCrawl({ dryRun = false } = {}) {
   const runStartedAt = timestamp();
-  logCrawl('Bat dau crawl du lieu tu Youtube (Che do Nho Giot)...', { runStartedAt, dryRun });
+  const runDay = runStartedAt.slice(0, 10);
+  const categoryPlans = CATEGORY_CRAWL_PLANS.map(plan => {
+    const category = getCategoryDefinitionBySlug(plan.slug);
+    return {
+      ...plan,
+      tag: category?.tag || plan.slug,
+      batchLimit: CATEGORY_BATCH_LIMIT,
+      category,
+    };
+  });
+
+  logCrawl('Bat dau crawl du lieu tu Youtube (Che do phan loai theo danh muc)...', {
+    runStartedAt,
+    runDay,
+    dryRun,
+    batchLimitPerCategory: CATEGORY_BATCH_LIMIT,
+    categories: categoryPlans.map(plan => ({ slug: plan.slug, tag: plan.tag })),
+  });
 
   const oldData = await readMoviesFromJsonFile();
   logCrawl('Phat hien list video cu.', { existingVideos: oldData.length, source: 'json' });
 
-  const exactHaNhanChannelTargets = ['@HaNhanCartoon', '@Hanhansubchannel'];
-  const exactHaNhanKeywordTargets = ['H\u00e0 Nh\u00e2n', 'Ha Nhan', 'H\u00e0 Nh\u00e2n phim', 'Ha Nhan phim'];
-  const haNhanThemeComboTargets = ['H\u00e0 Nh\u00e2n Li\u1ec5u Nh\u01b0 Y\u00ean', 'Ha Nhan Lieu Nhu Yen', 'H\u00e0 Nh\u00e2n tu ti\u00ean', 'Ha Nhan tu tien', 'H\u00e0 Nh\u00e2n xuy\u00ean kh\u00f4ng', 'Ha Nhan xuyen khong', 'H\u00e0 Nh\u00e2n tr\u1ecdng sinh', 'Ha Nhan trong sinh'];
-  const haNhanFormatHelperTargets = ['H\u00e0 Nh\u00e2n full', 'Ha Nhan full', 'H\u00e0 Nh\u00e2n series', 'Ha Nhan series', 'H\u00e0 Nh\u00e2n t\u1eadp', 'Ha Nhan tap', 'H\u00e0 Nh\u00e2n vietsub', 'Ha Nhan vietsub'];
-  const broadChannelTargets = ['@keodeovietsub', '@Banhbaoreview2026', '@CibiiSub-01', '@HoatHinhTrungQuoc-3D', '@ReviewPhim3DAI', '@HoatHinhReview'];
-  const broadFallbackKeywordTargets = ['phim', 'tu ti\u00ean', 'xuy\u00ean kh\u00f4ng', 'tr\u1ecdng sinh'];
+  const existingIds = new Set(oldData.map(video => video.id));
+  const runNewIds = new Set();
+  const newVideos = [];
+  const categorySummaries = [];
 
-  const crawlTiers = [
-    {
-      stage: 'primary',
-      label: 'primary exact Ha Nhan anchors',
-      reason: 'exact Ha Nhan anchors should seed the run first',
-      targets: [
-        ...exactHaNhanKeywordTargets.map(query => ({ query, type: 'keyword' })),
-        ...exactHaNhanChannelTargets.map(query => ({ query, type: 'channel' })),
-      ],
-    },
-    {
-      stage: 'secondary',
-      label: 'secondary Ha Nhan theme combos',
-      reason: 'use approved character/theme combinations when exact anchors are still thin',
-      targets: haNhanThemeComboTargets.map(query => ({ query, type: 'keyword' })),
-    },
-    {
-      stage: 'secondary',
-      label: 'secondary Ha Nhan format helpers',
-      reason: 'keep discovery in the Ha Nhan corpus with format/helper queries before broad fallback',
-      targets: haNhanFormatHelperTargets.map(query => ({ query, type: 'keyword' })),
-    },
-    {
-      stage: 'fallback',
-      label: 'fallback curated channels',
-      reason: 'expand to related curated channels only after the Ha Nhan-specific tiers stay thin',
-      targets: broadChannelTargets.map(query => ({ query, type: 'channel' })),
-    },
-    {
-      stage: 'fallback',
-      label: 'fallback broad keywords',
-      reason: 'use broad terms as the last safe tier only if the run still needs more items',
-      targets: broadFallbackKeywordTargets.map(query => ({ query, type: 'keyword' })),
-    },
-  ];
+  const crawlCategoryTargets = async (plan) => {
+    const { tag, slug, targets, reason } = plan;
+    const keptVideos = [];
+    let targetErrors = 0;
+    let rejectedCount = 0;
+    let duplicateCount = 0;
 
-  const trustedAuthorWords = ['ha nhan', 'h\u00e0 nh\u00e2n', 'review phim', 'hoat hinh', 'ho\u1ea1t h\u00ecnh', 'vietsub', 'anime', 'phim', 'cartoon'];
-
-  let fetchedResults = [];
-
-  const crawlTargets = async (tier, maxResults) => {
-    const { targets, stage, label } = tier;
-    const phaseResults = [];
-    let phaseErrorCount = 0;
-
-    logCrawl(`Bat dau tier ${label}.`, {
-      stage,
-      tier: label,
-      reason: tier.reason,
-      maxResults,
+    logCrawl('crawl_category_batch_start', {
+      runDay,
+      category: tag,
+      slug,
+      batchLimit: CATEGORY_BATCH_LIMIT,
+      reason,
       targets: targets.map(target => target.query),
     });
 
     for (const target of targets) {
-      if (phaseResults.length >= maxResults) {
-        logCrawl(`Dat gioi han tier ${label}, dung mo rong tier nay.`, {
-          stage,
-          tier: label,
-          maxResults,
-          kept: phaseResults.length,
-        });
+      if (keptVideos.length >= CATEGORY_BATCH_LIMIT) {
+        logCrawl('crawl_category_batch_limit_reached', { runDay, category: tag, slug, kept: keptVideos.length, batchLimit: CATEGORY_BATCH_LIMIT });
         break;
       }
 
-      logCrawl(`Crawl [${label}]`, {
-        stage,
-        tier: label,
+      logCrawl('crawl_category_target_start', {
+        runDay,
+        category: tag,
+        slug,
         query: target.query,
         type: target.type,
       });
 
       try {
-        const searchResult = await searchWithRetry(target.query, { stage, tier: label, query: target.query, type: target.type });
+        const searchResult = await searchWithRetry(target.query, { category: tag, slug, query: target.query, type: target.type, runDay });
 
         if (!searchResult.ok) {
-          phaseErrorCount += 1;
-          logCrawl('crawl_target_skipped', {
-            stage,
-            tier: label,
+          targetErrors += 1;
+          logCrawl('crawl_category_target_skipped', {
+            runDay,
+            category: tag,
+            slug,
             query: target.query,
             type: target.type,
             reason: 'target failed after retries',
@@ -394,137 +341,136 @@ export async function runCrawl({ dryRun = false } = {}) {
           continue;
         }
 
-        const result = searchResult.result;
-        const candidates = Array.isArray(result?.videos) ? result.videos : [];
+        const candidates = Array.isArray(searchResult.result?.videos) ? searchResult.result.videos : [];
 
         if (candidates.length === 0) {
-          logCrawl('Khong co video nao tra ve tu target nay.', { stage, tier: label, query: target.query });
+          logCrawl('crawl_category_target_empty', { runDay, category: tag, slug, query: target.query });
           continue;
         }
 
         let keptCount = 0;
-        let rejectCount = 0;
+        let targetRejectedCount = 0;
 
         for (const video of candidates) {
-          const decision = explainVideoDecision(video, target.type, trustedAuthorWords);
+          if (keptVideos.length >= CATEGORY_BATCH_LIMIT) {
+            break;
+          }
+
+          const qualityDecision = explainVideoDecision(video, target.type, CATEGORY_TRUSTED_AUTHOR_WORDS);
           const videoLabel = video?.title || video?.videoId || 'khong ro tieu de';
 
-          if (!decision.keep) {
-            rejectCount += 1;
+          if (!qualityDecision.keep) {
+            rejectedCount += 1;
+            targetRejectedCount += 1;
             logCrawl('  - reject', {
-              stage,
-              tier: label,
+              runDay,
+              category: tag,
+              slug,
               query: target.query,
               title: videoLabel,
               seconds: video?.seconds ?? null,
               author: video?.author?.name ?? null,
-              reason: decision.reason,
+              reason: qualityDecision.reason,
             });
             continue;
           }
 
+          const resolvedCategory = resolveMovieCategory(video);
+          if (resolvedCategory.slug !== slug) {
+            rejectedCount += 1;
+            targetRejectedCount += 1;
+            logCrawl('  - reject', {
+              runDay,
+              category: tag,
+              slug,
+              query: target.query,
+              title: videoLabel,
+              resolvedCategory: resolvedCategory.tag,
+              reason: `resolved to ${resolvedCategory.tag}`,
+            });
+            continue;
+          }
+
+          if (existingIds.has(video.videoId) || runNewIds.has(video.videoId)) {
+            duplicateCount += 1;
+            logCrawl('  - skip duplicate', {
+              runDay,
+              category: tag,
+              slug,
+              query: target.query,
+              title: videoLabel,
+              reason: existingIds.has(video.videoId) ? 'already in catalog' : 'already selected in this run',
+            });
+            continue;
+          }
+
+          const normalized = normalizeVideoData(video, resolvedCategory);
+          runNewIds.add(video.videoId);
+          keptVideos.push(normalized);
+          newVideos.push(normalized);
           keptCount += 1;
-          const normalized = normalizeVideoData(video);
-          phaseResults.push(normalized);
+
           logCrawl('  + keep', {
-            stage,
-            tier: label,
+            runDay,
+            category: tag,
+            slug,
             query: target.query,
             title: normalized.title,
             seconds: video?.seconds ?? null,
             author: video?.author?.name ?? null,
+            keptForCategory: keptVideos.length,
+            batchLimit: CATEGORY_BATCH_LIMIT,
           });
-
-          if (phaseResults.length >= maxResults) {
-            break;
-          }
         }
 
-        logCrawl('Tong ket target', {
-          stage,
-          tier: label,
+        logCrawl('crawl_category_target_summary', {
+          runDay,
+          category: tag,
+          slug,
           query: target.query,
           kept: keptCount,
-          rejected: rejectCount,
+          rejected: targetRejectedCount,
           candidates: candidates.length,
         });
       } catch (error) {
-        phaseErrorCount += 1;
-        logCrawl('crawl_target_skipped', {
-          stage,
-          tier: label,
+        targetErrors += 1;
+        logCrawl('crawl_category_target_error', {
+          runDay,
+          category: tag,
+          slug,
           query: target.query,
           type: target.type,
-          reason: 'unexpected target processing error',
           error: serializeError(error),
         });
-        continue;
       }
     }
 
-    logCrawl(`Ket thuc tier ${label}.`, { stage, tier: label, kept: phaseResults.length, errors: phaseErrorCount });
-    return phaseResults;
+    const summary = {
+      runDay,
+      category: tag,
+      slug,
+      batchLimit: CATEGORY_BATCH_LIMIT,
+      kept: keptVideos.length,
+      added: keptVideos.length,
+      duplicates: duplicateCount,
+      rejected: rejectedCount,
+      errors: targetErrors,
+    };
+
+    categorySummaries.push(summary);
+    logCrawl('crawl_category_batch_complete', summary);
+    return keptVideos;
   };
 
-  logCrawl('Uu tien nhom Ha Nhan truoc, tiep tuc mo rong cho den khi dat toi thieu 30 video giu lai hoac het tier an toan.');
-  logCrawl('Thu tu tier/query se chay.', {
-    minKeptVideos: MIN_KEPT_VIDEOS,
-    tiers: crawlTiers.map(tier => ({ stage: tier.stage, tier: tier.label, targets: tier.targets.map(target => target.query) })),
-  });
-
-  for (const tier of crawlTiers) {
-    const remainingNeeded = MIN_KEPT_VIDEOS - fetchedResults.length;
-
-    if (remainingNeeded <= 0) {
-      logCrawl('Da dat muc toi thieu giu lai, dung mo rong tier tiep theo.', { minKeptVideos: MIN_KEPT_VIDEOS, kept: fetchedResults.length });
-      break;
-    }
-
-    if (tier.stage !== 'primary') {
-      logCrawl('Mo rong crawl sang tier an toan tiep theo.', {
-        stage: tier.stage,
-        tier: tier.label,
-        reason: tier.reason,
-        stillNeeded: remainingNeeded,
-        minKeptVideos: MIN_KEPT_VIDEOS,
-      });
-    } else {
-      logCrawl('Chay tier khoi tao Ha Nhan.', {
-        stage: tier.stage,
-        tier: tier.label,
-        reason: tier.reason,
-        stillNeeded: remainingNeeded,
-        minKeptVideos: MIN_KEPT_VIDEOS,
-      });
-    }
-
-    const tierResults = await crawlTargets(tier, remainingNeeded);
-    fetchedResults = [...fetchedResults, ...tierResults];
-
-    logCrawl('Ket qua sau tier.', {
-      stage: tier.stage,
-      tier: tier.label,
-      keptFromTier: tierResults.length,
-      totalKept: fetchedResults.length,
-      stillNeeded: Math.max(MIN_KEPT_VIDEOS - fetchedResults.length, 0),
+  for (const plan of categoryPlans) {
+    const categoryVideos = await crawlCategoryTargets(plan);
+    logCrawl('crawl_category_batch_result', {
+      runDay,
+      category: plan.tag,
+      slug: plan.slug,
+      added: categoryVideos.length,
+      totalNewSoFar: newVideos.length,
     });
-  }
-
-  if (fetchedResults.length >= MIN_KEPT_VIDEOS) {
-    logCrawl('Da dat muc toi thieu giu lai cho mot run.', { minKeptVideos: MIN_KEPT_VIDEOS, kept: fetchedResults.length });
-  } else {
-    logCrawl('Da het tat ca tier an toan nhung chua dat muc toi thieu giu lai.', { minKeptVideos: MIN_KEPT_VIDEOS, kept: fetchedResults.length });
-  }
-
-  const oldIds = new Set(oldData.map(video => video.id));
-  const uniqueNewIds = new Set();
-  const newVideos = [];
-
-  for (const video of fetchedResults) {
-    if (!oldIds.has(video.id) && !uniqueNewIds.has(video.id)) {
-      uniqueNewIds.add(video.id);
-      newVideos.push(video);
-    }
   }
 
   const keptOldVideos = oldData.filter(video => {
@@ -534,31 +480,31 @@ export async function runCrawl({ dryRun = false } = {}) {
       seconds: video.type === 'full' ? MIN_VIDEO_SECONDS : MIN_VIDEO_SECONDS + 1,
       author: { name: 'trusted old data' },
     };
-    return explainVideoDecision(fakeVideoLike, 'channel', trustedAuthorWords).keep;
-  });
+    return explainVideoDecision(fakeVideoLike, 'channel', CATEGORY_TRUSTED_AUTHOR_WORDS).keep;
+  }).map(video => normalizeMovieCategory(video));
 
   logCrawl('Tong ket video moi.', {
     newVideos: newVideos.length,
-    totalFetched: fetchedResults.length,
+    totalFetched: newVideos.length,
     existingKept: keptOldVideos.length,
+    categorySummaries,
   });
 
   const finalData = [...newVideos, ...keptOldVideos]
     .slice(0, MAX_STORED_VIDEOS)
-    .map(video => ({
-      ...video,
-      tags: video.tags || classifyTag((video.title || '').toLowerCase()),
-    }));
+    .map(video => normalizeMovieCategory(video));
 
   if (dryRun) {
     const finishedAt = timestamp();
-    logCrawl('Dry run crawl, khong ghi vao Postgres.', { runStartedAt, finishedAt, totalVideos: finalData.length });
+    logCrawl('Dry run crawl, khong ghi vao Postgres.', { runStartedAt, runDay, finishedAt, totalVideos: finalData.length, categorySummaries });
     return {
       runStartedAt,
+      runDay,
       finishedAt,
       totalVideos: finalData.length,
       newVideos: newVideos.length,
-      fetchedCount: fetchedResults.length,
+      fetchedCount: newVideos.length,
+      categorySummaries,
       dryRun: true,
       persistedTo: 'dry-run',
     };
@@ -570,20 +516,22 @@ export async function runCrawl({ dryRun = false } = {}) {
       finishedAt: timestamp(),
       status: 'completed',
       keptCount: finalData.length,
-      fetchedCount: fetchedResults.length,
+      fetchedCount: newVideos.length,
       source: 'scripts/crawl.mjs',
-      metadata: { mode: 'crawl', dryRun: false },
+      metadata: { mode: 'category-batches', dryRun: false, runDay, categorySummaries },
     });
 
     const finishedAt = timestamp();
-    logCrawl('Xong crawl.', { runStartedAt, finishedAt, totalVideos: finalData.length, persistedTo: 'postgres' });
+    logCrawl('Xong crawl.', { runStartedAt, runDay, finishedAt, totalVideos: finalData.length, persistedTo: 'postgres', categorySummaries });
 
     return {
       runStartedAt,
+      runDay,
       finishedAt,
       totalVideos: finalData.length,
       newVideos: newVideos.length,
-      fetchedCount: fetchedResults.length,
+      fetchedCount: newVideos.length,
+      categorySummaries,
       dryRun: false,
       persistedTo: 'postgres',
       crawlRunId: persisted.crawlRunId,
@@ -596,14 +544,16 @@ export async function runCrawl({ dryRun = false } = {}) {
     })}`);
 
     const finishedAt = timestamp();
-    logCrawl('Xong crawl.', { runStartedAt, finishedAt, totalVideos: finalData.length, persistedTo: 'json-fallback' });
+    logCrawl('Xong crawl.', { runStartedAt, runDay, finishedAt, totalVideos: finalData.length, persistedTo: 'json-fallback', categorySummaries });
 
     return {
       runStartedAt,
+      runDay,
       finishedAt,
       totalVideos: finalData.length,
       newVideos: newVideos.length,
-      fetchedCount: fetchedResults.length,
+      fetchedCount: newVideos.length,
+      categorySummaries,
       dryRun: false,
       persistedTo: 'json-fallback',
       persistenceError: serializeError(error),

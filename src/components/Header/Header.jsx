@@ -63,10 +63,10 @@ export default function Header() {
                  <button className={styles.closeMenu} onClick={() => setIsMobileOpen(false)}>×</button>
                )}
               <Link href="/" className={styles.active} onClick={() => setIsMobileOpen(false)}>Trang Chủ</Link>
-              {categoryMenu.slice(0, 5).map(category => (
-                <Link
-                  key={category.slug}
-                  href={`/category/${category.slug}`}
+               {categoryMenu.map(category => (
+                  <Link
+                    key={category.slug}
+                    href={`/category/${category.slug}`}
                   onClick={() => setIsMobileOpen(false)}
                 >
                   🏷️ {category.tag}

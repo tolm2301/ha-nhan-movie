@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 export default async function Home() {
   const catalog = await getMovieCatalog();
   const featuredMovie = catalog.featuredMovie;
-  const homeCategories = catalog.categoryMenu.slice(0, 4);
+  const homeCategories = catalog.categoryBuckets.filter(category => category.movies.length > 0);
 
   return (
     <>
@@ -16,19 +16,17 @@ export default async function Home() {
 
       <RecentWatchedSection />
       
-      {catalog.trendingMovies.length > 0 && (
-        <MovieCarousel title="🔥 Mới cập nhật" movies={catalog.trendingMovies} />
+      {catalog.homeTrendingMovies.length > 0 && (
+        <MovieCarousel title="🔥 Mới cập nhật" movies={catalog.homeTrendingMovies} />
       )}
 
       {homeCategories.map(category => {
-        const categoryData = catalog.getCategoryBySlug(category.slug);
-        if (!categoryData || categoryData.movies.length === 0) return null;
-
         return (
           <MovieCarousel
             key={category.slug}
             title={`🏷️ ${category.tag}`}
-            movies={categoryData.movies.slice(0, 20)}
+            movies={category.movies.slice(0, 20)}
+            viewAllHref={`/category/${category.slug}`}
           />
         );
       })}

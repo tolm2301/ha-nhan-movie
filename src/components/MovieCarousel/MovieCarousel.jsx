@@ -1,9 +1,10 @@
 "use client";
 import React, { useRef } from 'react';
+import Link from 'next/link';
 import styles from './MovieCarousel.module.css';
 import MovieCard from '../MovieCard/MovieCard';
 
-export default function MovieCarousel({ title, movies }) {
+export default function MovieCarousel({ title, movies, viewAllHref }) {
   const scrollRef = useRef(null);
 
   const scrollLeft = () => {
@@ -25,7 +26,11 @@ export default function MovieCarousel({ title, movies }) {
         <div className={styles.controls}>
           <button className={styles.navBtn} onClick={scrollLeft}>❮</button>
           <button className={styles.navBtn} onClick={scrollRight}>❯</button>
-          <button className={styles.viewAll}>Xem tất cả ➔</button>
+          {viewAllHref ? (
+            <Link className={styles.viewAll} href={viewAllHref}>
+              Tất cả ➔
+            </Link>
+          ) : null}
         </div>
       </div>
       
