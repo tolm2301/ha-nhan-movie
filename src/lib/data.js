@@ -1,4 +1,5 @@
-import moviesData from './movies.json';
+import { cache } from 'react';
+import { loadPersistedMovies } from './movieStore.server.js';
 
 const HIDDEN_CATEGORY_TAGS = new Set(['Tấu Hài']);
 const HA_NHAN_CATEGORY = {
@@ -104,65 +105,112 @@ function cleanMovieTitle(title = '') {
   return cleaned || original;
 }
 
-export const allMovies = moviesData.map(movie => ({
-  ...movie,
-  displayTitle: cleanMovieTitle(movie.title || ''),
-}));
-
-export const trendingMovies = allMovies.slice(0, 15);
-
-export const haNhanMovies = allMovies.filter(movie => {
-  const title = normalizeText(movie.title || '');
-  return title.includes('ha nhan') || title.includes('hanhan');
-});
-
-const tagMap = new Map();
-
-for (const movie of allMovies) {
-  const rawTag = (movie.tags || 'Khác').trim();
-  const tag = rawTag || 'Khác';
-  const current = tagMap.get(tag) || [];
-  current.push(movie);
-  tagMap.set(tag, current);
-}
-
-export const tagBuckets = [...tagMap.entries()]
-  .map(([tag, movies]) => ({
-    tag,
-    slug: slugifyTag(tag),
-    movies,
-    count: movies.length,
-  }))
-  .sort((a, b) => b.count - a.count);
-
-export const categoryMenu = tagBuckets
-  .filter(category => !HIDDEN_CATEGORY_TAGS.has(category.tag))
-  .filter(category => category.count >= 3)
-  .slice(0, 8)
-  .map(category => ({
-    slug: category.slug,
-    tag: category.tag,
-    count: category.count,
+export function buildMovieCatalog(movies = []) {
+  const allMovies = movies.map(movie => ({
+    ...movie,
+    displayTitle: cleanMovieTitle(movie.title || ''),
   }));
 
-if (haNhanMovies.length > 0) {
-  const hasExistingHaNhan = categoryMenu.some(category => category.slug === HA_NHAN_CATEGORY.slug);
-  if (!hasExistingHaNhan) {
-    categoryMenu.unshift({
-      ...HA_NHAN_CATEGORY,
-      count: haNhanMovies.length,
-    });
+  const trendingMovies = allMovies.slice(0, 15);
+
+  const haNhanMovies = allMovies.filter(movie => {
+    const title = normalizeText(movie.title || '');
+    return title.includes('ha nhan') || title.includes('hanhan');
+  });
+
+  const tagMap = new Map();
+
+  for (const movie of allMovies) {
+    const rawTag = (movie.tags || 'Khác').trim();
+    const tag = rawTag || 'Khác';
+    const current = tagMap.get(tag) || [];
+    current.push(movie);
+    tagMap.set(tag, current);
   }
+
+  const tagBuckets = [...tagMap.entries()]
+    .map(([tag, bucketMovies]) => ({
+      tag,
+      slug: slugifyTag(tag),
+      movies: bucketMovies,
+      count: bucketMovies.length,
+    }))
+    .sort((a, b) => b.count - a.count);
+
+  const categoryMenu = tagBuckets
+    .filter(category => !HIDDEN_CATEGORY_TAGS.has(category.tag))
+    .filter(category => category.count >= 3)
+    .slice(0, 8)
+    .map(category => ({
+      slug: category.slug,
+      tag: category.tag,
+      count: category.count,
+    }));
+
+  if (haNhanMovies.length > 0) {
+    const hasExistingHaNhan = categoryMenu.some(category => category.slug === HA_NHAN_CATEGORY.slug);
+    if (!hasExistingHaNhan) {
+      categoryMenu.unshift({
+        ...HA_NHAN_CATEGORY,
+        count: haNhanMovies.length,
+      });
+    }
+  }
+
+  function getCategoryBySlug(slug = '') {
+    if (slug === HA_NHAN_CATEGORY.slug) {
+      return {
+        ...HA_NHAN_CATEGORY,
+        movies: haNhanMovies,
+        count: haNhanMovies.length,
+      };
+    }
+
+    return tagBuckets.find(category => category.slug === slug && !HIDDEN_CATEGORY_TAGS.has(category.tag)) || null;
+  }
+
+  function getMovieById(movieId = '') {
+    return allMovies.find(movie => movie.id === movieId) || null;
+  }
+
+  return {
+    allMovies,
+    trendingMovies,
+    haNhanMovies,
+    tagBuckets,
+    categoryMenu,
+    getCategoryBySlug,
+    getMovieById,
+    featuredMovie: haNhanMovies[0] || allMovies[0] || null,
+  };
 }
 
-export function getCategoryBySlug(slug = '') {
-  if (slug === HA_NHAN_CATEGORY.slug) {
-    return {
-      ...HA_NHAN_CATEGORY,
-      movies: haNhanMovies,
-      count: haNhanMovies.length,
-    };
-  }
+const getLoadedCatalog = cache(async () => buildMovieCatalog(await loadPersistedMovies({ allowJsonFallback: true })));
 
-  return tagBuckets.find(category => category.slug === slug && !HIDDEN_CATEGORY_TAGS.has(category.tag)) || null;
+export async function getMovieCatalog() {
+  return getLoadedCatalog();
+}
+
+export async function getAllMovies() {
+  return (await getMovieCatalog()).allMovies;
+}
+
+export async function getTrendingMovies() {
+  return (await getMovieCatalog()).trendingMovies;
+}
+
+export async function getHaNhanMovies() {
+  return (await getMovieCatalog()).haNhanMovies;
+}
+
+export async function getCategoryMenu() {
+  return (await getMovieCatalog()).categoryMenu;
+}
+
+export async function getCategoryBySlug(slug = '') {
+  return (await getMovieCatalog()).getCategoryBySlug(slug);
+}
+
+export async function getMovieById(movieId = '') {
+  return (await getMovieCatalog()).getMovieById(movieId);
 }

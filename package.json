@@ -1,9 +1,12 @@
 {
   "name": "hanhan-movie",
+  "type": "module",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "crawl": "node scripts/crawl.mjs",
+    "crawl:dry": "node scripts/crawl.mjs --dry-run",
+    "migrate:movies": "node scripts/migrate-movies-to-postgres.mjs",
     "dev": "next dev",
     "dev:fresh": "npm run crawl && next dev",
     "build": "next build",
@@ -13,6 +16,7 @@
   },
   "dependencies": {
     "next": "16.2.4",
+    "pg": "^8.20.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "yt-search": "^2.13.1"

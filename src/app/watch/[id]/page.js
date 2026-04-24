@@ -1,7 +1,6 @@
 "use client";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { allMovies } from '@/lib/data';
 import { getWatchProgress, pushWatchedMovie, setWatchProgress } from '@/lib/watchHistory';
 import styles from './Watch.module.css';
 
@@ -128,6 +127,8 @@ function isInteractiveKeyboardTarget(target) {
 export default function WatchPage() {
   const router = useRouter();
   const routeParams = useParams();
+  const [movies, setMovies] = useState([]);
+  const [isCatalogLoaded, setIsCatalogLoaded] = useState(false);
   const playerSectionRef = useRef(null);
   const playerMountRef = useRef(null);
   const viewMenuRef = useRef(null);
@@ -162,15 +163,44 @@ export default function WatchPage() {
   const [isControlsVisible, setIsControlsVisible] = useState(true);
 
   const movieId = typeof routeParams?.id === 'string' ? routeParams.id : '';
-  const movie = allMovies.find(m => m.id === movieId) || allMovies[0] || null;
+  const movie = movies.find(m => m.id === movieId) || movies[0] || null;
   const movieDisplayTitle = movie?.displayTitle || movie?.title;
   const shouldShowEpisodes = isSeriesMovie(movie);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadMovies() {
+      try {
+        const response = await fetch('/api/movies', { cache: 'no-store' });
+        const payload = await response.json();
+
+        if (!active) return;
+
+        if (response.ok && Array.isArray(payload.movies)) {
+          setMovies(payload.movies);
+        } else {
+          setMovies([]);
+        }
+      } catch {
+        if (active) setMovies([]);
+      } finally {
+        if (active) setIsCatalogLoaded(true);
+      }
+    }
+
+    loadMovies();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const episodes = useMemo(() => {
     if (!movie || !shouldShowEpisodes) return [];
 
     const movieSeriesKey = movie.seriesKey || normalizeSeriesKey(movie.title);
-    const related = allMovies
+    const related = movies
       .filter(item => {
         if (!isSeriesMovie(item)) return false;
         const itemSeriesKey = item.seriesKey || normalizeSeriesKey(item.title);
@@ -190,7 +220,7 @@ export default function WatchPage() {
     }
 
     return related.slice(0, 40);
-  }, [movie, shouldShowEpisodes]);
+  }, [movie, movies, shouldShowEpisodes]);
 
   const clearHideControlsTimer = useCallback(() => {
     if (hideControlsTimerRef.current) {
@@ -890,6 +920,16 @@ export default function WatchPage() {
 
     handleTogglePlay();
   };
+
+  if (!isCatalogLoaded && !movie) {
+    return (
+      <div className={styles.watchLayout}>
+        <div className={styles.container}>
+          <p>Đang tải dữ liệu phim...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!movie) {
     return (

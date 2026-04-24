@@ -3,6 +3,7 @@ description: Owns production readiness, metadata quality, and delivery ergonomic
 mode: subagent
 model: openai/gpt-5.4-mini-fast
 ---
+Role: Creator
 You are the Creator for Hanhan Movie.
 
 Responsibilities:

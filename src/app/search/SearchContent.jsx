@@ -1,6 +1,6 @@
 "use client";
+import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { allMovies } from '@/lib/data';
 import MovieCard from '@/components/MovieCard/MovieCard';
 import styles from './Search.module.css';
 
@@ -8,15 +8,54 @@ export default function SearchContent() {
   const searchParamsObj = useSearchParams();
   const query = searchParamsObj.get('q') || '';
   const router = useRouter();
+  const [movies, setMovies] = useState([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadMovies() {
+      try {
+        const response = await fetch('/api/movies', { cache: 'no-store' });
+        const payload = await response.json();
+
+        if (!active) return;
+
+        if (response.ok && Array.isArray(payload.movies)) {
+          setMovies(payload.movies);
+        } else {
+          setMovies([]);
+        }
+      } catch {
+        if (active) setMovies([]);
+      } finally {
+        if (active) setIsLoaded(true);
+      }
+    }
+
+    loadMovies();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const results = query
-    ? allMovies.filter(m => {
+    ? movies.filter(m => {
       const normalizedQuery = query.toLowerCase();
       const rawTitle = (m.title || '').toLowerCase();
       const displayTitle = (m.displayTitle || '').toLowerCase();
       return rawTitle.includes(normalizedQuery) || displayTitle.includes(normalizedQuery);
     })
-    : allMovies;
+    : movies;
+
+  if (!isLoaded) {
+    return (
+      <main className={styles.page}>
+        <p className={styles.count}>Đang tải dữ liệu phim...</p>
+      </main>
+    );
+  }
 
   return (
     <main className={styles.page}>

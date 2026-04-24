@@ -2,19 +2,42 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { categoryMenu } from '@/lib/data';
 import styles from './Header.module.css';
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [categoryMenu, setCategoryMenu] = useState([]);
   const router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadCategories() {
+      try {
+        const response = await fetch('/api/movies', { cache: 'no-store' });
+        const payload = await response.json();
+
+        if (active && response.ok && Array.isArray(payload.categoryMenu)) {
+          setCategoryMenu(payload.categoryMenu);
+        }
+      } catch {
+        if (active) setCategoryMenu([]);
+      }
+    }
+
+    loadCategories();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   const handleSearch = (e) => {

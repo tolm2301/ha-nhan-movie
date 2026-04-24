@@ -12,3 +12,4 @@ Use this queue for new requests, escalation, and final review tasks.
 - 2026-04-22 | From: user | Task: Fix watch fullscreen and popup UX | Context: Fullscreen currently only fills page area; needs true window fullscreen and popup interaction should be redesigned to be more logical.
 - 2026-04-22 | From: creator | Task: Final review for watch fullscreen + popup UX update | Context: Validate designer/developer evidence and close only after lint/build verification with browser-support fallback noted.
 - 2026-04-22 | From: user | Task: Standardize team working rules | Context: Techlead must orchestrate only; define clear SOP, handoff contract, quality gates, and closeout criteria for all roles.
+- 2026-04-24 | From: creator | Task: Review curated Ha Nhân discovery taxonomy | Context: Validate grouped query terms for crawl discovery, keep them controlled, and avoid over-broad search expansion.

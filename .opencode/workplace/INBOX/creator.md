@@ -4,6 +4,7 @@ Use this queue for production-readiness and workflow improvement tasks.
 
 ## Entries
 - (template) YYYY-MM-DD | From: techlead | Scope: ... | Deliverable: ...
+- 2026-04-24 | From: techlead | Scope: Expand the Ha Nhân search/tag taxonomy for crawl discovery. Deliverable: add a curated set of Ha Nhân-related search terms (phim, Liễu Như Yên, tu tiên, xuyên không, trọng sinh, and closely related variants) so crawl discovery can find more related content without becoming too broad.
 - 2026-04-21 | From: techlead | Scope: Check production-readiness around crawled data flow. Deliverable: confirm no missing docs/metadata/workflow gaps and call out any release-readiness risks.
 - 2026-04-21 | From: developer | Scope: Review build/lint results and assess release-readiness impact. Deliverable: note whether the crawl flow is safe to ship and document remaining risks.
 - 2026-04-21 | From: developer | Scope: Review the follow-up fixes for crawl quality and playback UX. Deliverable: confirm whether build/lint/runtime evidence is sufficient to ship and list any remaining docs/metadata gaps.

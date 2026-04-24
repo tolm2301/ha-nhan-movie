@@ -8,6 +8,17 @@
 - [ ] Restore local lint/build environment for watch verification | Owner: techlead | Priority: high
 - [ ] Implement watch-player double-click seek interaction | Owner: creator | Priority: medium
 - [ ] Add keyboard arrow controls to watch player | Owner: creator | Priority: medium
+- [ ] Expand Ha Nhân search/tag taxonomy for crawl discovery | Owner: creator | Priority: medium
+- [ ] Tighten crawler theme filtering and rejection reasons | Owner: developer | Priority: high
+- [ ] Enforce 30-video floor with tiered crawl fallback | Owner: developer | Priority: high
+
+## Review
+- [ ] Move daily crawl trigger from GitHub Actions to Vercel Cron | Owner: developer | Priority: high
+- [ ] Migrate crawl data to Postgres and switch runtime reads to DB | Owner: developer | Priority: high
+- [ ] Harden crawl retries for transient network/DNS failures | Owner: developer | Priority: high
+- [ ] Rebuild crawler logging + Ha Nhân-first small-batch crawl behavior | Owner: developer | Priority: high
+- [ ] Implement detailed crawl rejection/failure logging | Owner: developer | Priority: high
+- [ ] Apply Ha Nhân taxonomy to crawler discovery order and weighting | Owner: developer | Priority: high
 
 ## Done
 - [ ] (template) Task title | Owner: techlead | Finished: YYYY-MM-DD
