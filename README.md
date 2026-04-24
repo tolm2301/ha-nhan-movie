@@ -38,6 +38,8 @@ Vercel Cron: `/api/cron/crawl`
 
 - Runs every day at `02:00 UTC`
 - Invokes the server-side crawl route and writes refreshed data to Postgres
+- Crawls are split by category (`Hà Nhân`, `Xuyên Không`, `Trọng Sinh`, `Liễu Như Yên`, `Hệ Thống`, `Khác`) and keep roughly 5 new movies per category per day; the `Hà Nhân` bucket is now strict and only accepts explicit Hà Nhân-branded/source content, while other character-series titles fall back into the thematic buckets or `Khác`
+- Logs include the category batch name, run day, and how many items were added/skipped
 - Optional manual access can use `CRON_SECRET` with `x-cron-secret` or `?secret=`
 
 GitHub Actions workflow: `.github/workflows/daily-crawl.yml`

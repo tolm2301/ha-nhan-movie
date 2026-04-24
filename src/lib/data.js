@@ -1,21 +1,20 @@
 import { cache } from 'react';
 import { describeDatabaseTarget, loadPersistedMovies, readMoviesFromJsonFile } from './movieStore.server.js';
+import { buildCategoryBuckets, normalizeMovieCategory } from './movieCategories.js';
 
-const HIDDEN_CATEGORY_TAGS = new Set(['Tấu Hài']);
-const HA_NHAN_CATEGORY = {
-  slug: 'ha-nhan',
-  tag: 'Hà Nhân',
-};
+const BROKEN_THUMBNAIL_URLS = new Set([
+  'https://i.ytimg.com/vi/ESTeyBsZt68/hq720_custom_2.jpg',
+  'https://i.ytimg.com/vi/jygfwGrRvtw/hq720.jpg',
+  'https://i.ytimg.com/vi/cT4f_09O5NE/hq720.jpg',
+  'https://i.ytimg.com/vi/fF8qkLjnRuA/hq720_custom_1.jpg',
+]);
 
-function slugifyTag(tag) {
-  return (tag || 'khac')
-    .toString()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
+const BROKEN_THUMBNAIL_IDS = new Set([
+  'ESTeyBsZt68',
+  'jygfwGrRvtw',
+  'cT4f_09O5NE',
+  'fF8qkLjnRuA',
+]);
 
 function normalizeText(value = '') {
   return value
@@ -105,68 +104,65 @@ function cleanMovieTitle(title = '') {
   return cleaned || original;
 }
 
+function hasRenderableThumbnail(movie = {}) {
+  const thumbnail = String(movie.thumbnail || '').trim();
+  if (!thumbnail) return false;
+
+  const movieId = String(movie.id || '').trim();
+  if (BROKEN_THUMBNAIL_IDS.has(movieId)) return false;
+  if (BROKEN_THUMBNAIL_URLS.has(thumbnail)) return false;
+
+  return true;
+}
+
+function moveMovieToFront(movies = [], featuredMovie = null) {
+  if (!featuredMovie?.id || !Array.isArray(movies) || movies.length === 0) {
+    return featuredMovie?.id ? [featuredMovie] : movies;
+  }
+
+  const featuredIndex = movies.findIndex(movie => movie.id === featuredMovie.id);
+  if (featuredIndex === -1) {
+    return [featuredMovie, ...movies.slice(0, movies.length - 1)];
+  }
+
+  if (featuredIndex <= 0) {
+    return movies;
+  }
+
+  const reordered = movies.slice();
+  const [selectedMovie] = reordered.splice(featuredIndex, 1);
+  reordered.unshift(selectedMovie);
+  return reordered;
+}
+
+function getHomeFeaturedMovie(categoryBuckets, allMovies) {
+  const haNhanBucket = categoryBuckets.find(category => category.slug === 'ha-nhan');
+  const directHaNhanMovie = haNhanBucket?.movies?.[0] || null;
+
+  return directHaNhanMovie || allMovies[0] || null;
+}
+
 export function buildMovieCatalog(movies = []) {
-  const allMovies = movies.map(movie => ({
+  const allMovies = movies.filter(hasRenderableThumbnail).map(movie => normalizeMovieCategory({
     ...movie,
     displayTitle: cleanMovieTitle(movie.title || ''),
   }));
 
   const trendingMovies = allMovies.slice(0, 15);
 
-  const haNhanMovies = allMovies.filter(movie => {
-    const title = normalizeText(movie.title || '');
-    return title.includes('ha nhan') || title.includes('hanhan');
-  });
+  const categoryBuckets = buildCategoryBuckets(allMovies);
+  const categoryMenu = categoryBuckets.map(category => ({
+    slug: category.slug,
+    tag: category.tag,
+    count: category.count,
+  }));
 
-  const tagMap = new Map();
-
-  for (const movie of allMovies) {
-    const rawTag = (movie.tags || 'Khác').trim();
-    const tag = rawTag || 'Khác';
-    const current = tagMap.get(tag) || [];
-    current.push(movie);
-    tagMap.set(tag, current);
-  }
-
-  const tagBuckets = [...tagMap.entries()]
-    .map(([tag, bucketMovies]) => ({
-      tag,
-      slug: slugifyTag(tag),
-      movies: bucketMovies,
-      count: bucketMovies.length,
-    }))
-    .sort((a, b) => b.count - a.count);
-
-  const categoryMenu = tagBuckets
-    .filter(category => !HIDDEN_CATEGORY_TAGS.has(category.tag))
-    .filter(category => category.count >= 3)
-    .slice(0, 8)
-    .map(category => ({
-      slug: category.slug,
-      tag: category.tag,
-      count: category.count,
-    }));
-
-  if (haNhanMovies.length > 0) {
-    const hasExistingHaNhan = categoryMenu.some(category => category.slug === HA_NHAN_CATEGORY.slug);
-    if (!hasExistingHaNhan) {
-      categoryMenu.unshift({
-        ...HA_NHAN_CATEGORY,
-        count: haNhanMovies.length,
-      });
-    }
-  }
+  const haNhanMovies = categoryBuckets.find(category => category.slug === 'ha-nhan')?.movies || [];
+  const homeFeaturedMovie = getHomeFeaturedMovie(categoryBuckets, allMovies);
+  const homeTrendingMovies = moveMovieToFront(allMovies.slice(0, 15), homeFeaturedMovie);
 
   function getCategoryBySlug(slug = '') {
-    if (slug === HA_NHAN_CATEGORY.slug) {
-      return {
-        ...HA_NHAN_CATEGORY,
-        movies: haNhanMovies,
-        count: haNhanMovies.length,
-      };
-    }
-
-    return tagBuckets.find(category => category.slug === slug && !HIDDEN_CATEGORY_TAGS.has(category.tag)) || null;
+    return categoryBuckets.find(category => category.slug === slug) || null;
   }
 
   function getMovieById(movieId = '') {
@@ -176,12 +172,15 @@ export function buildMovieCatalog(movies = []) {
   return {
     allMovies,
     trendingMovies,
+    homeTrendingMovies,
     haNhanMovies,
-    tagBuckets,
+    tagBuckets: categoryBuckets,
+    categoryBuckets,
     categoryMenu,
     getCategoryBySlug,
     getMovieById,
-    featuredMovie: haNhanMovies[0] || allMovies[0] || null,
+    featuredMovie: homeFeaturedMovie,
+    homeFeaturedMovie,
   };
 }
 

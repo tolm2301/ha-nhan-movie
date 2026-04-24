@@ -13,6 +13,12 @@
 - [ ] Enforce 30-video floor with tiered crawl fallback | Owner: developer | Priority: high
 
 ## Review
+- [ ] Restore Khác home section and hide movies with broken thumbnails | Owner: developer | Priority: high
+- [ ] Tighten Hà Nhân classification to exact brand/source content only | Owner: developer | Priority: high
+- [ ] Fix home category rails so each section links to its own category and category pages paginate | Owner: techlead | Priority: medium
+- [ ] Keep the home top slot Ha Nhân-first without disturbing the rest of the home ordering | Owner: developer | Priority: medium
+- [ ] Move `@keodeovietsub` into shared crawl source anchors | Owner: developer | Priority: medium
+- [ ] Rename category bucket to Hệ Thống across crawl/runtime | Owner: developer | Priority: high
 - [ ] Fix Vercel Supabase production SSL handling for SSR DB access | Owner: developer | Priority: high
 - [ ] Temporary JSON-first runtime fallback for DB certificate failures | Owner: developer | Priority: high
 - [ ] Create local env setup for DB-backed crawl/runtime and ignore local env files | Owner: developer | Priority: high

@@ -1,5 +1,61 @@
 # Progress Timeline
 
+## 2026-04-25 (developer home catalog hygiene)
+- Scope: Restore the `Khác` rail on the home page and keep broken/missing-thumbnail movies out of home/category listings.
+- Actions: Removed the home-page exclusion that hid `Khác`, added a renderability filter in `src/lib/data.js` that drops known-bad or missing thumbnails before category bucketing, and cleaned the source catalog by removing the four broken thumbnail records from `src/lib/movies.json`.
+- Evidence: Runtime smoke via `getMovieCatalog()` reported `khacCount:76`, `homeCategories` including `khac`, `totalMovies:168`, and `visibleBad:[]` for the four inspected broken movie IDs.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; catalog smoke inspection passed.
+- Risks: The thumbnail filter currently blocks the catalog's known broken items explicitly; if new thumbnail failures appear later, they will need to be added to the filter or removed at the source.
+
+## 2026-04-25 (developer Hà Nhân classification tighten)
+- Scope: Tighten the Hà Nhân bucket so only explicit Hà Nhân-branded/source items stay there, and push unrelated character-series content into the themed buckets or Khác.
+- Actions: Removed the legacy character-series fallback tags from the Hà Nhân category rule, made Hà Nhân require title-based brand/source markers before any fallback tagging, and kept non-Hà Nhân exact tags eligible for their own buckets.
+- Evidence: Runtime smoke with env loaded reported `featuredTitle:"Xuyên Không Giả Vờ Ăn Chơi, Hà Nhân Âm Thầm Lên Đỉnh Quyền Lực | Hà Nhân Sub"`, `homeTrendingFirstTitle` matching the featured item, `haNhanCount:59`, and `badCount:0` for Diệp Phàm/Tiêu Viêm/Thạch Hạo/Vương Lâm title checks.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; runtime category smoke test passed.
+- Risks: A few borderline Hà Nhân items that do not carry an explicit Hà Nhân marker in the title/source will now fall out of the Hà Nhân bucket by design.
+
+## 2026-04-25 (developer home category rails)
+- Scope: Make each home section represent its real category, add a `Tất cả` action for each rail, and paginate category pages.
+- Actions: Switched the home page rails to read directly from `categoryBuckets`, passed category-specific `viewAllHref` links into `MovieCarousel`, replaced the rail action with a `Tất cả` navigation link, and added 24-per-page pagination plus page controls on the category route.
+- Evidence: Local smoke test reported `featuredTag:"Hà Nhân"`, `homeTrendingFirstTag:"Hà Nhân"`, home category links like `/category/ha-nhan` and `/category/xuyen-khong`, and `haNhanPages:2` with `haNhanFirstPageCount:24`.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; smoke test passed.
+- Risks: Pagination is query-string based (`?page=`), so copied links should preserve the current category page state in the browser.
+
+## 2026-04-25 (developer home ranking)
+- Scope: Keep the home hero and first updated rail slot Ha Nhân-first while preserving the rest of the home ordering.
+- Actions: Added a small home-ranking helper in `src/lib/data.js` that picks the first direct `Hà Nhân` bucket item deterministically, promotes that movie to the front of the home update rail, and keeps the remaining order unchanged; switched `src/app/page.js` to render the home-specific rail ordering.
+- Evidence: Local smoke test returned `{"featuredTag":"Hà Nhân","homeTrendingFirstTag":"Hà Nhân","featuredId":"EvzXuJn2aUM","homeTrendingFirstId":"EvzXuJn2aUM","haNhanCount":40}`.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; smoke test passed.
+- Risks: If the home catalog ever contains no direct `Hà Nhân` bucket, the code still falls back to the first available movie.
+
+## 2026-04-25 (developer crawl anchor refinement)
+- Scope: Move `@keodeovietsub` into a shared crawl source-anchor list so AI/short-form story discovery can reuse it outside `Hệ Thống`.
+- Actions: Extracted the anchor into a shared source list in `src/lib/crawl.server.js`, reused it for both `Hệ Thống` and `Khác` before their keyword batches, and updated the crawl README note to describe the shared taxonomy.
+- Evidence: Source change is limited to `src/lib/crawl.server.js`, `README.md`, and workplace tracking notes; verification commands are listed below.
+- Verification: Passed locally (`node --check src/lib/crawl.server.js`; `npm.cmd run lint`; `npm.cmd run build`; `npm.cmd run crawl:dry`).
+- Risks: `Khác` now also seeds from the shared trusted source, so day-to-day mix there may lean a little more toward the anchored AI/short-form content.
+
+## 2026-04-25 (developer category crawl split)
+- Scope: Reorganize the catalog into the requested six buckets and split the daily crawl into per-category batches.
+- Actions: Added a shared category taxonomy helper, normalized runtime grouping to `Hà Nhân` / `Xuyên Không` / `Trọng Sinh` / `Liễu Như Yên` / `Hệ Thống` / `Khác`, and rewired the crawler to process each category separately with ~5 new items per category, dedupe per run, and emit category batch summaries in logs and crawl-run metadata.
+- Evidence: `node --check src/lib/movieCategories.js`; `node --check src/lib/data.js`; `node --check src/lib/crawl.server.js`; `npm.cmd run lint`; `npm.cmd run build`; `npm.cmd run crawl:dry` completed with category batch logs and `categorySummaries`; runtime category smoke test printed `Hệ Thống` in the category menu.
+- Verification: Passed locally.
+- Risks: The `Khác` bucket still depends on broad fallback discovery, so its contents may vary more than the named buckets from day to day.
+
+## 2026-04-25 (developer crawl execution)
+- Scope: Run the current DB-first crawl flow and persist newly found movies to Postgres/Supabase.
+- Actions: Executed `npm.cmd run crawl` with the current Ha Nhân-first filtering/retry logic; the crawl kept 30 items from the primary tier, found 16 new videos, reused 74 existing kept videos, and persisted the final 90-movie set to Postgres without using JSON fallback.
+- Evidence: Crawl output reported `existingVideos:172`, `newVideos:16`, `totalFetched:30`, `existingKept:74`, and `persistedTo:"postgres"`; follow-up DB readback with env loaded reported `dbMovieCount:90`.
+- Verification: Passed locally.
+- Risks: The final DB count is lower than the pre-run JSON snapshot because the current persist path writes the filtered kept set; if a larger retention set is desired, that is a separate policy decision.
+
+## 2026-04-25 (developer JSON backfill execution)
+- Scope: Execute the existing JSON-to-Postgres migration for `src/lib/movies.json` and verify the full dataset was written.
+- Actions: Ran `npm.cmd run migrate:movies` against the configured Supabase/Postgres target; the script reported `mode:"migrated"`, `crawlRunId:"3"`, `totalMovies:172`, and `keptCount:172`; then reloaded persisted movies through the DB-backed loader and confirmed the database returned 172 movies.
+- Evidence: Migration output: `{"mode":"migrated","crawlRunId":"3","totalMovies":172,"keptCount":172}`; DB readback: `dbMovieCount:172`.
+- Verification: Passed locally against the configured Postgres target.
+- Risks: The migration is replace-on-write for `movies` but appends a new `crawl_runs` row each time, so repeated runs are content-idempotent but not history-idempotent.
+
 ## 2026-04-25 (developer DB-primary SSR restore)
 - Scope: Restore DB-backed runtime as the primary path for Vercel/Supabase while keeping JSON as fallback only when the DB path fails.
 - Actions: Switched the shared catalog loader back to Postgres-first reads, added a structured DB-failure log before JSON fallback, and updated the Postgres pool setup to prefer the direct Supabase URL on Vercel while handling the Supabase SSL chain safely.
