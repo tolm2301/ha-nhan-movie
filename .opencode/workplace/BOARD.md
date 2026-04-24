@@ -13,6 +13,7 @@
 - [ ] Enforce 30-video floor with tiered crawl fallback | Owner: developer | Priority: high
 
 ## Review
+- [ ] Create local env setup for DB-backed crawl/runtime and ignore local env files | Owner: developer | Priority: high
 - [ ] Move daily crawl trigger from GitHub Actions to Vercel Cron | Owner: developer | Priority: high
 - [ ] Migrate crawl data to Postgres and switch runtime reads to DB | Owner: developer | Priority: high
 - [ ] Harden crawl retries for transient network/DNS failures | Owner: developer | Priority: high

@@ -1,5 +1,19 @@
 # Progress Timeline
 
+## 2026-04-25 (developer DB-backed crawl/runtime verification)
+- Scope: Re-run local verification with the populated `.env.local`, reproduce the DB-backed deploy failure locally if possible, and fix env/DB wiring for local + Vercel use.
+- Actions: Kept the local env loader in the crawl/migration scripts, taught the Postgres pool to relax SSL certificate checks only in non-production SSL-backed runs, stripped SSL query params before handing the connection string to `pg`, and hardened integer normalization so blank values no longer become `NaN` during inserts.
+- Evidence: `npm.cmd run crawl:dry` completed against Postgres and reported `source:"postgres"`; `npm.cmd run crawl` completed successfully and persisted to Postgres; `npm.cmd run migrate:movies -- --dry-run` completed successfully; `npm.cmd run build` completed successfully with `.env.local` loaded.
+- Verification: Passed locally.
+- Risks: SSL relaxation is limited to non-production SSL-backed connections; production/Vercel still relies on a valid Postgres certificate chain.
+
+## 2026-04-25 (developer local env setup)
+- Scope: Create a local-only environment file for DB-backed crawl/runtime testing and keep local env files out of git.
+- Actions: Added `.env.local` with placeholder Postgres/cron values, tightened `.gitignore` to exclude local env variants explicitly, documented how to use the file for local DB-backed testing, and taught the crawl/migration scripts to load the same env file locally.
+- Evidence: `npm.cmd run dev` started successfully and reported `Environments: .env.local`; `npm.cmd run crawl:dry` completed successfully; `npm.cmd run migrate:movies -- --dry-run` completed successfully; `npm.cmd run build` completed successfully; `npm.cmd run crawl` now loads `.env.local` and fails with `connect ECONNREFUSED 127.0.0.1:65432`, showing the DB-backed path is isolated to the connection string.
+- Verification: Passed for startup/dry-run/build; full crawl now reaches the DB connection step and fails only because the placeholder Postgres endpoint is not running.
+- Risks: The placeholder `DATABASE_URL` still needs a real local or Supabase Postgres connection string to exercise an actual write.
+
 ## 2026-04-25 (developer Vercel Cron migration)
 - Scope: Move the daily crawl trigger from GitHub Actions to a Vercel Cron-compatible route so scheduling no longer depends on GitHub.
 - Actions: Extracted the crawler into a reusable server module, added `/api/cron/crawl` with Vercel Cron header validation plus optional `CRON_SECRET` manual access, wired `vercel.json` cron scheduling, and retired the GitHub Actions schedule in favor of a manual fallback workflow note.

@@ -1,4 +1,10 @@
-import { hasDatabaseConfig, seedMoviesFromJson } from '../src/lib/movieStore.server.js';
+import nextEnv from '@next/env';
+
+const { loadEnvConfig } = nextEnv;
+
+loadEnvConfig(process.cwd());
+
+const { hasDatabaseConfig, seedMoviesFromJson } = await import('../src/lib/movieStore.server.js');
 
 const dryRun = process.argv.includes('--dry-run');
 

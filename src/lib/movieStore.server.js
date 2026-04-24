@@ -15,6 +15,40 @@ function getDatabaseUrl() {
     || '';
 }
 
+function getPoolConfig(connectionString) {
+  try {
+    const url = new URL(connectionString);
+    const sslMode = String(url.searchParams.get('sslmode') || '').toLowerCase();
+    const requiresTls = ['require', 'verify-ca', 'verify-full', 'prefer'].includes(sslMode);
+    const config = {
+      connectionString,
+      max: 3,
+    };
+
+    if (!requiresTls) {
+      return config;
+    }
+
+    if (process.env.NODE_ENV === 'production') {
+      return config;
+    }
+
+    url.searchParams.delete('sslmode');
+    url.searchParams.delete('ssl');
+
+    return {
+      ...config,
+      connectionString: url.toString(),
+      ssl: { rejectUnauthorized: false },
+    };
+  } catch {
+    return {
+      connectionString,
+      max: 3,
+    };
+  }
+}
+
 export function hasDatabaseConfig() {
   return Boolean(getDatabaseUrl());
 }
@@ -24,7 +58,7 @@ function getPool() {
   if (!connectionString) return null;
 
   if (!pool) {
-    pool = new Pool({ connectionString, max: 3 });
+    pool = new Pool(getPoolConfig(connectionString));
   }
 
   return pool;
@@ -39,7 +73,8 @@ function chunk(items, size) {
 }
 
 function toSafeInteger(value, fallback = null) {
-  return Number.isFinite(Number(value)) ? Number.parseInt(value, 10) : fallback;
+  const parsed = Number.parseInt(String(value ?? '').trim(), 10);
+  return Number.isFinite(parsed) ? parsed : fallback;
 }
 
 export function normalizeMovieRecord(movie = {}, sortOrder = 0) {
