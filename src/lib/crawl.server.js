@@ -1,5 +1,5 @@
 import ytSearch from 'yt-search';
-import { hasDatabaseConfig, loadPersistedMovies, replacePersistedMovies } from './movieStore.server.js';
+import { readMoviesFromJsonFile, replacePersistedMovies } from './movieStore.server.js';
 
 const EPISODE_REGEX = /(t\u1eadp|tap|episode|ep\.?|ph\u1ea7n)\s*(\d{1,4})/i;
 const MIN_VIDEO_SECONDS = 600;
@@ -297,12 +297,8 @@ export async function runCrawl({ dryRun = false } = {}) {
   const runStartedAt = timestamp();
   logCrawl('Bat dau crawl du lieu tu Youtube (Che do Nho Giot)...', { runStartedAt, dryRun });
 
-  if (!dryRun && !hasDatabaseConfig()) {
-    throw new Error('DATABASE_URL is required to persist crawl results to Postgres. Use npm run crawl:dry for local verification.');
-  }
-
-  const oldData = await loadPersistedMovies({ allowJsonFallback: dryRun || !hasDatabaseConfig() });
-  logCrawl('Phat hien list video cu.', { existingVideos: oldData.length, source: hasDatabaseConfig() ? 'postgres' : 'json-fallback' });
+  const oldData = await readMoviesFromJsonFile();
+  logCrawl('Phat hien list video cu.', { existingVideos: oldData.length, source: 'json' });
 
   const exactHaNhanChannelTargets = ['@HaNhanCartoon', '@Hanhansubchannel'];
   const exactHaNhanKeywordTargets = ['H\u00e0 Nh\u00e2n', 'Ha Nhan', 'H\u00e0 Nh\u00e2n phim', 'Ha Nhan phim'];
@@ -568,27 +564,49 @@ export async function runCrawl({ dryRun = false } = {}) {
     };
   }
 
-  const persisted = await replacePersistedMovies(finalData, {
-    startedAt: runStartedAt,
-    finishedAt: timestamp(),
-    status: 'completed',
-    keptCount: finalData.length,
-    fetchedCount: fetchedResults.length,
-    source: 'scripts/crawl.mjs',
-    metadata: { mode: 'crawl', dryRun: false },
-  });
+  try {
+    const persisted = await replacePersistedMovies(finalData, {
+      startedAt: runStartedAt,
+      finishedAt: timestamp(),
+      status: 'completed',
+      keptCount: finalData.length,
+      fetchedCount: fetchedResults.length,
+      source: 'scripts/crawl.mjs',
+      metadata: { mode: 'crawl', dryRun: false },
+    });
 
-  const finishedAt = timestamp();
-  logCrawl('Xong crawl.', { runStartedAt, finishedAt, totalVideos: finalData.length, persistedTo: 'postgres' });
+    const finishedAt = timestamp();
+    logCrawl('Xong crawl.', { runStartedAt, finishedAt, totalVideos: finalData.length, persistedTo: 'postgres' });
 
-  return {
-    runStartedAt,
-    finishedAt,
-    totalVideos: finalData.length,
-    newVideos: newVideos.length,
-    fetchedCount: fetchedResults.length,
-    dryRun: false,
-    persistedTo: 'postgres',
-    crawlRunId: persisted.crawlRunId,
-  };
+    return {
+      runStartedAt,
+      finishedAt,
+      totalVideos: finalData.length,
+      newVideos: newVideos.length,
+      fetchedCount: fetchedResults.length,
+      dryRun: false,
+      persistedTo: 'postgres',
+      crawlRunId: persisted.crawlRunId,
+    };
+  } catch (error) {
+    console.error(`[${timestamp()}] crawl_persist_failed ${JSON.stringify({
+      runStartedAt,
+      totalVideos: finalData.length,
+      error: serializeError(error),
+    })}`);
+
+    const finishedAt = timestamp();
+    logCrawl('Xong crawl.', { runStartedAt, finishedAt, totalVideos: finalData.length, persistedTo: 'json-fallback' });
+
+    return {
+      runStartedAt,
+      finishedAt,
+      totalVideos: finalData.length,
+      newVideos: newVideos.length,
+      fetchedCount: fetchedResults.length,
+      dryRun: false,
+      persistedTo: 'json-fallback',
+      persistenceError: serializeError(error),
+    };
+  }
 }

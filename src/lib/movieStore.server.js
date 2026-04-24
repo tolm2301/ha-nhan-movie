@@ -8,7 +8,8 @@ const BATCH_SIZE = 100;
 let pool;
 
 function getDatabaseUrl() {
-  return process.env.DATABASE_URL
+  return process.env.POSTGRES_URL_NON_POOLING
+    || process.env.DATABASE_URL
     || process.env.SUPABASE_DATABASE_URL
     || process.env.POSTGRES_URL
     || process.env.POSTGRES_CONNECTION_STRING
@@ -149,7 +150,7 @@ async function withClient(work) {
   }
 }
 
-async function readMoviesFromJsonFile() {
+export async function readMoviesFromJsonFile() {
   const raw = await readFile(MOVIES_JSON_PATH, 'utf8');
   const parsed = JSON.parse(raw);
   if (!Array.isArray(parsed)) return [];

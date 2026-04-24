@@ -1,5 +1,12 @@
 # Progress Timeline
 
+## 2026-04-25 (developer JSON-first runtime fallback)
+- Scope: Temporarily stop production 500s from the DB certificate error by making the JSON file the primary runtime source again while keeping DB/cron failures visible.
+- Actions: Switched the shared catalog loader to read `src/lib/movies.json` directly; made the crawl runner use the JSON file as its existing-data source; wrapped Postgres persistence so a DB failure is logged and the crawl returns a JSON-fallback result instead of crashing.
+- Evidence: `node --check src/lib/data.js`; `node --check src/lib/movieStore.server.js`; `node --check src/lib/crawl.server.js`; `npm.cmd run lint`; `npm.cmd run build`; smoke test `node --input-type=module -e \"import('./src/lib/data.js')...\"` returned `{\"movies\":172,\"featured\":true,\"categories\":9}`.
+- Verification: Passed locally.
+- Risks: New crawl writes will not reach Postgres until the certificate/DB issue is fixed; the app now intentionally prioritizes the JSON snapshot over live DB data.
+
 ## 2026-04-25 (developer DB-backed crawl/runtime verification)
 - Scope: Re-run local verification with the populated `.env.local`, reproduce the DB-backed deploy failure locally if possible, and fix env/DB wiring for local + Vercel use.
 - Actions: Kept the local env loader in the crawl/migration scripts, taught the Postgres pool to relax SSL certificate checks only in non-production SSL-backed runs, stripped SSL query params before handing the connection string to `pg`, and hardened integer normalization so blank values no longer become `NaN` during inserts.
