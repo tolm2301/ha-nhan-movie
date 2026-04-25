@@ -1,12 +1,14 @@
 import { Inter } from 'next/font/google'
 import './globals.css'
 import Header from '@/components/Header/Header'
+import { SITE_DESCRIPTION, SITE_NAME, getSiteUrl } from '@/lib/seo'
 
 const inter = Inter({ subsets: ['latin', 'vietnamese'], weight: ['300', '400', '600', '700'] })
 
 export const metadata = {
-  title: 'Hà Nhân Movie',
-  description: 'Nền tảng xem phim giả tưởng, tu tiên, hoạt hình 2D/3D đỉnh cao.',
+  metadataBase: new URL(getSiteUrl()),
+  title: SITE_NAME,
+  description: SITE_DESCRIPTION,
 }
 
 export default function RootLayout({ children }) {

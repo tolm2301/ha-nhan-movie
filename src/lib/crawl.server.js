@@ -121,6 +121,14 @@ const CATEGORY_CRAWL_PLANS = [
     ],
   },
   {
+    slug: 'tu-tien',
+    reason: 'keep Tu Tien / Tien Hiep content in its own daily batch right after Ha Nhan',
+    targets: [
+      ...keywordTargets(['Tu Tiên', 'tu tien', 'Tiên Hiệp', 'tien hiep', 'Hà Nhân tu tiên', 'Ha Nhan tu tien', 'Hà Nhân tiên hiệp', 'Ha Nhan tien hiep']),
+      ...channelTargets(['@HaNhanCartoon', '@Hanhansubchannel']),
+    ],
+  },
+  {
     slug: 'xuyen-khong',
     reason: 'pull the Xuyen Khong batch separately from the Ha Nhan bucket',
     targets: keywordTargets(['Xuy\u00ean Kh\u00f4ng', 'xuyen khong', 'H\u00e0 Nh\u00e2n xuy\u00ean kh\u00f4ng', 'Ha Nhan xuyen khong']),

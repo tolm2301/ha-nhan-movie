@@ -1,6 +1,14 @@
 import { Suspense } from 'react';
 import SearchContent from './SearchContent';
 
+export const metadata = {
+  title: 'Hanhan Movie / Hà Nhân | Tìm kiếm',
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
+
 export default function SearchPage() {
   return (
     <Suspense fallback={
