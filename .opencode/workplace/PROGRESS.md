@@ -1,5 +1,19 @@
 # Progress Timeline
 
+## 2026-04-25 (developer watch skip controls)
+- Scope: Add visible skip backward/forward controls to the watch-player toolbar and keep the jump interval consistent with the existing seek shortcuts.
+- Actions: Added 15-second skip buttons beside the playback controls, reused the shared seek helper for button, keyboard, and double-click seeking, and kept the buttons inside the same fullscreen/auto-hide control surface so both normal and fullscreen modes use the same wiring.
+- Evidence: `npm.cmd run lint` passed; `npm.cmd run build` passed; focused source smoke confirmed the watch player now contains the skip-step constant and both skip button handlers.
+- Verification: Passed locally.
+- Risks: The buttons rely on the same control-bar visibility rules as the rest of the toolbar, so if future UX changes alter auto-hide timing, the new controls will follow that behavior too.
+
+## 2026-04-25 (developer watch toolbar auto-hide)
+- Scope: Make the watch-page toolbar auto-hide in normal mode while preserving the existing fullscreen hide/show behavior.
+- Actions: Added a shared player-activity handler plus a startup timer so the controls auto-hide in both normal and fullscreen modes; wired pointer movement, pointer down, and keyboard activity to restore visibility without changing playback/fullscreen logic.
+- Evidence: `npm.cmd run lint` passed; `npm.cmd run build` passed; source smoke confirmed the new handler and control-visibility wiring are present in `src/app/watch/[id]/page.js`.
+- Verification: Passed locally.
+- Risks: Touch-only interactions still depend on the same overlay/tap behavior as fullscreen, so gesture tuning may be needed later if the normal-mode experience needs to differ.
+
 ## 2026-04-25 (developer thumbnail card fallback)
 - Scope: Handle broken or missing thumbnails in the shared movie card UI used by home/category rails while keeping the existing source-level filters intact.
 - Actions: Turned `MovieCard` into a client component, hid cards that fail `hasRenderableThumbnail()`, added a neutral placeholder for runtime image-load failures, and filtered carousel slides before rendering so invalid items do not leave empty slots.
