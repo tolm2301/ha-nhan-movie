@@ -11,9 +11,10 @@
 - [ ] Expand Ha Nhân search/tag taxonomy for crawl discovery | Owner: creator | Priority: medium
 - [ ] Tighten crawler theme filtering and rejection reasons | Owner: developer | Priority: high
 - [ ] Enforce 30-video floor with tiered crawl fallback | Owner: developer | Priority: high
+- [ ] Enforce agreed 4-slot AdSense setup: home after rail 3, category after first block, watch after related, search after 8–12 results | Owner: developer | Priority: medium
 
 ## Review
-- [ ] Add lightweight AdSense slots with env-driven activation | Owner: techlead | Priority: medium
+- [ ] Wire exact Google AdSense snippet values into the existing integration | Owner: techlead | Priority: medium
 - [ ] Move AdSense account verification into Next metadata export | Owner: developer | Priority: medium
 - [ ] Add `Tu Tiên` as a first-class taxonomy bucket and home rail after `Hà Nhân` | Owner: techlead | Priority: medium
 - [ ] Add SEO metadata, robots/sitemap, and structured data for home/category/watch pages | Owner: techlead | Priority: medium

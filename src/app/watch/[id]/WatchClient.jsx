@@ -1100,8 +1100,6 @@ export default function WatchClient({ movieId = '' }) {
           </p>
         </div>
 
-        <AdSlot placement="watchBelowMetadata" minHeight={250} />
-
         {shouldShowEpisodes && episodes.length > 1 && (
           <div className={styles.episodeSection}>
             <h3 className={styles.sectionTitle}>Chọn Tập Phim</h3>

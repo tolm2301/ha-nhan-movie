@@ -30,8 +30,6 @@ export default async function Home() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toJsonLd(websiteJsonLd) }} />
       <Hero featuredMovie={featuredMovie} />
 
-      <AdSlot placement="homeAfterHero" minHeight={250} />
-
       <RecentWatchedSection />
       
       {catalog.homeTrendingMovies.length > 0 && (
@@ -47,12 +45,10 @@ export default async function Home() {
               viewAllHref={`/category/${category.slug}`}
             />
 
-            {index === 1 && <AdSlot placement="homeAfterRails" minHeight={250} />}
+            {index === 2 && <AdSlot placement="homeAfterRails" minHeight={250} />}
           </div>
         );
       })}
-
-      {homeCategories.length >= 3 && <AdSlot placement="homeFooter" minHeight={280} />}
 
       <footer style={{ 
         textAlign: 'center', 

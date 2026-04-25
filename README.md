@@ -8,18 +8,14 @@ Runtime movie data now lives in Postgres (Supabase-compatible). Set the direct S
 
 ## AdSense
 
-Ad slots are disabled by default and stay hidden when the required env vars are missing. To enable production ads later, set:
+The shared AdSense framework stays intact, but only four placements are active now: home after the third rail, category after the first block, watch after the related block, and search after 8–12 results. To enable them, set:
 
-- `NEXT_PUBLIC_ADSENSE_CLIENT_ID`
-- `NEXT_PUBLIC_ADSENSE_SLOT_HOME_AFTER_HERO`
 - `NEXT_PUBLIC_ADSENSE_SLOT_HOME_AFTER_RAILS`
-- `NEXT_PUBLIC_ADSENSE_SLOT_HOME_FOOTER`
 - `NEXT_PUBLIC_ADSENSE_SLOT_CATEGORY_AFTER_FIRST_BLOCK`
-- `NEXT_PUBLIC_ADSENSE_SLOT_WATCH_BELOW_METADATA`
 - `NEXT_PUBLIC_ADSENSE_SLOT_WATCH_AFTER_RELATED`
 - `NEXT_PUBLIC_ADSENSE_SLOT_SEARCH_AFTER_RESULTS`
 
-Only configure the placement IDs you want to show; missing slot env vars keep that slot inert.
+Missing slot env vars keep those placements inert.
 
 ## Local development
 

@@ -1,5 +1,23 @@
 # Progress Timeline
 
+# 2026-04-25 (developer 4-slot AdSense enforcement)
+- Scope: Enforce the agreed four-slot AdSense setup with no top-of-page home ad and no extra placements beyond home-after-rails, category-after-first-block, watch-after-related, and search-after-results.
+- Actions: Removed the home hero/footer AdSense placements, kept the shared AdSense script/framework intact, trimmed the active placement config to the four approved slots, and updated the README/board to match the new layout.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: The watch slot now appears only after the related/episode block, and any placement with a missing slot env remains inert by design.
+
+## 2026-04-25 (developer homepage AdSense placement)
+- Scope: Reduce the intrusiveness of the homepage AdSense placement by removing the ad directly under the hero and moving the first visible home ad lower on the page, while preserving the site-wide AdSense framework.
+- Actions: Removed the `homeAfterHero` placement from `src/app/page.js` and moved the remaining home rail ad to render after the third category rail (`index === 2`); updated the README note so the homepage placement decision matches the new behavior.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: If the home page ever has fewer than three rendered category rails, the lower home rail ad may not appear.
+
+## 2026-04-25 (developer AdSense snippet wiring)
+- Scope: Wire the exact Google AdSense client ID and the first ad-unit slot from the provided snippet into the existing AdSense integration, while leaving the rest of the placement behavior unchanged.
+- Actions: Added hardcoded fallback values in `src/lib/adsense.js` so the shared client ID resolves to `ca-pub-5517015894265969` and `homeAfterHero` resolves to `6443422368` when env vars are absent; updated `README.md` to note the first home ad unit is now wired by default; the existing site-wide script loader and other placement gates still run through the shared helper.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: Other placements remain env-driven and hidden unless their slot IDs are still configured.
+
 ## 2026-04-25 (developer AdSense metadata hardcode)
 - Scope: Hardcode the Google AdSense account verification meta tag into the Next.js metadata export using the exact provided value, while keeping the rest of the SEO metadata intact.
 - Actions: Replaced the env-gated `google-adsense-account` metadata branch in `src/app/layout.js` with a direct `metadata.other['google-adsense-account'] = 'ca-pub-5517015894265969'` entry and removed the now-unused client-id helper import from the layout.
