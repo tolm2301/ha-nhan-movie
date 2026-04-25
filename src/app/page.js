@@ -1,6 +1,7 @@
 import Hero from '@/components/Hero/Hero';
 import MovieCarousel from '@/components/MovieCarousel/MovieCarousel';
 import RecentWatchedSection from '@/components/RecentWatchedSection/RecentWatchedSection';
+import AdSlot from '@/components/Adsense/AdSlot';
 import { getMovieCatalog } from '@/lib/data';
 import { buildMetadata, buildWebsiteJsonLd, toJsonLd } from '@/lib/seo';
 
@@ -29,22 +30,29 @@ export default async function Home() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toJsonLd(websiteJsonLd) }} />
       <Hero featuredMovie={featuredMovie} />
 
+      <AdSlot placement="homeAfterHero" minHeight={250} />
+
       <RecentWatchedSection />
       
       {catalog.homeTrendingMovies.length > 0 && (
         <MovieCarousel title="🔥 Mới cập nhật" movies={catalog.homeTrendingMovies} />
       )}
 
-      {homeCategories.map(category => {
+      {homeCategories.map((category, index) => {
         return (
-          <MovieCarousel
-            key={category.slug}
-            title={`🏷️ ${category.tag}`}
-            movies={category.movies.slice(0, 20)}
-            viewAllHref={`/category/${category.slug}`}
-          />
+          <div key={category.slug}>
+            <MovieCarousel
+              title={`🏷️ ${category.tag}`}
+              movies={category.movies.slice(0, 20)}
+              viewAllHref={`/category/${category.slug}`}
+            />
+
+            {index === 1 && <AdSlot placement="homeAfterRails" minHeight={250} />}
+          </div>
         );
       })}
+
+      {homeCategories.length >= 3 && <AdSlot placement="homeFooter" minHeight={280} />}
 
       <footer style={{ 
         textAlign: 'center', 

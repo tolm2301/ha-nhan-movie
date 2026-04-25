@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import MovieCard from '@/components/MovieCard/MovieCard';
+import AdSlot from '@/components/Adsense/AdSlot';
 import styles from './Search.module.css';
 
 export default function SearchContent() {
@@ -48,6 +49,9 @@ export default function SearchContent() {
       return rawTitle.includes(normalizedQuery) || displayTitle.includes(normalizedQuery);
     })
     : movies;
+  const adBreakIndex = results.length >= 10 ? 10 : results.length >= 8 ? 8 : -1;
+  const firstResults = adBreakIndex > -1 ? results.slice(0, adBreakIndex) : results;
+  const remainingResults = adBreakIndex > -1 ? results.slice(adBreakIndex) : [];
 
   if (!isLoaded) {
     return (
@@ -67,11 +71,23 @@ export default function SearchContent() {
       <p className={styles.count}>{results.length} bộ phim tìm được</p>
 
       {results.length > 0 ? (
-        <div className={styles.grid}>
-          {results.map(movie => (
-            <MovieCard key={movie.id} movie={movie} />
-          ))}
-        </div>
+        <>
+          <div className={styles.grid}>
+            {firstResults.map(movie => (
+              <MovieCard key={movie.id} movie={movie} />
+            ))}
+          </div>
+
+          {adBreakIndex > -1 && <AdSlot placement="searchAfterResults" minHeight={250} />}
+
+          {remainingResults.length > 0 && (
+            <div className={styles.grid}>
+              {remainingResults.map(movie => (
+                <MovieCard key={movie.id} movie={movie} />
+              ))}
+            </div>
+          )}
+        </>
       ) : (
         <div className={styles.empty}>
           <p>Không tìm thấy phim nào cho &quot;<strong>{query}</strong>&quot;</p>

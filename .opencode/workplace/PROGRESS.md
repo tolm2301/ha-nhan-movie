@@ -1,5 +1,23 @@
 # Progress Timeline
 
+## 2026-04-25 (developer AdSense metadata hardcode)
+- Scope: Hardcode the Google AdSense account verification meta tag into the Next.js metadata export using the exact provided value, while keeping the rest of the SEO metadata intact.
+- Actions: Replaced the env-gated `google-adsense-account` metadata branch in `src/app/layout.js` with a direct `metadata.other['google-adsense-account'] = 'ca-pub-5517015894265969'` entry and removed the now-unused client-id helper import from the layout.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: None beyond the existing AdSense script gating, which was intentionally left unchanged.
+
+## 2026-04-25 (developer AdSense metadata follow-up)
+- Scope: Move the Google AdSense account verification meta tag into the Next.js metadata export while preserving the existing SEO metadata.
+- Actions: Added `google-adsense-account` under `export const metadata.other` in `src/app/layout.js`, reusing the existing AdSense client ID helper so the tag is emitted from the metadata API instead of raw head markup.
+- Verification: Pending `npm.cmd run lint` and `npm.cmd run build`.
+- Risks: The tag only emits when `NEXT_PUBLIC_ADSENSE_CLIENT_ID` is set; no literal `ca-pub-...` value was present in the repo to hardcode.
+
+## 2026-04-25 (developer AdSense framework)
+- Scope: Add a lightweight AdSense framework with safe placeholders for home, category, watch, and search placements, while keeping ads disabled when env config is missing.
+- Actions: Added a shared AdSense config helper, a reusable client-side ad slot component, and page-level placements for home/category/watch/search; wired the root layout to load the AdSense script only when a client ID is configured; documented the required env vars for production activation.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: Real rendering still depends on valid AdSense client and slot IDs being supplied later; the framework intentionally hides empty slots instead of showing mock ads.
+
 ## 2026-04-25 (developer Tu Tiên taxonomy pass)
 - Scope: Add `Tu Tiên` as a first-class category in the shared taxonomy, surface it on the home page immediately after `Hà Nhân`, and keep related crawl/category grouping consistent.
 - Actions: Added `Tu Tiên` to the shared category definitions, taught the classifier to bucket titles/tags containing `Tu Tiên` or `Tiên Hiệp`, inserted a `tu-tien` crawl batch right after `ha-nhan`, and updated the README category list plus workplace tracking.

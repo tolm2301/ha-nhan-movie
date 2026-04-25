@@ -6,6 +6,21 @@ Next.js movie site with automated YouTube crawling and Vercel Git-based deployme
 
 Runtime movie data now lives in Postgres (Supabase-compatible). Set the direct Supabase URL in `POSTGRES_URL_NON_POOLING` on Vercel (preferred) or `DATABASE_URL` if that is your server-only direct URL.
 
+## AdSense
+
+Ad slots are disabled by default and stay hidden when the required env vars are missing. To enable production ads later, set:
+
+- `NEXT_PUBLIC_ADSENSE_CLIENT_ID`
+- `NEXT_PUBLIC_ADSENSE_SLOT_HOME_AFTER_HERO`
+- `NEXT_PUBLIC_ADSENSE_SLOT_HOME_AFTER_RAILS`
+- `NEXT_PUBLIC_ADSENSE_SLOT_HOME_FOOTER`
+- `NEXT_PUBLIC_ADSENSE_SLOT_CATEGORY_AFTER_FIRST_BLOCK`
+- `NEXT_PUBLIC_ADSENSE_SLOT_WATCH_BELOW_METADATA`
+- `NEXT_PUBLIC_ADSENSE_SLOT_WATCH_AFTER_RELATED`
+- `NEXT_PUBLIC_ADSENSE_SLOT_SEARCH_AFTER_RESULTS`
+
+Only configure the placement IDs you want to show; missing slot env vars keep that slot inert.
+
 ## Local development
 
 ```bash

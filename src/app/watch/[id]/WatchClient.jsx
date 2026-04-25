@@ -2,6 +2,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getWatchProgress, pushWatchedMovie, setWatchProgress } from '@/lib/watchHistory';
+import AdSlot from '@/components/Adsense/AdSlot';
 import styles from './Watch.module.css';
 
 const EPISODE_REGEX = /(tập|tap|episode|ep\.?|phần)\s*(\d{1,4})/i;
@@ -1099,6 +1100,8 @@ export default function WatchClient({ movieId = '' }) {
           </p>
         </div>
 
+        <AdSlot placement="watchBelowMetadata" minHeight={250} />
+
         {shouldShowEpisodes && episodes.length > 1 && (
           <div className={styles.episodeSection}>
             <h3 className={styles.sectionTitle}>Chọn Tập Phim</h3>
@@ -1116,6 +1119,8 @@ export default function WatchClient({ movieId = '' }) {
             </div>
           </div>
         )}
+
+        <AdSlot placement="watchAfterRelated" minHeight={250} />
       </div>
     </div>
   );
