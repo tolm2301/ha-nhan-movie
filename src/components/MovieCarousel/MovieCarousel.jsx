@@ -1,11 +1,17 @@
 "use client";
 import React, { useRef } from 'react';
 import Link from 'next/link';
+import { hasRenderableThumbnail } from '@/lib/thumbnailFilters';
 import styles from './MovieCarousel.module.css';
 import MovieCard from '../MovieCard/MovieCard';
 
 export default function MovieCarousel({ title, movies, viewAllHref }) {
   const scrollRef = useRef(null);
+  const visibleMovies = (movies || []).filter(hasRenderableThumbnail);
+
+  if (visibleMovies.length === 0) {
+    return null;
+  }
 
   const scrollLeft = () => {
     if (scrollRef.current) {
@@ -35,7 +41,7 @@ export default function MovieCarousel({ title, movies, viewAllHref }) {
       </div>
       
       <div className={styles.slider} ref={scrollRef}>
-        {movies.map((movie) => (
+        {visibleMovies.map((movie) => (
           <div key={movie.id} className={styles.slideItem}>
             <MovieCard movie={movie} />
           </div>

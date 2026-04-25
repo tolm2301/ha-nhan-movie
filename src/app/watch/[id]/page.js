@@ -20,6 +20,8 @@ const QUALITY_LABELS = {
   auto: 'Tự động',
 };
 
+const SEEK_STEP_SECONDS = 30;
+
 const POPOUT_RETURN_TYPE = 'HANHAN_POPOUT_RETURN';
 const POPOUT_SYNC_KEY = 'hanhan:popout-sync';
 
@@ -241,6 +243,11 @@ export default function WatchPage() {
     clearHideControlsTimer();
     hideControlsTimerRef.current = window.setTimeout(() => setIsControlsVisible(false), 2200);
   }, [clearHideControlsTimer]);
+
+  const handlePlayerActivity = useCallback(() => {
+    if (!isReady || isSystemPopout) return;
+    armControlsAutoHide();
+  }, [armControlsAutoHide, isReady, isSystemPopout]);
 
   const restoreFromSystemPopout = useCallback((closeWindow = true) => {
     const mainPlayer = playerRef.current;
@@ -528,6 +535,19 @@ export default function WatchPage() {
   }, [armControlsAutoHide, clearHideControlsTimer, isPseudoFullscreen]);
 
   useEffect(() => {
+    if (!isReady || isSystemPopout) return undefined;
+
+    const initialHideTimer = window.setTimeout(() => {
+      armControlsAutoHide();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(initialHideTimer);
+      clearHideControlsTimer();
+    };
+  }, [armControlsAutoHide, clearHideControlsTimer, isFullscreen, isPseudoFullscreen, isReady, isSystemPopout]);
+
+  useEffect(() => {
     if (!isPseudoFullscreen) return;
 
     const prevOverflow = document.body.style.overflow;
@@ -650,9 +670,7 @@ export default function WatchPage() {
 
   useEffect(() => {
     const onKeyDown = event => {
-      if (isFullscreen || isPseudoFullscreen) {
-        armControlsAutoHide();
-      }
+      handlePlayerActivity();
 
       if (event.key === 'Escape' && isPseudoFullscreen) {
         setIsPseudoFullscreen(false);
@@ -674,10 +692,10 @@ export default function WatchPage() {
 
       if (event.key === 'ArrowLeft') {
         event.preventDefault();
-        handleSeekByOffset(-15);
+        handleSeekByOffset(-SEEK_STEP_SECONDS);
       } else if (event.key === 'ArrowRight') {
         event.preventDefault();
-        handleSeekByOffset(15);
+        handleSeekByOffset(SEEK_STEP_SECONDS);
       } else if (event.key === 'ArrowUp') {
         event.preventDefault();
         handleVolumeByOffset(5);
@@ -689,7 +707,7 @@ export default function WatchPage() {
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [armControlsAutoHide, clearHideControlsTimer, handleSeekByOffset, handleVolumeByOffset, isFullscreen, isPseudoFullscreen]);
+  }, [clearHideControlsTimer, handlePlayerActivity, handleSeekByOffset, handleVolumeByOffset, isPseudoFullscreen]);
 
   const handleQualityChange = value => {
     const player = playerRef.current;
@@ -902,7 +920,7 @@ export default function WatchPage() {
 
     const current = Number(player.getCurrentTime?.() || currentTime || 0);
     const durationValue = Number(player.getDuration?.() || duration || 0);
-    const offset = isLeftHalf ? -15 : 15;
+    const offset = isLeftHalf ? -SEEK_STEP_SECONDS : SEEK_STEP_SECONDS;
     const next = Math.min(Math.max(current + offset, 0), durationValue || Infinity);
 
     player.seekTo(next, true);
@@ -954,10 +972,8 @@ export default function WatchPage() {
         >
           <div
             className={`${styles.videoContainer} ${(isFullscreen || isPseudoFullscreen) && !isControlsVisible ? styles.videoContainerUiHidden : ''}`}
-            onPointerMove={() => {
-              if (!(isFullscreen || isPseudoFullscreen)) return;
-              armControlsAutoHide();
-            }}
+            onPointerMove={handlePlayerActivity}
+            onPointerDown={handlePlayerActivity}
           >
             <div ref={playerMountRef} className={styles.playerFrame}></div>
             <button
@@ -973,7 +989,7 @@ export default function WatchPage() {
             <div className={styles.playerMaskTop}></div>
             <div className={styles.playerMaskLogo}></div>
 
-            <div className={`${styles.inVideoControls} ${(isFullscreen || isPseudoFullscreen) && !isControlsVisible ? styles.inVideoControlsHidden : ''}`}>
+            <div className={`${styles.inVideoControls} ${!isControlsVisible ? styles.inVideoControlsHidden : ''}`}>
               <div className={styles.seekRow}>
                 <span>{formatTime(currentTime)}</span>
                 <input
@@ -991,6 +1007,26 @@ export default function WatchPage() {
 
               <div className={styles.controlRow}>
                 <div className={styles.leftControls}>
+                  <button
+                    type="button"
+                    className={`${styles.controlBtn} ${styles.skipBtn}`}
+                    onClick={() => handleSeekByOffset(-SEEK_STEP_SECONDS)}
+                    disabled={!isReady}
+                    aria-label={`Lùi ${SEEK_STEP_SECONDS} giây`}
+                    title={`Lùi ${SEEK_STEP_SECONDS} giây`}
+                  >
+                    ⏪
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.controlBtn} ${styles.skipBtn}`}
+                    onClick={() => handleSeekByOffset(SEEK_STEP_SECONDS)}
+                    disabled={!isReady}
+                    aria-label={`Tiến ${SEEK_STEP_SECONDS} giây`}
+                    title={`Tiến ${SEEK_STEP_SECONDS} giây`}
+                  >
+                     ⏩
+                  </button>
                   <button className={styles.controlBtn} onClick={handleTogglePlay} disabled={!isReady}>
                     {isPlaying ? '⏸' : '▶'}
                   </button>

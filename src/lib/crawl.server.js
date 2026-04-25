@@ -1,6 +1,7 @@
 import ytSearch from 'yt-search';
 import { readMoviesFromJsonFile, replacePersistedMovies } from './movieStore.server.js';
 import { getCategoryDefinitionBySlug, normalizeMovieCategory, resolveMovieCategory } from './movieCategories.js';
+import { hasRenderableThumbnail } from './thumbnailFilters.js';
 
 const EPISODE_REGEX = /(t\u1eadp|tap|episode|ep\.?|ph\u1ea7n)\s*(\d{1,4})/i;
 const MIN_VIDEO_SECONDS = 600;
@@ -229,6 +230,14 @@ function normalizeVideoData(video, category) {
   };
 }
 
+function explainThumbnailDecision(movie = {}) {
+  if (!hasRenderableThumbnail(movie)) {
+    return { keep: false, reason: 'invalid thumbnail' };
+  }
+
+  return { keep: true, reason: 'accepted' };
+}
+
 async function searchWithRetry(query, context = {}) {
   let lastError = null;
 
@@ -375,6 +384,22 @@ export async function runCrawl({ dryRun = false } = {}) {
             continue;
           }
 
+          const thumbnailDecision = explainThumbnailDecision({ id: video.videoId, thumbnail: video.thumbnail });
+          if (!thumbnailDecision.keep) {
+            rejectedCount += 1;
+            targetRejectedCount += 1;
+            logCrawl('  - reject', {
+              runDay,
+              category: tag,
+              slug,
+              query: target.query,
+              title: videoLabel,
+              thumbnail: video?.thumbnail ?? null,
+              reason: thumbnailDecision.reason,
+            });
+            continue;
+          }
+
           const resolvedCategory = resolveMovieCategory(video);
           if (resolvedCategory.slug !== slug) {
             rejectedCount += 1;
@@ -480,7 +505,7 @@ export async function runCrawl({ dryRun = false } = {}) {
       seconds: video.type === 'full' ? MIN_VIDEO_SECONDS : MIN_VIDEO_SECONDS + 1,
       author: { name: 'trusted old data' },
     };
-    return explainVideoDecision(fakeVideoLike, 'channel', CATEGORY_TRUSTED_AUTHOR_WORDS).keep;
+    return explainVideoDecision(fakeVideoLike, 'channel', CATEGORY_TRUSTED_AUTHOR_WORDS).keep && hasRenderableThumbnail(video);
   }).map(video => normalizeMovieCategory(video));
 
   logCrawl('Tong ket video moi.', {

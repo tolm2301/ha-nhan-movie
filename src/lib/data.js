@@ -1,20 +1,7 @@
 import { cache } from 'react';
 import { describeDatabaseTarget, loadPersistedMovies, readMoviesFromJsonFile } from './movieStore.server.js';
 import { buildCategoryBuckets, normalizeMovieCategory } from './movieCategories.js';
-
-const BROKEN_THUMBNAIL_URLS = new Set([
-  'https://i.ytimg.com/vi/ESTeyBsZt68/hq720_custom_2.jpg',
-  'https://i.ytimg.com/vi/jygfwGrRvtw/hq720.jpg',
-  'https://i.ytimg.com/vi/cT4f_09O5NE/hq720.jpg',
-  'https://i.ytimg.com/vi/fF8qkLjnRuA/hq720_custom_1.jpg',
-]);
-
-const BROKEN_THUMBNAIL_IDS = new Set([
-  'ESTeyBsZt68',
-  'jygfwGrRvtw',
-  'cT4f_09O5NE',
-  'fF8qkLjnRuA',
-]);
+import { hasRenderableThumbnail } from './thumbnailFilters.js';
 
 function normalizeText(value = '') {
   return value
@@ -102,17 +89,6 @@ function cleanMovieTitle(title = '') {
   }
 
   return cleaned || original;
-}
-
-function hasRenderableThumbnail(movie = {}) {
-  const thumbnail = String(movie.thumbnail || '').trim();
-  if (!thumbnail) return false;
-
-  const movieId = String(movie.id || '').trim();
-  if (BROKEN_THUMBNAIL_IDS.has(movieId)) return false;
-  if (BROKEN_THUMBNAIL_URLS.has(thumbnail)) return false;
-
-  return true;
 }
 
 function moveMovieToFront(movies = [], featuredMovie = null) {

@@ -1,5 +1,33 @@
 # Progress Timeline
 
+## 2026-04-25 (developer watch skip controls)
+- Scope: Add visible skip backward/forward controls to the watch-player toolbar and keep the jump interval consistent with the existing seek shortcuts.
+- Actions: Added 15-second skip buttons beside the playback controls, reused the shared seek helper for button, keyboard, and double-click seeking, and kept the buttons inside the same fullscreen/auto-hide control surface so both normal and fullscreen modes use the same wiring.
+- Evidence: `npm.cmd run lint` passed; `npm.cmd run build` passed; focused source smoke confirmed the watch player now contains the skip-step constant and both skip button handlers.
+- Verification: Passed locally.
+- Risks: The buttons rely on the same control-bar visibility rules as the rest of the toolbar, so if future UX changes alter auto-hide timing, the new controls will follow that behavior too.
+
+## 2026-04-25 (developer watch toolbar auto-hide)
+- Scope: Make the watch-page toolbar auto-hide in normal mode while preserving the existing fullscreen hide/show behavior.
+- Actions: Added a shared player-activity handler plus a startup timer so the controls auto-hide in both normal and fullscreen modes; wired pointer movement, pointer down, and keyboard activity to restore visibility without changing playback/fullscreen logic.
+- Evidence: `npm.cmd run lint` passed; `npm.cmd run build` passed; source smoke confirmed the new handler and control-visibility wiring are present in `src/app/watch/[id]/page.js`.
+- Verification: Passed locally.
+- Risks: Touch-only interactions still depend on the same overlay/tap behavior as fullscreen, so gesture tuning may be needed later if the normal-mode experience needs to differ.
+
+## 2026-04-25 (developer thumbnail card fallback)
+- Scope: Handle broken or missing thumbnails in the shared movie card UI used by home/category rails while keeping the existing source-level filters intact.
+- Actions: Turned `MovieCard` into a client component, hid cards that fail `hasRenderableThumbnail()`, added a neutral placeholder for runtime image-load failures, and filtered carousel slides before rendering so invalid items do not leave empty slots.
+- Evidence: `npm.cmd run lint` passed; `npm.cmd run build` passed; thumbnail helper smoke confirmed missing, broken, and foreign-host thumbnails return `false`.
+- Verification: Passed locally.
+- Risks: Runtime image failures now show the placeholder instead of a hard hide; if stricter removal is desired later, the carousel/card coordination would need a callback.
+
+## 2026-04-25 (developer thumbnail placeholder cleanup)
+- Scope: Tighten thumbnail filtering so blank/dark placeholder cards do not appear in home/category rails, then clean any already-stored bad items from the catalog and DB.
+- Actions: Extracted thumbnail checks into `src/lib/thumbnailFilters.js`, added deterministic ytimg host/filename validation plus `frameN.jpg` placeholder rejection, wired the crawler to reject bad thumbnails before persistence, removed the `f9Ei2z8Fn1c` placeholder record from `src/lib/movies.json`, and deleted that row from Postgres.
+- Evidence: Catalog smoke via `getMovieCatalog()` returned `totalMovies:197`, `homeCategories` still populated for all six rails, `visibleBad:[]`, and the placeholder item was absent from runtime results.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; catalog smoke inspection passed.
+- Risks: The filter is intentionally conservative and only allows known ytimg filename shapes, so future thumbnail variants may need to be added if crawler output changes.
+
 ## 2026-04-25 (developer home catalog hygiene)
 - Scope: Restore the `Khác` rail on the home page and keep broken/missing-thumbnail movies out of home/category listings.
 - Actions: Removed the home-page exclusion that hid `Khác`, added a renderability filter in `src/lib/data.js` that drops known-bad or missing thumbnails before category bucketing, and cleaned the source catalog by removing the four broken thumbnail records from `src/lib/movies.json`.
@@ -48,6 +76,13 @@
 - Evidence: Crawl output reported `existingVideos:172`, `newVideos:16`, `totalFetched:30`, `existingKept:74`, and `persistedTo:"postgres"`; follow-up DB readback with env loaded reported `dbMovieCount:90`.
 - Verification: Passed locally.
 - Risks: The final DB count is lower than the pre-run JSON snapshot because the current persist path writes the filtered kept set; if a larger retention set is desired, that is a separate policy decision.
+
+## 2026-04-25 (developer crawl execution rerun)
+- Scope: Run the current category-aware crawl again and verify the DB-backed catalog accepted the new batch.
+- Actions: Ran `npm.cmd run crawl` with the existing taxonomy/filtering rules; the run added 30 new items total across all six categories (5 each), skipped 5 duplicates, and logged category-rule rejects for untrusted authors, low-quality titles, short clips, and category reclassification.
+- Evidence: Crawl output ended with `{"newVideos":30,"totalFetched":30,"existingKept":168,...}` and `persistedTo:"postgres"`; DB readback with env loaded returned `dbMovieCount:198`.
+- Verification: `npm.cmd run crawl` passed; `node --input-type=module -e "...loadPersistedMovies({ allowJsonFallback: false })..."` returned `dbMovieCount:198`.
+- Risks: No broken-thumbnail exclusions were surfaced in this run; category-rule filtering remained strict, so some long videos were excluded or reassigned rather than kept.
 
 ## 2026-04-25 (developer JSON backfill execution)
 - Scope: Execute the existing JSON-to-Postgres migration for `src/lib/movies.json` and verify the full dataset was written.

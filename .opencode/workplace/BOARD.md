@@ -13,7 +13,9 @@
 - [ ] Enforce 30-video floor with tiered crawl fallback | Owner: developer | Priority: high
 
 ## Review
-- [ ] Restore Khác home section and hide movies with broken thumbnails | Owner: developer | Priority: high
+- [ ] Add watch skip backward/forward controls to the watch player | Owner: techlead | Priority: medium
+- [ ] Enable normal-mode watch toolbar auto-hide | Owner: techlead | Priority: medium
+- [ ] Tighten thumbnail filtering and remove broken/placeholder cards from home/category rails | Owner: developer | Priority: high
 - [ ] Tighten Hà Nhân classification to exact brand/source content only | Owner: developer | Priority: high
 - [ ] Fix home category rails so each section links to its own category and category pages paginate | Owner: techlead | Priority: medium
 - [ ] Keep the home top slot Ha Nhân-first without disturbing the rest of the home ordering | Owner: developer | Priority: medium
