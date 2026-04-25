@@ -16,6 +16,7 @@
 ## Review
 - [ ] Wire exact Google AdSense snippet values into the existing integration | Owner: techlead | Priority: medium
 - [ ] Move AdSense account verification into Next metadata export | Owner: developer | Priority: medium
+- [ ] Reclassify catalog items to the expanded seven-bucket taxonomy | Owner: developer | Priority: high
 - [ ] Add `Tu Tiên` as a first-class taxonomy bucket and home rail after `Hà Nhân` | Owner: techlead | Priority: medium
 - [ ] Add SEO metadata, robots/sitemap, and structured data for home/category/watch pages | Owner: techlead | Priority: medium
 - [ ] Add watch skip backward/forward controls to the watch player | Owner: techlead | Priority: medium

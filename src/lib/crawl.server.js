@@ -1,6 +1,6 @@
 import ytSearch from 'yt-search';
 import { readMoviesFromJsonFile, replacePersistedMovies } from './movieStore.server.js';
-import { getCategoryDefinitionBySlug, normalizeMovieCategory, resolveMovieCategory } from './movieCategories.js';
+import { CATEGORY_TAXONOMY, getCategoryDefinitionBySlug, normalizeMovieCategory, resolveMovieCategory } from './movieCategories.js';
 import { hasRenderableThumbnail } from './thumbnailFilters.js';
 
 const EPISODE_REGEX = /(t\u1eadp|tap|episode|ep\.?|ph\u1ea7n)\s*(\d{1,4})/i;
@@ -102,13 +102,36 @@ const CATEGORY_BATCH_LIMIT = 5;
 const CATEGORY_TRUSTED_AUTHOR_WORDS = ['ha nhan', 'h\u00e0 nh\u00e2n', 'review phim', 'hoat hinh', 'ho\u1ea1t h\u00ecnh', 'vietsub', 'anime', 'phim', 'cartoon'];
 const SHARED_SOURCE_ANCHORS = ['@keodeovietsub'];
 const SHARED_SOURCE_TARGETS = channelTargets(SHARED_SOURCE_ANCHORS);
+const CATEGORY_QUERY_CAPS = {
+  core: Infinity,
+  expanded: Infinity,
+  fallbackOnly: 2,
+  riskyCaps: 1,
+};
 
-function keywordTargets(queries = []) {
-  return queries.map(query => ({ query, type: 'keyword' }));
+function keywordTargets(queries = [], tier = 'core') {
+  return queries.map(query => ({ query, type: 'keyword', tier }));
 }
 
 function channelTargets(queries = []) {
   return queries.map(query => ({ query, type: 'channel' }));
+}
+
+function takeKeywordTargets(queries = [], tier = 'core') {
+  const cap = CATEGORY_QUERY_CAPS[tier] ?? Infinity;
+  return keywordTargets(queries.slice(0, cap), tier);
+}
+
+function buildCategoryKeywordTargets(slug) {
+  const category = CATEGORY_TAXONOMY.find(item => item.slug === slug);
+  if (!category) return [];
+
+  return [
+    ...takeKeywordTargets(category.core, 'core'),
+    ...takeKeywordTargets(category.expanded, 'expanded'),
+    ...takeKeywordTargets(category.fallbackOnly, 'fallbackOnly'),
+    ...takeKeywordTargets(category.riskyCaps, 'riskyCaps'),
+  ];
 }
 
 const CATEGORY_CRAWL_PLANS = [
@@ -116,7 +139,7 @@ const CATEGORY_CRAWL_PLANS = [
     slug: 'ha-nhan',
     reason: 'seed the day with Ha Nhan-owned and legacy Ha Nhan content first',
     targets: [
-      ...keywordTargets(['H\u00e0 Nh\u00e2n', 'Ha Nhan', 'H\u00e0 Nh\u00e2n phim', 'Ha Nhan phim', 'H\u00e0 Nh\u00e2n full', 'Ha Nhan full', 'H\u00e0 Nh\u00e2n series', 'Ha Nhan series', 'H\u00e0 Nh\u00e2n t\u1eadp', 'Ha Nhan tap', 'H\u00e0 Nh\u00e2n vietsub', 'Ha Nhan vietsub']),
+      ...buildCategoryKeywordTargets('ha-nhan'),
       ...channelTargets(['@HaNhanCartoon', '@Hanhansubchannel']),
     ],
   },
@@ -124,31 +147,31 @@ const CATEGORY_CRAWL_PLANS = [
     slug: 'tu-tien',
     reason: 'keep Tu Tien / Tien Hiep content in its own daily batch right after Ha Nhan',
     targets: [
-      ...keywordTargets(['Tu Tiên', 'tu tien', 'Tiên Hiệp', 'tien hiep', 'Hà Nhân tu tiên', 'Ha Nhan tu tien', 'Hà Nhân tiên hiệp', 'Ha Nhan tien hiep']),
+      ...buildCategoryKeywordTargets('tu-tien'),
       ...channelTargets(['@HaNhanCartoon', '@Hanhansubchannel']),
     ],
   },
   {
     slug: 'xuyen-khong',
     reason: 'pull the Xuyen Khong batch separately from the Ha Nhan bucket',
-    targets: keywordTargets(['Xuy\u00ean Kh\u00f4ng', 'xuyen khong', 'H\u00e0 Nh\u00e2n xuy\u00ean kh\u00f4ng', 'Ha Nhan xuyen khong']),
+    targets: buildCategoryKeywordTargets('xuyen-khong'),
   },
   {
     slug: 'trong-sinh',
     reason: 'pull the Trong Sinh batch separately from other story types',
-    targets: keywordTargets(['Tr\u1ecdng Sinh', 'trong sinh', 'H\u00e0 Nh\u00e2n tr\u1ecdng sinh', 'Ha Nhan trong sinh']),
+    targets: buildCategoryKeywordTargets('trong-sinh'),
   },
   {
     slug: 'lieu-nhu-yen',
     reason: 'keep Li\u1ec5u Nh\u01b0 Y\u00ean content in its own daily batch',
-    targets: keywordTargets(['Li\u1ec5u Nh\u01b0 Y\u00ean', 'lieu nhu yen', 'H\u00e0 Nh\u00e2n Li\u1ec5u Nh\u01b0 Y\u00ean', 'Ha Nhan Lieu Nhu Yen']),
+    targets: buildCategoryKeywordTargets('lieu-nhu-yen'),
   },
   {
     slug: 'he-thong',
     reason: 'seed AI Chinese animated / short-form story content with trusted anchors first',
     targets: [
       ...SHARED_SOURCE_TARGETS,
-      ...keywordTargets(['Hệ Thống', 'he thong', 'system', 'xuyen khong he thong', 'trong sinh he thong']),
+      ...buildCategoryKeywordTargets('he-thong'),
     ],
   },
   {
@@ -156,7 +179,7 @@ const CATEGORY_CRAWL_PLANS = [
     reason: 'use broad fallback discovery only for uncategorized leftovers',
     targets: [
       ...SHARED_SOURCE_TARGETS,
-      ...keywordTargets(['phim hoat hinh', 'anime 2d', 'vietsub', 'series', 'full', 'review phim']),
+      ...buildCategoryKeywordTargets('khac'),
     ],
   },
 ];

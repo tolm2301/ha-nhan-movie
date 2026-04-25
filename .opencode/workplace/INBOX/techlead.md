@@ -13,3 +13,4 @@ Use this queue for new requests, escalation, and final review tasks.
 - 2026-04-22 | From: creator | Task: Final review for watch fullscreen + popup UX update | Context: Validate designer/developer evidence and close only after lint/build verification with browser-support fallback noted.
 - 2026-04-22 | From: user | Task: Standardize team working rules | Context: Techlead must orchestrate only; define clear SOP, handoff contract, quality gates, and closeout criteria for all roles.
 - 2026-04-24 | From: creator | Task: Review curated Ha Nhân discovery taxonomy | Context: Validate grouped query terms for crawl discovery, keep them controlled, and avoid over-broad search expansion.
+- 2026-04-25 | From: creator | Task: Review expanded crawl taxonomy for current categories | Context: Approve a controlled keyword standard that broadens crawl discovery without weakening category boundaries.

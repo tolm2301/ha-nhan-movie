@@ -1,5 +1,23 @@
 # Progress Timeline
 
+## 2026-04-25 (developer taxonomy reclassification pass)
+- Scope: Reclassify the current catalog to the expanded seven-bucket taxonomy while preserving the Ha Nhân-first rule and keeping unrelated UI/SEO/ads work untouched.
+- Actions: Broadened the shared category matcher in `src/lib/movieCategories.js` so `Trọng Sinh`, `Xuyên Không`, `Hệ Thống`, and `Tu Tiên` now recognize the latest expanded anchors/synonyms, and moved the category priority to `Hà Nhân` → `Liễu Như Yên` → `Trọng Sinh` → `Xuyên Không` → `Hệ Thống` → `Tu Tiên` → `Khác`.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; catalog smoke check via `getMovieCatalog()` reported `ha-nhan:49`, `tu-tien:43`, `xuyen-khong:22`, `trong-sinh:15`, `lieu-nhu-yen:20`, `he-thong:14`, `khac:34`.
+- Risks: The broadened `Tu Tiên` bucket now absorbs many cultivation/anime series by design, so borderline fantasy titles can still land there; `Khác` remains a catch-all for general review/variety content.
+
+## 2026-04-25 (developer controlled taxonomy expansion)
+- Scope: Update the crawler taxonomy using the creator-approved tiered keyword structure for the current category set without letting broad fallback terms dominate primary classification.
+- Actions: Split the shared category taxonomy into `core`, `expanded`, `fallback-only`, and `risky caps` tiers for `Hà Nhân`, `Tu Tiên`, `Xuyên Không`, `Trọng Sinh`, `Liễu Như Yên`, `Hệ Thống`, and `Khác`; wired the crawler to query the tiers in order with caps on the broader tiers; kept runtime category resolution on explicit/strong matches before broader fallbacks; moved the broad `system` query into the crawl-only risky tier so it no longer drives runtime classification; and documented the tiered crawl behavior in the README/workplace notes.
+- Verification: `npm.cmd run lint` passed (`EXIT:0`); `npm.cmd run build` passed (`EXIT:0`); `npm.cmd run crawl:dry` passed (`EXIT:0`) and still completed a 7-category dry crawl with 35 kept videos total.
+- Risks: The broader `risky caps` tier still exists for crawl discovery, so it must stay capped or it can widen noisy search results faster than the named tiers; `Hệ Thống` remains the noisiest bucket because it still accepts several broad system/AI-style anchors.
+
+## 2026-04-25 (creator crawl taxonomy proposal)
+- Scope: Propose a broader but controlled keyword taxonomy for crawl discovery across the current category system so the techlead can expand queries without making classification too loose.
+- Actions: Drafted a priority-based recommendation for `Hà Nhân`, `Tu Tiên`, `Xuyên Không`, `Trọng Sinh`, `Liễu Như Yên`, `Hệ Thống`, and `Khác`, separating must-have anchors, expanded synonyms/phrases, fallback-only broad terms, and risky terms to cap or avoid.
+- Verification: Review-only; no code or data changes made.
+- Risks: Any broad term promoted into the primary tier will increase crawl noise and category overlap, especially for `Hệ Thống`, `Tu Tiên`, and `Khác`.
+
 # 2026-04-25 (developer 4-slot AdSense enforcement)
 - Scope: Enforce the agreed four-slot AdSense setup with no top-of-page home ad and no extra placements beyond home-after-rails, category-after-first-block, watch-after-related, and search-after-results.
 - Actions: Removed the home hero/footer AdSense placements, kept the shared AdSense script/framework intact, trimmed the active placement config to the four approved slots, and updated the README/board to match the new layout.
