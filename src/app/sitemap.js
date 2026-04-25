@@ -1,6 +1,8 @@
 import { getMovieCatalog } from '../lib/data.js';
 import { buildAbsoluteUrl } from '../lib/seo.js';
 
+export const revalidate = 3600;
+
 export default async function sitemap() {
   const catalog = await getMovieCatalog();
   const categories = catalog.categoryBuckets
