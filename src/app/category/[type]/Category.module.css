@@ -3,6 +3,7 @@
   margin: 0 auto;
   padding: 100px 24px 60px;
   min-height: 100vh;
+  overflow-x: clip;
 }
 
 .header {
@@ -12,6 +13,39 @@
   gap: 16px;
   border-bottom: 4px solid #000;
   padding-bottom: 24px;
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 88px 16px 48px;
+  }
+
+  .header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 10px 12px;
+  }
+
+  .title {
+    font-size: 2rem;
+    flex: 1 1 100%;
+    line-height: 1.05;
+  }
+
+  .count,
+  .pageInfo {
+    margin-left: 0;
+    white-space: normal;
+  }
+
+  .count {
+    flex: 1 1 auto;
+  }
+
+  .pageInfo {
+    flex: 1 1 auto;
+    text-align: right;
+  }
 }
 
 .emoji {
@@ -46,6 +80,8 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 24px;
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 3200px;
 }
 
 .pagination {

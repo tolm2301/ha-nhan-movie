@@ -1,14 +1,15 @@
 import { notFound } from 'next/navigation';
-import { getMovieById } from '@/lib/data';
+import { getMovieCatalog } from '@/lib/data';
 import { buildAbsoluteUrl, buildBreadcrumbJsonLd, buildMetadata, buildVideoJsonLd, toJsonLd } from '@/lib/seo';
 import WatchClient from './WatchClient';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 export async function generateMetadata({ params }) {
   const resolvedParams = await params;
   const movieId = typeof resolvedParams?.id === 'string' ? resolvedParams.id : '';
-  const movie = await getMovieById(movieId);
+  const catalog = await getMovieCatalog();
+  const movie = catalog.getMovieById(movieId);
 
   if (!movie) {
     return buildMetadata({
@@ -30,7 +31,8 @@ export async function generateMetadata({ params }) {
 export default async function WatchPage({ params }) {
   const resolvedParams = await params;
   const movieId = typeof resolvedParams?.id === 'string' ? resolvedParams.id : '';
-  const movie = await getMovieById(movieId);
+  const catalog = await getMovieCatalog();
+  const movie = catalog.getMovieById(movieId);
 
   if (!movie) {
     notFound();
@@ -47,7 +49,7 @@ export default async function WatchPage({ params }) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toJsonLd(breadcrumbJsonLd) }} />
       {videoJsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toJsonLd(videoJsonLd) }} />}
-      <WatchClient movieId={movie.id} />
+      <WatchClient key={movie.id} movieId={movie.id} initialMovies={[movie]} />
     </>
   );
 }

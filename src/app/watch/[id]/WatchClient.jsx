@@ -127,10 +127,10 @@ function isInteractiveKeyboardTarget(target) {
   );
 }
 
-export default function WatchClient({ movieId = '' }) {
+export default function WatchClient({ movieId = '', initialMovies = [] }) {
   const router = useRouter();
-  const [movies, setMovies] = useState([]);
-  const [isCatalogLoaded, setIsCatalogLoaded] = useState(false);
+  const [movies, setMovies] = useState(() => initialMovies);
+  const [isCatalogLoaded, setIsCatalogLoaded] = useState(() => Array.isArray(initialMovies) && initialMovies.length > 0);
   const playerSectionRef = useRef(null);
   const playerMountRef = useRef(null);
   const viewMenuRef = useRef(null);
@@ -144,10 +144,12 @@ export default function WatchClient({ movieId = '' }) {
   const selectedQualityRef = useRef('auto');
   const qualityEnforceUntilRef = useRef(0);
   const qualityReloadAttemptedRef = useRef(false);
+  const playableMarkedRef = useRef(false);
   const lastKnownTimeRef = useRef(0);
   const lastKnownPlayingRef = useRef(true);
 
   const [isReady, setIsReady] = useState(false);
+  const [isPlayable, setIsPlayable] = useState(false);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(100);
@@ -169,9 +171,12 @@ export default function WatchClient({ movieId = '' }) {
   const shouldShowEpisodes = isSeriesMovie(movie);
 
   useEffect(() => {
-    let active = true;
+    if (!shouldShowEpisodes) {
+      return undefined;
+    }
 
-    async function loadMovies() {
+    let active = true;
+    const fetchTimer = window.setTimeout(async () => {
       try {
         const response = await fetch('/api/movies', { cache: 'no-store' });
         const payload = await response.json();
@@ -179,7 +184,22 @@ export default function WatchClient({ movieId = '' }) {
         if (!active) return;
 
         if (response.ok && Array.isArray(payload.movies)) {
-          setMovies(payload.movies);
+          setMovies(currentMovies => {
+            const currentMovie = currentMovies.find(item => item?.id === movieId) || currentMovies[0] || null;
+            const mergedMovies = [];
+
+            if (currentMovie) {
+              mergedMovies.push(currentMovie);
+            }
+
+            for (const item of payload.movies) {
+              if (item?.id !== currentMovie?.id) {
+                mergedMovies.push(item);
+              }
+            }
+
+            return mergedMovies;
+          });
         } else {
           setMovies([]);
         }
@@ -188,14 +208,13 @@ export default function WatchClient({ movieId = '' }) {
       } finally {
         if (active) setIsCatalogLoaded(true);
       }
-    }
-
-    loadMovies();
+    }, 1200);
 
     return () => {
       active = false;
+      window.clearTimeout(fetchTimer);
     };
-  }, []);
+  }, [movieId, shouldShowEpisodes]);
 
   const episodes = useMemo(() => {
     if (!movie || !shouldShowEpisodes) return [];
@@ -333,7 +352,15 @@ export default function WatchClient({ movieId = '' }) {
     let saveTimer;
 
     setIsReady(false);
+    setIsPlayable(false);
+    playableMarkedRef.current = false;
     resumeAppliedRef.current = false;
+
+    if (typeof performance !== 'undefined' && performance.clearMarks) {
+      performance.clearMarks('watch-player-ready');
+      performance.clearMarks('watch-playable');
+      performance.clearMeasures('watch-ready-to-playable');
+    }
 
     loadYouTubeApi().then(() => {
       if (isCancelled || !window.YT?.Player || !playerMountRef.current) return;
@@ -389,6 +416,9 @@ export default function WatchClient({ movieId = '' }) {
             }
 
             setIsReady(true);
+            if (typeof performance !== 'undefined' && performance.mark) {
+              performance.mark('watch-player-ready');
+            }
             setDuration(Number(event.target.getDuration?.() || 0));
             setVolume(Number(event.target.getVolume?.() || 100));
             setIsMuted(Boolean(event.target.isMuted?.()));
@@ -424,6 +454,20 @@ export default function WatchClient({ movieId = '' }) {
             const playing = event.data === window.YT.PlayerState.PLAYING;
             setIsPlaying(playing);
             lastKnownPlayingRef.current = playing;
+
+            if (playing && !playableMarkedRef.current) {
+              playableMarkedRef.current = true;
+              setIsPlayable(true);
+
+              if (typeof performance !== 'undefined' && performance.mark) {
+                performance.mark('watch-playable');
+                try {
+                  performance.measure('watch-ready-to-playable', 'watch-player-ready', 'watch-playable');
+                } catch {
+                  // Ignore if the marks are unavailable in this browser/session.
+                }
+              }
+            }
           },
         },
       });
@@ -968,6 +1012,7 @@ export default function WatchClient({ movieId = '' }) {
         <div
           ref={playerSectionRef}
           className={`${styles.playerSection} ${isMiniMode ? styles.playerSectionMini : ''} ${isPseudoFullscreen ? styles.playerSectionPseudoFullscreen : ''} ${isNativePlayerFullscreen ? styles.playerSectionNativeFullscreen : ''}`}
+          data-watch-readiness={isPlayable ? 'playable' : isReady ? 'ready' : 'loading'}
         >
           <div
             className={`${styles.videoContainer} ${(isFullscreen || isPseudoFullscreen) && !isControlsVisible ? styles.videoContainerUiHidden : ''}`}

@@ -14,6 +14,8 @@
 - [ ] Enforce agreed 4-slot AdSense setup: home after rail 3, category after first block, watch after related, search after 8–12 results | Owner: developer | Priority: medium
 
 ## Review
+- [ ] Reduce watch page payload and push slower category/watch loads below warning threshold | Owner: developer | Priority: high
+- [ ] Test current UI performance and route transitions, prioritizing load speed first | Owner: techlead | Priority: high
 - [ ] Wire exact Google AdSense snippet values into the existing integration | Owner: techlead | Priority: medium
 - [ ] Move AdSense account verification into Next metadata export | Owner: developer | Priority: medium
 - [ ] Reclassify catalog items to the expanded seven-bucket taxonomy | Owner: developer | Priority: high
@@ -54,3 +56,4 @@
 - [x] Fix watch page fullscreen to true window fullscreen and improve popup display controls | Owner: developer | Finished: 2026-04-22
 - [x] Fix category bar wrapping and remove Tấu Hài from crawl-derived categories | Owner: designer | Finished: 2026-04-21
 - [x] Review UI and crawled data flow optimization | Owner: techlead | Finished: 2026-04-21
+ - [ ] Optimize home load, watch readiness, and mobile category overflow | Owner: developer | Priority: high

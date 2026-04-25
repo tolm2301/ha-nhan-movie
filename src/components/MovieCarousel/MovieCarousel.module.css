@@ -4,6 +4,8 @@
   margin: 0 auto;
   padding: 60px 24px 20px;
   position: relative;
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 820px;
 }
 
 .header {

@@ -1,5 +1,53 @@
 # Progress Timeline
 
+## 2026-04-26 (developer watch warm-up)
+- Scope: Add a lightweight network warm-up for the watch player bootstrap without changing search behavior or adding heavy homepage preloads.
+- Actions: Added conservative `preconnect`/`dns-prefetch` hints for `www.youtube.com`, `www.youtube-nocookie.com`, and `s.ytimg.com` in the root layout so the YouTube iframe API/player bootstrap can reuse warmed connections while keeping the hints global and low-cost.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; targeted browser pass reported desktop home `load=309ms`, category `load=1232ms`, search `load=128ms`, watch `load=1357ms`; mobile home `load=277ms`, category `load=1026ms`, search `load=98ms`, watch `load=1582ms`; home transitions `category=2627ms`, `search=1308ms`, `watch=2917ms`; watch readiness improved to `routeElapsedMs=2346ms` and `watch-player-ready=2324ms`; the page reached `data-watch-readiness="ready"`, but no `watch-playable` mark appeared in the timed window.
+- Risks: The warm-up helped the watch bootstrap/readiness path, but desktop and mobile watch route loads are still above 1000ms and mobile category remains just over the line in this run.
+
+## 2026-04-26 (tester combined browser verification)
+- Scope: Run one fresh combined browser verification pass on the current code after the latest category and watch optimizations, checking desktop/mobile fresh loads, home route transitions, watch readiness markers, and mobile overflow.
+- Actions: Measured fresh loads for `/`, `/category/ha-nhan`, `/search?q=hanhan`, and `/watch/EvzXuJn2aUM` on desktop and mobile, measured home→category/search/watch transitions from the home page, and captured watch readiness using the `watch-player-ready`/`watch-playable` markers plus the `data-watch-readiness` state.
+- Verification: Desktop loads were home `143ms`, category `809ms`, search `138ms`, watch `1409ms`; mobile loads were home `136ms`, category `2202ms`, search `112ms`, watch `1473ms`; home transitions were category `3121ms`, search `1285ms`, watch `3347ms`; watch readiness marks were `watch-player-ready=3287.9ms` and `watch-playable=15782.3ms` with the page ending in `data-watch-readiness="playable"`; mobile `/category/ha-nhan` stayed overflow-free (`scrollWidth=390` on `390px`).
+- Risks: Search and watch mobile loads still exceed the 1000ms warning line in this run, and home→category/home→watch transitions are also above the line; category desktop remained under, but mobile category was over.
+
+## 2026-04-26 (developer category paint deferral)
+- Scope: Apply one more narrow optimization to the category page by reducing upfront card layout/paint work, while keeping search and watch behavior untouched.
+- Actions: Added `content-visibility: auto` plus intrinsic sizing to `MovieCard` cards and the category grid so offscreen cards can skip early layout/paint work while preserving the same markup and UX.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; targeted browser pass on the category route reported desktop `/category/ha-nhan` `load=980ms` and mobile `/category/ha-nhan` `load=875ms`, both under the 1000ms warning line, with home->category transition at `3408ms` in that run but the initial category route itself now consistently landed below the warning line in the focused check.
+- Risks: The broader home/server timings still vary run-to-run, so the category improvement is strongest on the route’s own initial load rather than every navigation-related metric.
+
+## 2026-04-26 (developer performance fix)
+- Scope: Implement the smallest practical fixes for the confirmed home-load, mobile overflow, and watch-readiness issues without touching search behavior.
+- Actions: Reduced the watch route payload to ship only the current movie on first render, kept the rest of the catalog fetch deferred for series episodes only, merged the later catalog response without replacing the active movie object, and preserved the earlier mobile/header/home containment changes.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; browser verification after the watch-payload trim reported desktop home `load=468ms`, category `load=1115ms`, search `load=292ms`, watch `load=948ms`; mobile home `load=345ms`, category `load=1109ms`, search `load=211ms`, watch `load=1006ms`; home transitions measured `category=857ms`, `search=71ms`, `watch=879ms`; watch route entry settled in `4928ms` but the player reached `ready` at `1993.6ms` and `playable` after manual play at `5440.6ms`; mobile `/category/ha-nhan` remained overflow-free (`scrollWidth=390` on `390px`).
+- Risks: Watch playback readiness still depends on YouTube/browser behavior, and category load remains slightly above the stricter warning line even after the watch-payload trim.
+
+## 2026-04-26 (tester stricter performance sweep)
+- Scope: Re-run the browser performance pass with stricter thresholds, treating any route load over 1000ms as a warning and separating watch route navigation from video readiness.
+- Actions: Ran a fresh Playwright browser sweep on the local production server for desktop and mobile viewports, measured initial loads for `/`, `/category/ha-nhan`, `/search?q=hanhan`, and `/watch/EvzXuJn2aUM`, measured home->category/search/watch transitions, and probed watch readiness by checking the iframe/control state plus a user-click playback proxy.
+- Verification: Desktop loads were `home load=2676ms/fcp=2504ms`, `category load=896ms/fcp=1040ms`, `search load=149ms/fcp=108ms`, and `watch load=986ms/fcp=944ms`; route transitions were `home->category=1145ms`, `home->search=99ms`, `home->watch=1011ms`; watch readiness was not directly observable as a stable autoplay-first-frame event, but the player iframe was present and the controls became usable immediately after route settle, with a click-to-first-playback-progress proxy of `403ms`; mobile `/category/ha-nhan` still overflowed horizontally (`scrollWidth=424` on `390px`) and mobile category load hit `1009ms`.
+- Risks: Home load, home->category, and home->watch are all over the stricter 1000ms warning line; watch first-frame remains a proxy because autoplay did not expose a stable playing-state marker in the browser run.
+
+## 2026-04-26 (tester performance sweep)
+- Scope: Measure initial load speed and route transition speed first, then check desktop/mobile responsiveness on home, category, search, and watch flows.
+- Actions: Built the app, ran a headless Playwright browser pass against the local production server, measured fresh-load timings for `/`, `/category/ha-nhan`, `/search?q=hanhan`, and `/watch/EvzXuJn2aUM`, then measured home->category, home->search, and home->watch route transitions plus mobile viewport overflow checks.
+- Verification: Desktop load timings came back as home `load=2204ms`/`fcp=1984ms`, category `load=1197ms`/`fcp=1132ms`, search `load=118ms`/`fcp=160ms`, and watch `load=978ms`/`fcp=968ms`; route transitions measured home->category `933ms`, home->search `91ms`, and home->watch `914ms`; mobile checks showed no overflow on home/search/watch, but `/category/ha-nhan` exceeded the viewport (`scrollWidth=424` on `390px`) due to the page info badge at the top right.
+- Risks: The category page needs a mobile overflow fix before the responsive pass is clean; otherwise the main flows remained usable and no blocking jank or render failure was observed.
+
+## 2026-04-25 (tester performance sweep)
+- Scope: Test the current UI with performance prioritized first, focusing on page load speed, route transition speed, and obvious responsiveness regressions across the main flows.
+- Actions: Assigned the new tester pass to measure home/category/search/watch behavior and report any slow or janky paths with evidence.
+- Verification: Pending tester execution.
+- Risks: Current repo does not expose a dedicated UI performance test script, so results will depend on browser/runtime measurements gathered by the tester.
+
+## 2026-04-25 (agent skill upgrade)
+- Scope: Upgrade the `creator`, `designer`, and new `tester` subagent instructions so the team can operate at a higher-quality project level.
+- Actions: Strengthened `creator.md` around release readiness, metadata, docs, copy, and operational risk handling; sharpened `designer.md` toward premium UI direction, responsive/state coverage, and clearer handoff deliverables; added a new `tester.md` focused on desktop/mobile UI checks, regression coverage, reproducible bug reporting, and evidence-driven verification.
+- Verification: File-level update only; no app code changed and no runtime commands were required.
+- Risks: The new tester workflow assumes future tasks will hand off explicit scope and acceptance criteria so verification can stay concrete instead of generic.
+
 ## 2026-04-25 (developer taxonomy reclassification pass)
 - Scope: Reclassify the current catalog to the expanded seven-bucket taxonomy while preserving the Ha Nhân-first rule and keeping unrelated UI/SEO/ads work untouched.
 - Actions: Broadened the shared category matcher in `src/lib/movieCategories.js` so `Trọng Sinh`, `Xuyên Không`, `Hệ Thống`, and `Tu Tiên` now recognize the latest expanded anchors/synonyms, and moved the category priority to `Hà Nhân` → `Liễu Như Yên` → `Trọng Sinh` → `Xuyên Không` → `Hệ Thống` → `Tu Tiên` → `Khác`.
@@ -474,3 +522,8 @@
 - Evidence: Arrow shortcuts now call the active YouTube player directly and keep fullscreen control auto-hide behavior intact; interactive descendants are excluded via a target-guard helper.
 - Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
 - Risks: Browser-level focus handling can still vary slightly around embedded controls, but the target guard prevents hijacking standard form/interactive elements.
+## 2026-04-26 (strict performance rerun)
+- Scope: Re-test the UI under a stricter threshold where >1000ms is considered a warning, and separate watch route navigation from actual video readiness.
+- Actions: Re-ran the browser performance sweep on desktop and mobile, measured fresh-load timings for home/category/search/watch, rechecked home route transitions, and attempted to measure watch video readiness with a stable autoplay-first-frame signal.
+- Verification: Desktop loads came back as home `2676ms` (warn), category `896ms`, search `149ms`, watch `986ms`; mobile loads were home `1357ms` (warn), category `1009ms` (warn), search `157ms`, watch `971ms`; home transitions were category `1145ms` (warn), search `99ms`, watch `1011ms` (warn); a direct autoplay-first-frame metric could not be measured reliably, so the closest proxy was watch route settle `6215ms` with controls usable `+26ms` later and click-to-first-playback-progress proxy `403ms`.
+- Risks: Home load is the biggest regression under the stricter rule; `/category/ha-nhan` still overflows horizontally on mobile (`scrollWidth=424` at `390px`); watch readiness still needs a better instrumented signal than the current proxy.

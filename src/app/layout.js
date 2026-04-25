@@ -24,6 +24,14 @@ export default function RootLayout({ children }) {
 
   return (
     <html lang="vi">
+      <head>
+        <link rel="preconnect" href="https://www.youtube.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://www.youtube.com" />
+        <link rel="preconnect" href="https://www.youtube-nocookie.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://www.youtube-nocookie.com" />
+        <link rel="preconnect" href="https://s.ytimg.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://s.ytimg.com" />
+      </head>
       <body className={inter.className}>
         {hasAnyAdsensePlacementEnabled() && adsenseScriptUrl ? (
           <Script src={adsenseScriptUrl} strategy="afterInteractive" crossOrigin="anonymous" />
