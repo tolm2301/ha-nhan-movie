@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { getCategoryBySlug } from '@/lib/data';
 import Link from 'next/link';
 import MovieCard from '@/components/MovieCard/MovieCard';
+import AdSlot from '@/components/Adsense/AdSlot';
 import styles from './Category.module.css';
 import { buildBreadcrumbJsonLd, buildItemListJsonLd, buildMetadata, buildAbsoluteUrl, toJsonLd } from '@/lib/seo';
 
@@ -73,6 +74,8 @@ export default async function CategoryPage({ params, searchParams }) {
         <p className={styles.count}>{category.count} video</p>
         <p className={styles.pageInfo}>Trang {currentPage}/{totalPages}</p>
       </div>
+
+      <AdSlot placement="categoryAfterFirstBlock" minHeight={250} />
 
       <div className={styles.grid}>
         {pageMovies.map(movie => (
