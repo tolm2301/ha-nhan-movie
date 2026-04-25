@@ -2,16 +2,31 @@ import Hero from '@/components/Hero/Hero';
 import MovieCarousel from '@/components/MovieCarousel/MovieCarousel';
 import RecentWatchedSection from '@/components/RecentWatchedSection/RecentWatchedSection';
 import { getMovieCatalog } from '@/lib/data';
+import { buildMetadata, buildWebsiteJsonLd, toJsonLd } from '@/lib/seo';
 
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata() {
+  const catalog = await getMovieCatalog();
+  const featuredTitle = catalog.featuredMovie?.displayTitle || catalog.featuredMovie?.title || 'phim mới cập nhật';
+
+  return buildMetadata({
+    title: 'Hanhan Movie / Hà Nhân | Xem phim mới cập nhật',
+    description: `Hanhan Movie / Hà Nhân cập nhật ${featuredTitle} và các phim theo đúng danh mục hiện có.`,
+    pathname: '/',
+    image: catalog.featuredMovie?.thumbnail,
+  });
+}
 
 export default async function Home() {
   const catalog = await getMovieCatalog();
   const featuredMovie = catalog.featuredMovie;
   const homeCategories = catalog.categoryBuckets.filter(category => category.movies.length > 0);
+  const websiteJsonLd = buildWebsiteJsonLd();
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toJsonLd(websiteJsonLd) }} />
       <Hero featuredMovie={featuredMovie} />
 
       <RecentWatchedSection />

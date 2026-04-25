@@ -1,5 +1,12 @@
 # Progress Timeline
 
+## 2026-04-25 (developer SEO technical pass)
+- Scope: Add core technical SEO coverage for the Next.js app: metadata, canonical URLs, robots/sitemap routes, and structured data for the homepage, category pages, and watch pages.
+- Actions: Added shared SEO helpers, page-specific metadata generation, `WebSite`/`BreadcrumbList`/`ItemList`/`VideoObject` JSON-LD where appropriate, `robots.txt` and `sitemap.xml` route handlers, and a search-page noindex directive; also moved the watch page into a server wrapper so the watch metadata can be generated safely while preserving the existing client player.
+- Evidence: `npm.cmd run lint` passed; `npm.cmd run build` passed; SEO smoke check reported generated robots rules, sitemap URLs, homepage WebSite search action, and metadata helpers with canonical output.
+- Verification: Passed locally.
+- Risks: Absolute SEO URLs currently resolve from `NEXT_PUBLIC_SITE_URL` or `VERCEL_URL`, otherwise they fall back to localhost in development; set the production site URL env so canonical/JSON-LD values stay correct.
+
 ## 2026-04-25 (developer watch skip controls)
 - Scope: Add visible skip backward/forward controls to the watch-player toolbar and keep the jump interval consistent with the existing seek shortcuts.
 - Actions: Added 15-second skip buttons beside the playback controls, reused the shared seek helper for button, keyboard, and double-click seeking, and kept the buttons inside the same fullscreen/auto-hide control surface so both normal and fullscreen modes use the same wiring.
