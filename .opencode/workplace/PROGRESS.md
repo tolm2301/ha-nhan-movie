@@ -14,6 +14,13 @@
 - Verification: Passed locally.
 - Risks: Absolute SEO URLs currently resolve from `NEXT_PUBLIC_SITE_URL` or `VERCEL_URL`, otherwise they fall back to localhost in development; set the production site URL env so canonical/JSON-LD values stay correct.
 
+## 2026-04-25 (developer sitemap production-url follow-up)
+- Scope: Make the sitemap and absolute SEO URLs resolve to the Vercel production domain more reliably, and keep the sitemap refreshable for Google.
+- Actions: Expanded the site URL helper to prefer `NEXT_PUBLIC_SITE_URL`, `SITE_URL`, `VERCEL_PROJECT_PRODUCTION_URL`, then `VERCEL_URL`, with safe `https://` normalization; added a one-hour sitemap revalidate window so Google sees refreshed URLs without requiring a deploy.
+- Evidence: `npm.cmd run lint` passed; `npm.cmd run build` passed; build output still exposes `/sitemap.xml` as a route and now shows `Revalidate 1h` for the sitemap.
+- Verification: Passed locally.
+- Risks: The exact production hostname still depends on the Vercel environment variable or configured custom domain, so the deployed site must have one of those set for absolute URLs to match production.
+
 ## 2026-04-25 (developer watch skip controls)
 - Scope: Add visible skip backward/forward controls to the watch-player toolbar and keep the jump interval consistent with the existing seek shortcuts.
 - Actions: Added 15-second skip buttons beside the playback controls, reused the shared seek helper for button, keyboard, and double-click seeking, and kept the buttons inside the same fullscreen/auto-hide control surface so both normal and fullscreen modes use the same wiring.

@@ -1,10 +1,26 @@
 const DEFAULT_SITE_URL = 'http://localhost:3000';
 
+function normalizeSiteUrl(value = '') {
+  const trimmed = String(value || '').trim();
+  if (!trimmed) return DEFAULT_SITE_URL;
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed.replace(/\/+$/, '');
+  }
+
+  return `https://${trimmed.replace(/\/+$/, '')}`;
+}
+
 export const SITE_NAME = 'Hanhan Movie / Hà Nhân';
 export const SITE_DESCRIPTION = 'Hanhan Movie / Hà Nhân cập nhật phim theo các bucket hiện có: Xuyên Không, Trọng Sinh, Liễu Như Yên, Hệ Thống và Khác.';
 
 export function getSiteUrl() {
-  return process.env.NEXT_PUBLIC_SITE_URL || DEFAULT_SITE_URL;
+  return normalizeSiteUrl(
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.SITE_URL ||
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ||
+    process.env.VERCEL_URL
+  );
 }
 
 export function buildAbsoluteUrl(pathname = '/') {
