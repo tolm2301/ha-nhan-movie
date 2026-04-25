@@ -5,6 +5,11 @@ const CATEGORY_DEFINITIONS = [
     keywords: ['ha nhan', 'hanhan'],
   },
   {
+    slug: 'tu-tien',
+    tag: 'Tu Tiên',
+    keywords: ['tu tien', 'tien hiep'],
+  },
+  {
     slug: 'xuyen-khong',
     tag: 'Xuyên Không',
     keywords: ['xuyen khong'],
@@ -80,6 +85,10 @@ export function resolveMovieCategory(movie = {}) {
 
   if (matchesHeThongCategory(combinedText, tagText)) {
     return CATEGORY_BY_SLUG.get('he-thong');
+  }
+
+  if (hasKeyword(combinedText, 'tu tien') || hasKeyword(combinedText, 'tien hiep')) {
+    return CATEGORY_BY_SLUG.get('tu-tien');
   }
 
   if (hasKeyword(combinedText, 'lieu nhu yen')) {

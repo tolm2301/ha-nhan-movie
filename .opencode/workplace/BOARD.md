@@ -13,6 +13,7 @@
 - [ ] Enforce 30-video floor with tiered crawl fallback | Owner: developer | Priority: high
 
 ## Review
+- [ ] Add `Tu Tiên` as a first-class taxonomy bucket and home rail after `Hà Nhân` | Owner: techlead | Priority: medium
 - [ ] Add SEO metadata, robots/sitemap, and structured data for home/category/watch pages | Owner: techlead | Priority: medium
 - [ ] Add watch skip backward/forward controls to the watch player | Owner: techlead | Priority: medium
 - [ ] Enable normal-mode watch toolbar auto-hide | Owner: techlead | Priority: medium
