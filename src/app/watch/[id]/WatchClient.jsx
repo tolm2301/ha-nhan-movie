@@ -22,31 +22,64 @@ const QUALITY_LABELS = {
 };
 
 const SEEK_STEP_SECONDS = 30;
-
-const POPOUT_RETURN_TYPE = 'HANHAN_POPOUT_RETURN';
-const POPOUT_SYNC_KEY = 'hanhan:popout-sync';
+const YOUTUBE_API_LOAD_TIMEOUT_MS = 10000;
+const YOUTUBE_IFRAME_API_SRC = 'https://www.youtube.com/iframe_api';
+const POPUP_HELPER_TITLE = 'Hanhan Mini Popup';
+const POPUP_HELPER_PIN_COMMAND = 'powershell -ExecutionPolicy Bypass -File ".\\tools\\window-pin\\PinHanhanPopup.ps1" -Mode pin';
+const POPUP_HELPER_UNPIN_COMMAND = 'powershell -ExecutionPolicy Bypass -File ".\\tools\\window-pin\\PinHanhanPopup.ps1" -Mode unpin';
 
 function loadYouTubeApi() {
   if (typeof window === 'undefined') return Promise.resolve();
   if (window.YT?.Player) return Promise.resolve();
   if (youtubeApiPromise) return youtubeApiPromise;
 
-  youtubeApiPromise = new Promise(resolve => {
-    const existing = document.querySelector('script[src="https://www.youtube.com/iframe_api"]');
+  youtubeApiPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector(`script[src="${YOUTUBE_IFRAME_API_SRC}"]`);
+    const script = existing || document.createElement('script');
+    let settled = false;
+    let timeoutId;
+
+    const finish = callback => {
+      if (settled) return;
+      settled = true;
+      if (timeoutId) {
+        window.clearTimeout(timeoutId);
+      }
+      if (script) {
+        script.removeEventListener('error', handleError);
+      }
+      callback();
+    };
+
+    const handleError = () => {
+      finish(() => reject(new Error('YouTube API failed to load.')));
+    };
+
     if (!existing) {
-      const script = document.createElement('script');
-      script.src = 'https://www.youtube.com/iframe_api';
+      script.src = YOUTUBE_IFRAME_API_SRC;
       script.async = true;
+      script.addEventListener('error', handleError);
       document.body.appendChild(script);
+    } else {
+      existing.addEventListener('error', handleError);
     }
 
     const previous = window.onYouTubeIframeAPIReady;
     window.onYouTubeIframeAPIReady = () => {
       if (typeof previous === 'function') previous();
-      resolve();
+      finish(resolve);
     };
 
-    if (window.YT?.Player) resolve();
+    timeoutId = window.setTimeout(() => {
+      finish(() => reject(new Error('YouTube API load timed out.')));
+    }, YOUTUBE_API_LOAD_TIMEOUT_MS);
+
+    if (window.YT?.Player) {
+      finish(resolve);
+    }
+  }).catch(error => {
+    youtubeApiPromise = undefined;
+    throw error;
   });
 
   return youtubeApiPromise;
@@ -127,16 +160,13 @@ function isInteractiveKeyboardTarget(target) {
   );
 }
 
-export default function WatchClient({ movieId = '', initialMovies = [] }) {
+export default function WatchClient({ movieId = '', initialMovies = [], popupMode = false, popupStartTime = 0, popupShouldPlay = true }) {
   const router = useRouter();
   const [movies, setMovies] = useState(() => initialMovies);
   const [isCatalogLoaded, setIsCatalogLoaded] = useState(() => Array.isArray(initialMovies) && initialMovies.length > 0);
   const playerSectionRef = useRef(null);
   const playerMountRef = useRef(null);
-  const viewMenuRef = useRef(null);
   const playerRef = useRef(null);
-  const pipWindowRef = useRef(null);
-  const popoutWatchTimerRef = useRef(null);
   const hideControlsTimerRef = useRef(null);
   const videoAreaClickTimerRef = useRef(null);
   const suppressNextVideoAreaClickRef = useRef(false);
@@ -147,6 +177,9 @@ export default function WatchClient({ movieId = '', initialMovies = [] }) {
   const playableMarkedRef = useRef(false);
   const lastKnownTimeRef = useRef(0);
   const lastKnownPlayingRef = useRef(true);
+  const popupWindowRef = useRef(null);
+  const popupRestoreStateRef = useRef({ time: 0, playing: true });
+  const popupPollTimerRef = useRef(null);
 
   const [isReady, setIsReady] = useState(false);
   const [isPlayable, setIsPlayable] = useState(false);
@@ -158,20 +191,56 @@ export default function WatchClient({ movieId = '', initialMovies = [] }) {
   const [qualityLevels, setQualityLevels] = useState(['auto']);
   const [currentQuality, setCurrentQuality] = useState('auto');
   const [selectedQuality, setSelectedQuality] = useState('auto');
-  const [isMiniMode, setIsMiniMode] = useState(false);
+  const [isDetachedPopupOpen, setIsDetachedPopupOpen] = useState(false);
+  const [isPopupPinned, setIsPopupPinned] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isNativePlayerFullscreen, setIsNativePlayerFullscreen] = useState(false);
   const [isPseudoFullscreen, setIsPseudoFullscreen] = useState(false);
-  const [isSystemPopout, setIsSystemPopout] = useState(false);
-  const [isViewMenuOpen, setIsViewMenuOpen] = useState(false);
   const [isControlsVisible, setIsControlsVisible] = useState(true);
+  const [playerLoadError, setPlayerLoadError] = useState('');
+  const [popupNotice, setPopupNotice] = useState('');
+  const [isPopupPinHelperSupported, setIsPopupPinHelperSupported] = useState(false);
 
   const movie = movies.find(m => m.id === movieId) || movies[0] || null;
   const movieDisplayTitle = movie?.displayTitle || movie?.title;
   const shouldShowEpisodes = isSeriesMovie(movie);
+  const isPopupWindow = Boolean(popupMode);
 
   useEffect(() => {
-    if (!shouldShowEpisodes) {
+    if (!isPopupWindow) return undefined;
+
+    let nextPinned = false;
+    try {
+      nextPinned = window.localStorage.getItem(`hanhan-popup-pinned:${movieId}`) === '1';
+    } catch {
+      nextPinned = false;
+    }
+
+    const nextSupported = /win/i.test(window.navigator.platform || window.navigator.userAgent || '');
+    const frame = window.requestAnimationFrame(() => {
+      setIsPopupPinned(nextPinned);
+      setIsPopupPinHelperSupported(nextSupported);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [isPopupWindow, movieId]);
+
+  useEffect(() => {
+    if (!isPopupWindow) return undefined;
+
+    try {
+      window.localStorage.setItem(`hanhan-popup-pinned:${movieId}`, isPopupPinned ? '1' : '0');
+    } catch {
+      // Ignore storage failures; the popup still keeps the current session state.
+    }
+
+    document.title = `${POPUP_HELPER_TITLE} • ${isPopupPinned ? 'Đã ghim' : 'Chưa ghim'}${movieDisplayTitle ? ` | ${movieDisplayTitle}` : ''}`;
+
+    return undefined;
+  }, [isPopupPinned, isPopupWindow, movieDisplayTitle, movieId]);
+
+  useEffect(() => {
+    if (!shouldShowEpisodes || isPopupWindow) {
       return undefined;
     }
 
@@ -214,10 +283,10 @@ export default function WatchClient({ movieId = '', initialMovies = [] }) {
       active = false;
       window.clearTimeout(fetchTimer);
     };
-  }, [movieId, shouldShowEpisodes]);
+  }, [isPopupWindow, movieId, shouldShowEpisodes]);
 
   const episodes = useMemo(() => {
-    if (!movie || !shouldShowEpisodes) return [];
+    if (!movie || !shouldShowEpisodes || isPopupWindow) return [];
 
     const movieSeriesKey = movie.seriesKey || normalizeSeriesKey(movie.title);
     const related = movies
@@ -240,7 +309,7 @@ export default function WatchClient({ movieId = '', initialMovies = [] }) {
     }
 
     return related.slice(0, 40);
-  }, [movie, movies, shouldShowEpisodes]);
+  }, [isPopupWindow, movie, movies, shouldShowEpisodes]);
 
   const clearHideControlsTimer = useCallback(() => {
     if (hideControlsTimerRef.current) {
@@ -263,86 +332,14 @@ export default function WatchClient({ movieId = '', initialMovies = [] }) {
   }, [clearHideControlsTimer]);
 
   const handlePlayerActivity = useCallback(() => {
-    if (!isReady || isSystemPopout) return;
+    if (!isReady) return;
     armControlsAutoHide();
-  }, [armControlsAutoHide, isReady, isSystemPopout]);
-
-  const restoreFromSystemPopout = useCallback((closeWindow = true) => {
-    const mainPlayer = playerRef.current;
-    const popoutWindow = pipWindowRef.current;
-    let syncPayload = null;
-
-    try {
-      const raw = window.localStorage.getItem(POPOUT_SYNC_KEY);
-      syncPayload = raw ? JSON.parse(raw) : null;
-    } catch {
-      syncPayload = null;
-    }
-
-    let playbackTime = Number(syncPayload?.time ?? mainPlayer?.getCurrentTime?.() ?? lastKnownTimeRef.current ?? currentTime ?? 0);
-    if (playbackTime < 1 && lastKnownTimeRef.current > 1) {
-      playbackTime = Number(lastKnownTimeRef.current);
-    }
-    const shouldPlay =
-      typeof syncPayload?.playing === 'boolean'
-        ? syncPayload.playing
-        : Number(mainPlayer?.getPlayerState?.() || 2) === 1 || lastKnownPlayingRef.current;
-
-    if (popoutWatchTimerRef.current) {
-      window.clearInterval(popoutWatchTimerRef.current);
-      popoutWatchTimerRef.current = null;
-    }
-
-    if (closeWindow && popoutWindow && !popoutWindow.closed) {
-      popoutWindow.close();
-    }
-
-    pipWindowRef.current = null;
-
-    if (mainPlayer && isReady) {
-      mainPlayer.seekTo(playbackTime, true);
-      if (shouldPlay) {
-        mainPlayer.playVideo();
-        setIsPlaying(true);
-      } else {
-        mainPlayer.pauseVideo();
-        setIsPlaying(false);
-      }
-      setCurrentTime(playbackTime);
-      lastKnownTimeRef.current = playbackTime;
-      lastKnownPlayingRef.current = shouldPlay;
-    }
-
-    setIsViewMenuOpen(false);
-    setIsControlsVisible(true);
-    clearHideControlsTimer();
-    setIsSystemPopout(false);
-  }, [clearHideControlsTimer, currentTime, isReady]);
+  }, [armControlsAutoHide, isReady]);
 
   useEffect(() => {
     if (!movie) return;
     pushWatchedMovie(movie);
   }, [movie]);
-
-  useEffect(() => {
-    const handlePopoutSync = event => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data?.type !== POPOUT_RETURN_TYPE) return;
-      if (!['return', 'close'].includes(event.data?.action)) return;
-
-      const payload = event.data.payload || null;
-      if (payload?.videoId && payload.videoId !== movie?.id) {
-        return;
-      }
-
-      restoreFromSystemPopout(false);
-    };
-
-    window.addEventListener('message', handlePopoutSync);
-    return () => {
-      window.removeEventListener('message', handlePopoutSync);
-    };
-  }, [movie?.id, restoreFromSystemPopout]);
 
   useEffect(() => {
     if (!movie || !playerMountRef.current) return;
@@ -353,6 +350,7 @@ export default function WatchClient({ movieId = '', initialMovies = [] }) {
 
     setIsReady(false);
     setIsPlayable(false);
+    setPlayerLoadError('');
     playableMarkedRef.current = false;
     resumeAppliedRef.current = false;
 
@@ -438,7 +436,20 @@ export default function WatchClient({ movieId = '', initialMovies = [] }) {
               resumeAppliedRef.current = true;
             }
 
-            event.target.playVideo();
+            if (isPopupWindow && Number.isFinite(popupStartTime) && popupStartTime > 0) {
+              event.target.seekTo(popupStartTime, true);
+              setCurrentTime(popupStartTime);
+              lastKnownTimeRef.current = popupStartTime;
+              resumeAppliedRef.current = true;
+            }
+
+            if (isPopupWindow && popupShouldPlay === false) {
+              event.target.pauseVideo();
+              setIsPlaying(false);
+              lastKnownPlayingRef.current = false;
+            } else {
+              event.target.playVideo();
+            }
           },
           onApiChange: event => {
             if (isCancelled) return;
@@ -514,6 +525,10 @@ export default function WatchClient({ movieId = '', initialMovies = [] }) {
       window.addEventListener('beforeunload', saveCurrentProgress);
 
       playerRef.current.__saveCurrentProgress = saveCurrentProgress;
+    }).catch(error => {
+      if (isCancelled) return;
+
+      setPlayerLoadError(error?.message || 'Không tải được trình phát YouTube.');
     });
 
     return () => {
@@ -533,20 +548,8 @@ export default function WatchClient({ movieId = '', initialMovies = [] }) {
         playerRef.current.destroy();
         playerRef.current = null;
       }
-
-      if (popoutWatchTimerRef.current) {
-        window.clearInterval(popoutWatchTimerRef.current);
-        popoutWatchTimerRef.current = null;
-      }
-
-      if (pipWindowRef.current && !pipWindowRef.current.closed) {
-        pipWindowRef.current.close();
-      }
-
-      pipWindowRef.current = null;
-      setIsSystemPopout(false);
     };
-  }, [movie]);
+  }, [isPopupWindow, movie, popupShouldPlay, popupStartTime]);
 
   useEffect(() => {
     const onFullscreenChange = () => {
@@ -578,7 +581,7 @@ export default function WatchClient({ movieId = '', initialMovies = [] }) {
   }, [armControlsAutoHide, clearHideControlsTimer, isPseudoFullscreen]);
 
   useEffect(() => {
-    if (!isReady || isSystemPopout) return undefined;
+    if (!isReady) return undefined;
 
     const initialHideTimer = window.setTimeout(() => {
       armControlsAutoHide();
@@ -588,7 +591,7 @@ export default function WatchClient({ movieId = '', initialMovies = [] }) {
       window.clearTimeout(initialHideTimer);
       clearHideControlsTimer();
     };
-  }, [armControlsAutoHide, clearHideControlsTimer, isFullscreen, isPseudoFullscreen, isReady, isSystemPopout]);
+  }, [armControlsAutoHide, clearHideControlsTimer, isFullscreen, isPseudoFullscreen, isReady]);
 
   useEffect(() => {
     if (!isPseudoFullscreen) return;
@@ -601,26 +604,11 @@ export default function WatchClient({ movieId = '', initialMovies = [] }) {
     };
   }, [isFullscreen, isPseudoFullscreen]);
 
-  useEffect(() => {
-    if (!isViewMenuOpen) return;
-
-    const handlePointerDown = event => {
-      if (!viewMenuRef.current?.contains(event.target)) {
-        setIsViewMenuOpen(false);
-      }
-    };
-
-    window.addEventListener('pointerdown', handlePointerDown);
-    return () => {
-      window.removeEventListener('pointerdown', handlePointerDown);
-    };
-  }, [isViewMenuOpen]);
-
   useEffect(() => () => clearVideoAreaClickTimer(), [clearVideoAreaClickTimer]);
 
   const handleTogglePlay = () => {
     const player = playerRef.current;
-    if (!player || !isReady || isSystemPopout) return;
+    if (!player || !isReady) return;
 
     if (isPlaying) {
       player.pauseVideo();
@@ -635,7 +623,7 @@ export default function WatchClient({ movieId = '', initialMovies = [] }) {
 
   const handleSeek = value => {
     const player = playerRef.current;
-    if (!player || !isReady || isSystemPopout) return;
+    if (!player || !isReady) return;
 
     const next = clamp(Number(value), 0, Number(duration || 0));
     player.seekTo(next, true);
@@ -645,7 +633,7 @@ export default function WatchClient({ movieId = '', initialMovies = [] }) {
 
   const handleVolumeChange = value => {
     const player = playerRef.current;
-    if (!player || !isReady || isSystemPopout) return;
+    if (!player || !isReady) return;
 
     const next = clamp(Number(value), 0, 100);
     player.setVolume(next);
@@ -661,7 +649,7 @@ export default function WatchClient({ movieId = '', initialMovies = [] }) {
 
   const handleToggleMute = () => {
     const player = playerRef.current;
-    if (!player || !isReady || isSystemPopout) return;
+    if (!player || !isReady) return;
 
     if (isMuted) {
       player.unMute();
@@ -754,7 +742,7 @@ export default function WatchClient({ movieId = '', initialMovies = [] }) {
 
   const handleQualityChange = value => {
     const player = playerRef.current;
-    if (!player || !isReady || isSystemPopout) return;
+    if (!player || !isReady) return;
 
     setSelectedQuality(value);
     selectedQualityRef.current = value;
@@ -783,63 +771,6 @@ export default function WatchClient({ movieId = '', initialMovies = [] }) {
     }
 
     setCurrentQuality(normalizeQualityValue(player.getPlaybackQuality?.()));
-  };
-
-  const handlePopout = () => {
-    if (isSystemPopout) {
-      restoreFromSystemPopout(true);
-      return;
-    }
-
-    setIsViewMenuOpen(false);
-    setIsPseudoFullscreen(false);
-    setIsMiniMode(false);
-  };
-
-  const startSystemPopout = async () => {
-    if (typeof window.open !== 'function' || !movie?.id || !playerRef.current) {
-      return false;
-    }
-
-    const player = playerRef.current;
-    if (!player || !isReady) return false;
-
-    try {
-      const startAt = Number(player.getCurrentTime?.() || 0);
-      const shouldPlay = Number(player.getPlayerState?.() || 2) === 1;
-      const quality = selectedQualityRef.current || 'auto';
-
-      const url = new URL('/watch-popout', window.location.origin);
-      url.searchParams.set('id', movie.id);
-      url.searchParams.set('t', String(Math.max(0, Math.floor(startAt))));
-      url.searchParams.set('playing', shouldPlay ? '1' : '0');
-      url.searchParams.set('q', quality);
-
-      const width = 420;
-      const height = 300;
-      const left = Math.max(0, window.screenX + window.outerWidth - width - 30);
-      const top = Math.max(0, window.screenY + window.outerHeight - height - 90);
-      const features = `popup=yes,width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=no`;
-
-      const popup = window.open(url.toString(), 'hanhan-mini-web', features);
-      if (!popup) return false;
-
-      pipWindowRef.current = popup;
-      if (popoutWatchTimerRef.current) window.clearInterval(popoutWatchTimerRef.current);
-      popoutWatchTimerRef.current = window.setInterval(() => {
-        if (!pipWindowRef.current || pipWindowRef.current.closed) {
-          restoreFromSystemPopout(false);
-        }
-      }, 800);
-
-      player.pauseVideo();
-      setIsPlaying(false);
-
-      setIsSystemPopout(true);
-      return true;
-    } catch {
-      return false;
-    }
   };
 
   const requestElementFullscreen = async element => {
@@ -886,6 +817,151 @@ export default function WatchClient({ movieId = '', initialMovies = [] }) {
     return false;
   };
 
+  const closeDetachedPopupWindow = useCallback((restoredState = null) => {
+    popupWindowRef.current = null;
+    setIsDetachedPopupOpen(false);
+
+    if (popupPollTimerRef.current) {
+      window.clearInterval(popupPollTimerRef.current);
+      popupPollTimerRef.current = null;
+    }
+
+    const player = playerRef.current;
+    if (!player || !movie) return;
+
+    const fallbackState = popupRestoreStateRef.current;
+    const nextTime = Number.isFinite(restoredState?.time) ? restoredState.time : fallbackState.time;
+    const shouldPlay = typeof restoredState?.playing === 'boolean' ? restoredState.playing : fallbackState.playing;
+
+    if (Number.isFinite(nextTime) && nextTime >= 0) {
+      player.seekTo(nextTime, true);
+      setCurrentTime(nextTime);
+      lastKnownTimeRef.current = nextTime;
+    }
+
+    if (shouldPlay) {
+      player.playVideo();
+      setIsPlaying(true);
+      lastKnownPlayingRef.current = true;
+    } else {
+      player.pauseVideo();
+      setIsPlaying(false);
+      lastKnownPlayingRef.current = false;
+    }
+
+  }, [movie]);
+
+  const openDetachedPopupWindow = useCallback(() => {
+    if (!movie) return;
+
+    const existingPopup = popupWindowRef.current;
+    if (existingPopup && !existingPopup.closed) {
+      existingPopup.focus();
+      setIsDetachedPopupOpen(true);
+      return;
+    }
+
+    const player = playerRef.current;
+    const nextTime = Number(player?.getCurrentTime?.() || currentTime || lastKnownTimeRef.current || 0);
+    const nextPlaying = Boolean(player?.getPlayerState?.() === 1 || isPlaying);
+    const popupUrl = new URL(`/watch-popout/${movie.id}`, window.location.origin);
+    popupUrl.searchParams.set('t', String(Math.max(0, Math.floor(nextTime))));
+    popupUrl.searchParams.set('playing', nextPlaying ? '1' : '0');
+
+    popupRestoreStateRef.current = { time: nextTime, playing: nextPlaying };
+
+    const popupWindow = window.open(
+      popupUrl.toString(),
+      `hanhan-popup-${movie.id}`,
+      'popup=yes,width=1024,height=768,left=80,top=40',
+    );
+
+    if (!popupWindow) {
+      setPopupNotice('Trình duyệt đã chặn cửa sổ tách rời. Hãy cho phép popup để mở cửa sổ riêng.');
+      return;
+    }
+
+    setPopupNotice('');
+    popupWindowRef.current = popupWindow;
+    setIsDetachedPopupOpen(true);
+
+    if (player && typeof player.pauseVideo === 'function') {
+      player.pauseVideo();
+      setIsPlaying(false);
+      lastKnownPlayingRef.current = false;
+    }
+
+    if (popupPollTimerRef.current) {
+      window.clearInterval(popupPollTimerRef.current);
+    }
+
+    popupPollTimerRef.current = window.setInterval(() => {
+      if (!popupWindowRef.current || popupWindowRef.current.closed) {
+        closeDetachedPopupWindow();
+      }
+    }, 500);
+  }, [closeDetachedPopupWindow, currentTime, isPlaying, movie]);
+
+  useEffect(() => {
+    if (isPopupWindow) return undefined;
+
+    const handlePopupMessage = event => {
+      if (event.origin !== window.location.origin) return;
+      if (event.source !== popupWindowRef.current) return;
+
+      const data = event.data;
+      if (!data || data.type !== 'hanhan-watch-popup-state' || data.movieId !== movie?.id) return;
+
+      closeDetachedPopupWindow({
+        time: Number(data.time),
+        playing: Boolean(data.playing),
+      });
+    };
+
+    window.addEventListener('message', handlePopupMessage);
+    return () => window.removeEventListener('message', handlePopupMessage);
+  }, [closeDetachedPopupWindow, isPopupWindow, movie?.id]);
+
+  useEffect(() => {
+    if (!isPopupWindow) return undefined;
+
+    const postPopupState = () => {
+      if (!window.opener || !movie) return;
+
+      const player = playerRef.current;
+      const state = {
+        type: 'hanhan-watch-popup-state',
+        movieId: movie.id,
+        time: Number(player?.getCurrentTime?.() || lastKnownTimeRef.current || 0),
+        playing: Boolean(player?.getPlayerState?.() === 1 || lastKnownPlayingRef.current),
+      };
+
+      window.opener.postMessage(state, window.location.origin);
+    };
+
+    window.addEventListener('beforeunload', postPopupState);
+    window.addEventListener('pagehide', postPopupState);
+
+    return () => {
+      postPopupState();
+      window.removeEventListener('beforeunload', postPopupState);
+      window.removeEventListener('pagehide', postPopupState);
+    };
+  }, [isPopupWindow, movie]);
+
+  useEffect(() => {
+    return () => {
+      if (popupPollTimerRef.current) {
+        window.clearInterval(popupPollTimerRef.current);
+        popupPollTimerRef.current = null;
+      }
+
+      if (popupWindowRef.current && !popupWindowRef.current.closed) {
+        popupWindowRef.current.close();
+      }
+    };
+  }, []);
+
   const handleFullscreen = async () => {
     const hasNativeFullscreen = Boolean(getFullscreenElement());
 
@@ -895,9 +971,6 @@ export default function WatchClient({ movieId = '', initialMovies = [] }) {
       clearHideControlsTimer();
       return;
     }
-
-    setIsMiniMode(false);
-    setIsViewMenuOpen(false);
 
     const enteredNative = await requestElementFullscreen(playerSectionRef.current);
     if (enteredNative) {
@@ -916,27 +989,35 @@ export default function WatchClient({ movieId = '', initialMovies = [] }) {
     }
   };
 
-  const handleToggleMiniMode = () => {
-    if (isSystemPopout) {
-      restoreFromSystemPopout(true);
-    }
-
+  const handleTogglePopup = () => {
     setIsPseudoFullscreen(false);
-    setIsViewMenuOpen(false);
-    setIsMiniMode(value => !value);
-  };
 
-  const handleToggleSystemPopout = async () => {
-    setIsViewMenuOpen(false);
-    if (isSystemPopout) {
-      restoreFromSystemPopout(true);
+    if (isPopupWindow) {
+      if (typeof window !== 'undefined') {
+        window.close();
+      }
       return;
     }
 
-    const opened = await startSystemPopout();
-    if (!opened) {
-      setIsMiniMode(true);
+    if (popupWindowRef.current && !popupWindowRef.current.closed) {
+      popupWindowRef.current.close();
+      closeDetachedPopupWindow();
+      return;
     }
+
+    openDetachedPopupWindow();
+  };
+
+  const handleTogglePopupPin = () => {
+    setIsPopupPinned(current => {
+      const nextPinned = !current;
+      setPopupNotice(nextPinned
+        ? (isPopupPinHelperSupported
+          ? `Windows topmost helper có thể ghim cửa sổ này. ${POPUP_HELPER_PIN_COMMAND}`
+          : `Trình duyệt không thể bảo đảm always-on-top; trạng thái ghim này chỉ là nhãn giao diện. ${POPUP_HELPER_PIN_COMMAND}`)
+        : `Đã bỏ ghim. ${POPUP_HELPER_UNPIN_COMMAND}`);
+      return nextPinned;
+    });
   };
 
   const handleVideoAreaClick = event => {
@@ -1003,15 +1084,58 @@ export default function WatchClient({ movieId = '', initialMovies = [] }) {
   }
 
   return (
-    <div className={styles.watchLayout}>
+    <div className={`${styles.watchLayout} ${isPopupWindow ? styles.popupLayout : ''}`}>
       <div className={styles.container}>
-        <button onClick={() => router.back()} className={styles.backBtn}>
-          ← Quay lại
-        </button>
+        {isPopupWindow ? (
+          <div className={styles.popupHeader}>
+            <div className={styles.popupHeaderText}>
+              <strong>{movieDisplayTitle}</strong>
+              <span>Cửa sổ tách rời • {isPopupPinned ? 'Đã ghim' : 'Chưa ghim'}</span>
+              <p className={styles.popupHeaderHint}>
+                {isPopupPinHelperSupported
+                  ? 'Trên Windows, title cửa sổ này khớp helper topmost để giữ popup luôn nổi trên cùng.'
+                  : 'Web không thể ép always-on-top; nút ghim chỉ giữ trạng thái và nhắc bạn dùng helper ngoài trình duyệt.'}
+              </p>
+            </div>
+            <div className={styles.popupHeaderActions}>
+              <button
+                type="button"
+                className={`${styles.popupPinBtn} ${isPopupPinned ? styles.popupPinBtnActive : ''}`}
+                onClick={handleTogglePopupPin}
+                aria-pressed={isPopupPinned}
+                title={isPopupPinned ? 'Bỏ ghim cửa sổ' : 'Ghim cửa sổ'}
+              >
+                {isPopupPinned ? 'Unpin' : 'Pin'}
+              </button>
+              <button type="button" className={styles.popupCloseBtn} onClick={handleTogglePopup}>
+                Đóng
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button onClick={() => router.back()} className={styles.backBtn}>
+            ← Quay lại
+          </button>
+        )}
+
+        {popupNotice && (
+          <p style={{
+            margin: '0 0 16px',
+            padding: '10px 12px',
+            borderRadius: 10,
+            background: 'rgba(247, 208, 56, 0.12)',
+            border: '1px solid rgba(247, 208, 56, 0.32)',
+            color: '#f7d038',
+            fontSize: '0.92rem',
+            fontWeight: 600,
+          }}>
+            {popupNotice}
+          </p>
+        )}
 
         <div
           ref={playerSectionRef}
-          className={`${styles.playerSection} ${isMiniMode ? styles.playerSectionMini : ''} ${isPseudoFullscreen ? styles.playerSectionPseudoFullscreen : ''} ${isNativePlayerFullscreen ? styles.playerSectionNativeFullscreen : ''}`}
+          className={`${styles.playerSection} ${isPseudoFullscreen ? styles.playerSectionPseudoFullscreen : ''} ${isNativePlayerFullscreen ? styles.playerSectionNativeFullscreen : ''}`}
           data-watch-readiness={isPlayable ? 'playable' : isReady ? 'ready' : 'loading'}
         >
           <div
@@ -1019,133 +1143,147 @@ export default function WatchClient({ movieId = '', initialMovies = [] }) {
             onPointerMove={handlePlayerActivity}
             onPointerDown={handlePlayerActivity}
           >
-            <div ref={playerMountRef} className={styles.playerFrame}></div>
-            <button
-              type="button"
-              className={styles.interactionBlocker}
-              aria-label={isPlaying ? 'Tạm dừng video' : 'Phát video'}
-              onPointerUp={handleVideoAreaPointerUp}
-              onClick={handleVideoAreaClick}
-              onDoubleClick={handleVideoAreaDoubleClick}
-            >
-              {!isPlaying && <span className={styles.centerPlayHint}>▶</span>}
-            </button>
-            <div className={styles.playerMaskTop}></div>
-            <div className={styles.playerMaskLogo}></div>
-
-            <div className={`${styles.inVideoControls} ${!isControlsVisible ? styles.inVideoControlsHidden : ''}`}>
-              <div className={styles.seekRow}>
-                <span>{formatTime(currentTime)}</span>
-                <input
-                  type="range"
-                  min="0"
-                  max={Math.max(duration, 0)}
-                  step="1"
-                  value={Math.min(currentTime, duration || 0)}
-                  onChange={event => handleSeek(event.target.value)}
-                  className={styles.seekInput}
-                  aria-label="Tua video"
-                />
-                <span>{formatTime(duration)}</span>
+            {playerLoadError ? (
+              <div style={{
+                position: 'absolute',
+                inset: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 10,
+                padding: 24,
+                textAlign: 'center',
+                color: '#fff',
+                background: 'radial-gradient(circle at top, rgba(255, 222, 0, 0.16), rgba(0, 0, 0, 0.96))',
+                zIndex: 5,
+              }}>
+                <strong>Không tải được trình phát YouTube.</strong>
+                <p style={{ margin: 0, maxWidth: 520, color: 'rgba(255, 255, 255, 0.78)' }}>
+                  {playerLoadError} Vui lòng tải lại trang để thử lại.
+                </p>
               </div>
+            ) : (
+              <>
+                <div ref={playerMountRef} className={styles.playerFrame}></div>
+                <button
+                  type="button"
+                  className={styles.interactionBlocker}
+                  aria-label={isPlaying ? 'Tạm dừng video' : 'Phát video'}
+                  onPointerUp={handleVideoAreaPointerUp}
+                  onClick={handleVideoAreaClick}
+                  onDoubleClick={handleVideoAreaDoubleClick}
+                >
+                  {!isPlaying && <span className={styles.centerPlayHint}>▶</span>}
+                </button>
+                <div className={styles.playerMaskTop}></div>
+                <div className={styles.playerMaskLogo}></div>
 
-              <div className={styles.controlRow}>
-                <div className={styles.leftControls}>
-                  <button
-                    type="button"
-                    className={`${styles.controlBtn} ${styles.skipBtn}`}
-                    onClick={() => handleSeekByOffset(-SEEK_STEP_SECONDS)}
-                    disabled={!isReady}
-                    aria-label={`Lùi ${SEEK_STEP_SECONDS} giây`}
-                    title={`Lùi ${SEEK_STEP_SECONDS} giây`}
-                  >
-                    ⏪
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.controlBtn} ${styles.skipBtn}`}
-                    onClick={() => handleSeekByOffset(SEEK_STEP_SECONDS)}
-                    disabled={!isReady}
-                    aria-label={`Tiến ${SEEK_STEP_SECONDS} giây`}
-                    title={`Tiến ${SEEK_STEP_SECONDS} giây`}
-                  >
-                     ⏩
-                  </button>
-                  <button className={styles.controlBtn} onClick={handleTogglePlay} disabled={!isReady}>
-                    {isPlaying ? '⏸' : '▶'}
-                  </button>
-                  <button className={styles.controlBtn} onClick={handleToggleMute} disabled={!isReady}>
-                    {isMuted || volume === 0 ? '🔇' : '🔊'}
-                  </button>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    step="1"
-                    value={isMuted ? 0 : volume}
-                    onChange={event => handleVolumeChange(event.target.value)}
-                    className={styles.volumeInput}
-                    aria-label="Âm lượng"
-                  />
-                </div>
-
-                <div className={styles.rightControls}>
-                  <select
-                    className={styles.qualitySelect}
-                    value={selectedQuality || 'auto'}
-                    onChange={event => handleQualityChange(event.target.value)}
-                    title={`Đang chạy: ${QUALITY_LABELS[currentQuality] || currentQuality}`}
-                  >
-                    {qualityLevels.map(level => (
-                      <option key={level} value={level}>
-                        {QUALITY_LABELS[level] || level}
-                      </option>
-                    ))}
-                  </select>
-                  <div ref={viewMenuRef} className={styles.viewMenuWrap}>
-                    <button
-                      className={`${styles.controlBtn} ${styles.menuTriggerBtn}`}
-                      onClick={() => setIsViewMenuOpen(value => !value)}
-                      aria-haspopup="menu"
-                      aria-expanded={isViewMenuOpen}
-                      title="Tuỳ chọn hiển thị"
-                    >
-                      ⋯
-                    </button>
-                    {isViewMenuOpen && (
-                      <div className={styles.viewMenu} role="menu" aria-label="Tuỳ chọn hiển thị trình phát">
-                        <button type="button" className={styles.viewMenuItem} onClick={handleToggleMiniMode} role="menuitem">
-                          {isMiniMode ? 'Tắt mini player' : 'Mini player trong trang'}
-                        </button>
-                        <button type="button" className={styles.viewMenuItem} onClick={handleToggleSystemPopout} role="menuitem">
-                          {isSystemPopout ? 'Tắt popup nổi' : 'Popup nổi (pin trên màn hình)'}
-                        </button>
-                      </div>
-                    )}
+                <div className={`${styles.inVideoControls} ${!isControlsVisible ? styles.inVideoControlsHidden : ''}`}>
+                  <div className={styles.seekRow}>
+                    <span>{formatTime(currentTime)}</span>
+                    <input
+                      type="range"
+                      min="0"
+                      max={Math.max(duration, 0)}
+                      step="1"
+                      value={Math.min(currentTime, duration || 0)}
+                      onChange={event => handleSeek(event.target.value)}
+                      className={styles.seekInput}
+                      aria-label="Tua video"
+                    />
+                    <span>{formatTime(duration)}</span>
                   </div>
-                  <button className={styles.controlBtn} onClick={handleFullscreen}>
-                    {isFullscreen || isPseudoFullscreen ? '🡽' : '⛶'}
-                  </button>
+
+                  <div className={styles.controlRow}>
+                    <div className={styles.leftControls}>
+                      <button
+                        type="button"
+                        className={`${styles.controlBtn} ${styles.skipBtn}`}
+                        onClick={() => handleSeekByOffset(-SEEK_STEP_SECONDS)}
+                        disabled={!isReady}
+                        aria-label={`Lùi ${SEEK_STEP_SECONDS} giây`}
+                        title={`Lùi ${SEEK_STEP_SECONDS} giây`}
+                      >
+                        ⏪
+                      </button>
+                      <button
+                        type="button"
+                        className={`${styles.controlBtn} ${styles.skipBtn}`}
+                        onClick={() => handleSeekByOffset(SEEK_STEP_SECONDS)}
+                        disabled={!isReady}
+                        aria-label={`Tiến ${SEEK_STEP_SECONDS} giây`}
+                        title={`Tiến ${SEEK_STEP_SECONDS} giây`}
+                      >
+                        ⏩
+                      </button>
+                      <button className={styles.controlBtn} onClick={handleTogglePlay} disabled={!isReady}>
+                        {isPlaying ? '⏸' : '▶'}
+                      </button>
+                      <button className={styles.controlBtn} onClick={handleToggleMute} disabled={!isReady}>
+                        {isMuted || volume === 0 ? '🔇' : '🔊'}
+                      </button>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="1"
+                        value={isMuted ? 0 : volume}
+                        onChange={event => handleVolumeChange(event.target.value)}
+                        className={styles.volumeInput}
+                        aria-label="Âm lượng"
+                      />
+                    </div>
+
+                    <div className={styles.rightControls}>
+                      <select
+                        className={styles.qualitySelect}
+                        value={selectedQuality || 'auto'}
+                        onChange={event => handleQualityChange(event.target.value)}
+                        title={`Đang chạy: ${QUALITY_LABELS[currentQuality] || currentQuality}`}
+                      >
+                        {qualityLevels.map(level => (
+                          <option key={level} value={level}>
+                            {QUALITY_LABELS[level] || level}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        className={`${styles.controlBtn} ${styles.skipBtn}`}
+                        onClick={handleTogglePopup}
+                        aria-pressed={isPopupWindow || isDetachedPopupOpen}
+                        title={isPopupWindow || isDetachedPopupOpen ? 'Đóng cửa sổ tách rời' : 'Mở cửa sổ tách rời'}
+                      >
+                        {isPopupWindow || isDetachedPopupOpen ? 'Đóng cửa sổ' : 'Cửa sổ tách rời'}
+                      </button>
+                      <button className={styles.controlBtn} onClick={handleFullscreen}>
+                        {isFullscreen || isPseudoFullscreen ? '🡽' : '⛶'}
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {!isPopupWindow && (
+          <div className={styles.infoSection}>
+            <h1 className={styles.movieTitle}>{movieDisplayTitle}</h1>
+            <div className={styles.meta}>
+              <span className={styles.stat}>👁 {movie.views}</span>
+              <span className={styles.stat}>★ LƯỢT ĐÁNH GIÁ: {movie.rating || 'N/A'}</span>
+              <span className={styles.tag}>Full HD</span>
+              <span className={styles.tag}>{getEpisodeLabel(movie)}</span>
             </div>
+            <p className={styles.desc}>
+              Nguồn cung cấp: Kênh đối tác (Sưu tầm Internet)
+            </p>
           </div>
-        </div>
+        )}
 
-        <div className={styles.infoSection}>
-          <h1 className={styles.movieTitle}>{movieDisplayTitle}</h1>
-          <div className={styles.meta}>
-            <span className={styles.stat}>👁 {movie.views}</span>
-            <span className={styles.stat}>★ LƯỢT ĐÁNH GIÁ: {movie.rating || 'N/A'}</span>
-            <span className={styles.tag}>Full HD</span>
-            <span className={styles.tag}>{getEpisodeLabel(movie)}</span>
-          </div>
-          <p className={styles.desc}>
-            Nguồn cung cấp: Kênh đối tác (Sưu tầm Internet)
-          </p>
-        </div>
-
-        {shouldShowEpisodes && episodes.length > 1 && (
+        {!isPopupWindow && shouldShowEpisodes && episodes.length > 1 && (
           <div className={styles.episodeSection}>
             <h3 className={styles.sectionTitle}>Chọn Tập Phim</h3>
             <div className={styles.episodeGrid}>
@@ -1163,7 +1301,7 @@ export default function WatchClient({ movieId = '', initialMovies = [] }) {
           </div>
         )}
 
-        <AdSlot placement="watchAfterRelated" minHeight={250} />
+        {!isPopupWindow && <AdSlot placement="watchAfterRelated" minHeight={250} />}
       </div>
     </div>
   );

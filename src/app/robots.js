@@ -6,7 +6,7 @@ export default function robots() {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/api/', '/watch-popout'],
+        disallow: ['/api/'],
       },
     ],
     sitemap: buildAbsoluteUrl('/sitemap.xml'),

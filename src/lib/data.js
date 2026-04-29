@@ -1,5 +1,5 @@
 import { cache } from 'react';
-import { describeDatabaseTarget, loadPersistedMovies, readMoviesFromJsonFile } from './movieStore.server.js';
+import { readMoviesFromJsonFile } from './movieStore.server.js';
 import { buildCategoryBuckets, normalizeMovieCategory } from './movieCategories.js';
 import { hasRenderableThumbnail } from './thumbnailFilters.js';
 
@@ -160,56 +160,8 @@ export function buildMovieCatalog(movies = []) {
   };
 }
 
-function serializeError(error) {
-  if (error instanceof Error) {
-    return {
-      type: 'Error',
-      name: error.name,
-      message: error.message,
-    };
-  }
-
-  if (error === undefined) {
-    return { type: 'undefined', message: 'unknown error' };
-  }
-
-  if (error === null) {
-    return { type: 'null', message: 'null thrown' };
-  }
-
-  if (typeof error === 'string') {
-    return { type: 'string', message: error };
-  }
-
-  try {
-    return {
-      type: typeof error,
-      value: JSON.parse(JSON.stringify(error)),
-    };
-  } catch {
-    return {
-      type: typeof error,
-      value: String(error),
-    };
-  }
-}
-
-function logDatabaseFallback(error) {
-  const databaseTarget = describeDatabaseTarget();
-  console.error(`[${new Date().toISOString()}] movie_catalog_db_failed ${JSON.stringify({
-    fallback: 'json',
-    databaseTarget,
-    error: serializeError(error),
-  })}`);
-}
-
 const getLoadedCatalog = cache(async () => {
-  try {
-    return buildMovieCatalog(await loadPersistedMovies({ allowJsonFallback: false }));
-  } catch (error) {
-    logDatabaseFallback(error);
-    return buildMovieCatalog(await readMoviesFromJsonFile());
-  }
+  return buildMovieCatalog(await readMoviesFromJsonFile());
 });
 
 export async function getMovieCatalog() {

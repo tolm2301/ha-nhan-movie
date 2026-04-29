@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { getMovieCatalog } from '@/lib/data';
 import SearchContent from './SearchContent';
 
 export const metadata = {
@@ -9,14 +9,14 @@ export const metadata = {
   },
 };
 
-export default function SearchPage() {
+export const revalidate = 300;
+
+export default async function SearchPage({ searchParams }) {
+  const resolvedSearchParams = await searchParams;
+  const catalog = await getMovieCatalog();
+  const query = typeof resolvedSearchParams?.q === 'string' ? resolvedSearchParams.q : '';
+
   return (
-    <Suspense fallback={
-      <main style={{ padding: '100px 24px', textAlign: 'center' }}>
-        <p style={{ fontSize: '1.5rem', fontWeight: 700 }}>Đang tìm kiếm...</p>
-      </main>
-    }>
-      <SearchContent />
-    </Suspense>
+    <SearchContent query={query} movies={catalog.allMovies} />
   );
 }

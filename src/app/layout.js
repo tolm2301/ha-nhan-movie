@@ -4,6 +4,7 @@ import Header from '@/components/Header/Header'
 import { SITE_DESCRIPTION, SITE_NAME, getSiteUrl } from '@/lib/seo'
 import Script from 'next/script'
 import { getAdsenseScriptUrl, hasAnyAdsensePlacementEnabled } from '@/lib/adsense'
+import { getCategoryMenu } from '@/lib/data'
 
 const inter = Inter({ subsets: ['latin', 'vietnamese'], weight: ['300', '400', '600', '700'] })
 
@@ -19,7 +20,8 @@ export const metadata = {
   },
 }
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const categoryMenu = await getCategoryMenu()
   const adsenseScriptUrl = getAdsenseScriptUrl()
 
   return (
@@ -36,8 +38,8 @@ export default function RootLayout({ children }) {
         {hasAnyAdsensePlacementEnabled() && adsenseScriptUrl ? (
           <Script src={adsenseScriptUrl} strategy="afterInteractive" crossOrigin="anonymous" />
         ) : null}
-        <Header />
-        <main>{children}</main>
+        <Header initialCategoryMenu={categoryMenu} />
+        <div>{children}</div>
       </body>
     </html>
   )

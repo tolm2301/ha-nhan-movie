@@ -11,11 +11,14 @@ Run this review workflow for: `$ARGUMENTS`
 2. Designer review
 - UI hierarchy, responsiveness, interaction polish, and visual consistency.
 
-3. Tech Lead review
-- Architecture fit, maintainability, and scope alignment.
+3. Product-quality review
+- Product fit, completeness, acceptance alignment, and release risks.
 
 4. Creator review
 - Production readiness, metadata/assets handling, workflow quality.
+
+5. Tech Lead review
+- Architecture fit, maintainability, and scope alignment.
 
 Summarize findings and required fixes in:
 - `.opencode/workplace/PROGRESS.md`

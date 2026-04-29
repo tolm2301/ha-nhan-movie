@@ -14,6 +14,7 @@
 - [ ] Enforce agreed 4-slot AdSense setup: home after rail 3, category after first block, watch after related, search after 8–12 results | Owner: developer | Priority: medium
 
 ## Review
+- [ ] Wire static snapshot regeneration into crawl/cron update flow | Owner: developer | Priority: high
 - [ ] Reduce watch page payload and push slower category/watch loads below warning threshold | Owner: developer | Priority: high
 - [ ] Test current UI performance and route transitions, prioritizing load speed first | Owner: techlead | Priority: high
 - [ ] Wire exact Google AdSense snippet values into the existing integration | Owner: techlead | Priority: medium
@@ -42,6 +43,13 @@
 
 ## Done
 - [ ] (template) Task title | Owner: techlead | Finished: YYYY-MM-DD
+- [x] Move runtime movie reads off the DB critical path by serving a static snapshot with ISR freshness, keeping DB as the update source only | Owner: developer | Finished: 2026-04-30
+- [x] Restore current performance changes to baseline, then refactor slow routes toward static generation/ISR or server components where it actually reduces load time | Owner: developer | Finished: 2026-04-29
+- [x] Add visible Pin/Unpin control for detached watch popup | Owner: developer | Finished: 2026-04-28
+- [x] Restore detached popup window watch UX and keep load quality acceptable | Owner: developer | Finished: 2026-04-28
+- [x] Fix player/watch UX, improve search quality, and polish home/category from product-quality review | Owner: developer | Finished: 2026-04-28
+- [x] Fix product-quality findings: cron auth spoofing, YouTube API timeout handling, and nested main landmarks | Owner: developer | Finished: 2026-04-28
+- [x] Add a dedicated product-quality review agent and wire it into workflow docs | Owner: techlead | Finished: 2026-04-28
 - [x] Add Windows topmost helper tool for mini popup window pinning | Owner: creator | Finished: 2026-04-22
 - [x] Fix popup sync handshake so main player stays paused until popup closes | Owner: developer | Finished: 2026-04-22
 - [x] Switch popup mode to mini web window with reliable return sync | Owner: developer | Finished: 2026-04-22

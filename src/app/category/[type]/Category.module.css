@@ -36,6 +36,7 @@
   .pageInfo {
     margin-left: 0;
     white-space: normal;
+    font-size: 0.92rem;
   }
 
   .count {
@@ -45,6 +46,11 @@
   .pageInfo {
     flex: 1 1 auto;
     text-align: right;
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 16px;
   }
 }
 

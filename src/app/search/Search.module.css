@@ -20,10 +20,36 @@
   font-weight: 700;
 }
 
+.helperText {
+  color: var(--color-text-muted);
+  margin: -20px 0 28px;
+  line-height: 1.6;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 24px;
+}
+
+.stateBox {
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+  margin-bottom: 28px;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.stateTitle {
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.stateText {
+  color: var(--color-text-muted);
+  line-height: 1.6;
 }
 
 .empty {
@@ -38,4 +64,17 @@
 .empty p {
   font-size: 1.3rem;
   color: var(--color-text-muted);
+}
+
+.emptyHint {
+  font-size: 1rem !important;
+  max-width: 560px;
+  line-height: 1.6;
+}
+
+.emptyActions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
 }

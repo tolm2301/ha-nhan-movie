@@ -5,6 +5,11 @@ import WatchClient from './WatchClient';
 
 export const revalidate = 300;
 
+export async function generateStaticParams() {
+  const catalog = await getMovieCatalog();
+  return catalog.allMovies.map(movie => ({ id: movie.id }));
+}
+
 export async function generateMetadata({ params }) {
   const resolvedParams = await params;
   const movieId = typeof resolvedParams?.id === 'string' ? resolvedParams.id : '';

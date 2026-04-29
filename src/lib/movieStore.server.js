@@ -1,6 +1,7 @@
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { Pool } from 'pg';
+import { writeMovieSnapshot } from './movieSnapshot.server.js';
 
 const MOVIES_JSON_PATH = path.resolve('src/lib/movies.json');
 const BATCH_SIZE = 100;
@@ -305,7 +306,21 @@ export async function replacePersistedMovies(movies = [], runMeta = {}) {
       );
 
       await client.query('COMMIT');
-      return { crawlRunId, keptCount, fetchedCount, totalMovies: normalizedMovies.length };
+      let snapshotSynced = true;
+      let snapshotError = null;
+
+      try {
+        await writeMovieSnapshot(normalizedMovies, { source: 'db-write' });
+      } catch (error) {
+        snapshotSynced = false;
+        snapshotError = error instanceof Error ? { name: error.name, message: error.message } : { message: String(error) };
+        console.error(`[${new Date().toISOString()}] snapshot_refresh_failed ${JSON.stringify({
+          source: 'db-write',
+          error: snapshotError,
+        })}`);
+      }
+
+      return { crawlRunId, keptCount, fetchedCount, totalMovies: normalizedMovies.length, snapshotSynced, snapshotError };
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;

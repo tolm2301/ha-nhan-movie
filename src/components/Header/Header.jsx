@@ -4,11 +4,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styles from './Header.module.css';
 
-export default function Header() {
+export default function Header({ initialCategoryMenu = [] }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [categoryMenu, setCategoryMenu] = useState([]);
+  const categoryMenu = initialCategoryMenu;
   const router = useRouter();
 
   useEffect(() => {
@@ -16,30 +16,6 @@ export default function Header() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  useEffect(() => {
-    let active = true;
-
-    async function loadCategories() {
-      try {
-        const response = await fetch('/api/movies', { cache: 'no-store' });
-        const payload = await response.json();
-
-        if (active && response.ok && Array.isArray(payload.categoryMenu)) {
-          setCategoryMenu(payload.categoryMenu);
-        }
-      } catch {
-        if (active) setCategoryMenu([]);
-      }
-    }
-
-    loadCategories();
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
   const handleSearch = (e) => {
     if (e.key === 'Enter' && searchQuery.trim() !== '') {
       router.push(`/search?q=${encodeURIComponent(searchQuery)}`);

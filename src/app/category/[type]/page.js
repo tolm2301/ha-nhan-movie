@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { getCategoryBySlug } from '@/lib/data';
+import { getCategoryBySlug, getCategoryMenu } from '@/lib/data';
 import Link from 'next/link';
 import MovieCard from '@/components/MovieCard/MovieCard';
 import AdSlot from '@/components/Adsense/AdSlot';
@@ -9,6 +9,11 @@ import { buildBreadcrumbJsonLd, buildItemListJsonLd, buildMetadata, buildAbsolut
 export const revalidate = 300;
 
 const PAGE_SIZE = 24;
+
+export async function generateStaticParams() {
+  const categoryMenu = await getCategoryMenu();
+  return categoryMenu.map(category => ({ type: category.slug }));
+}
 
 export async function generateMetadata({ params, searchParams }) {
   const resolvedParams = await params;

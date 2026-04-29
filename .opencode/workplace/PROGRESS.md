@@ -1,5 +1,141 @@
 # Progress Timeline
 
+## 2026-04-30 (developer snapshot-refresh on crawl writes)
+- Scope: Refresh the static runtime snapshot automatically whenever crawl persistence writes updated DB data.
+- Actions: Added a shared snapshot writer, kept the standalone snapshot script as a thin wrapper around the shared helper, and hooked `replacePersistedMovies()` to rewrite `src/lib/movies.json` after a successful crawl/cron DB commit so the runtime snapshot stays aligned with the latest persisted batch.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed and the `prebuild` snapshot step reported `source: "db"` with 202 movies; `npm.cmd run crawl:dry` was attempted but timed out before completion.
+- Risks: Snapshot refresh now happens after DB commit, so a filesystem write failure can leave DB and snapshot briefly out of sync until the next successful crawl/migration run.
+
+## 2026-04-30 (techlead snapshot-static closeout)
+- Scope: Close the runtime snapshot-static delivery after developer removed live DB reads from the request path.
+- Actions: Confirmed the catalog now loads from the static JSON snapshot only, with DB used only to regenerate that snapshot during prebuild/dev refresh flows.
+- Verification: Developer reported `npm.cmd run lint` and `npm.cmd run build` passing; the snapshot regeneration step ran during build and rewrote `src/lib/movies.json` from DB with 202 movies.
+- Risks: DB freshness now depends on snapshot regeneration cadence plus ISR, so updates are no longer instant at request time.
+
+## 2026-04-30 (developer snapshot-static runtime)
+- Scope: Remove live Postgres reads from the runtime critical path by serving the catalog from a static JSON snapshot, while keeping the database as the update source.
+- Actions: Simplified `getMovieCatalog()` to build from `src/lib/movies.json` only, added `scripts/generate-movies-snapshot.mjs` to refresh that snapshot from Postgres when available and fall back to JSON locally, and wired `prebuild`/`dev:fresh` to keep the snapshot aligned without runtime DB calls.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; build output shows the snapshot refresh ran first and the app still pre-renders the same routes. The snapshot regeneration script reported `source: "db"` and rewrote `src/lib/movies.json` with 202 movies.
+- Risks: Freshness is now bounded by snapshot regeneration plus the existing ISR window, so a DB update will not appear until the next snapshot sync/build.
+
+## 2026-04-29 (techlead snapshot-static kickoff)
+- Scope: Move runtime movie reads off the DB critical path by generating/serving a static snapshot with ISR freshness.
+- Actions: Chosen direction is now DB-as-update-source only; runtime pages should read a precomputed snapshot or cache layer instead of waiting on live Postgres queries.
+- Verification: Planning/assignment only so far; implementation pending.
+- Risks: Freshness becomes bounded by the snapshot/ISR window, so the regeneration trigger must stay reliable.
+
+## 2026-04-29 (techlead static/ISR closeout)
+- Scope: Close the static-precompute delivery after developer implemented the prebuildable-route split.
+- Actions: Reviewed the implementation summary, confirmed the intended routes now pre-render or use server-cached data, and accepted the smaller client-island approach as the correct fit for this app.
+- Verification: Developer reported `npm.cmd run lint` and `npm.cmd run build` passing, with build output showing `/` as ISR, `/watch/[id]` and `/watch-popout/[id]` as static, and `/search` plus `/category/[type]` remaining server-rendered on demand.
+- Risks: Category pagination is still query-driven and search remains dynamic, so those routes are improved but not fully static.
+
+## 2026-04-29 (developer static/ISR split)
+- Scope: Make the app load faster by pre-rendering what can be static/ISR, while keeping only the minimum client code for playback and interaction.
+- Actions: Passed the shared category menu from the server layout into the client header so the nav no longer fetches `/api/movies` on mount; converted search to a server-rendered result page that filters the cached catalog on the server instead of hydrating a client fetch flow; added `generateStaticParams()` for watch, watch-popout, and category slugs so known content is prebuilt; kept the watch/player islands unchanged aside from the route split.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed. Build output now shows `/` as static/ISR, `/watch/[id]` and `/watch-popout/[id]` as SSG, while `/search` and `/category/[type]` remain server-rendered on demand because they depend on query-string state.
+- Risks: `/category/[type]` still needs `?page=` query handling, so it is not fully static yet; `/search` is still query-driven and therefore dynamic, but its data load is now server-cached instead of client-fetched.
+
+## 2026-04-29 (techlead static-precompute direction)
+- Scope: Reframe the load issue from generic SSR toward static generation/ISR where routes can be precomputed, keeping client-side code only for interactive islands.
+- Actions: Clarified that precompiled HTML/data is the better fit for mostly read-only pages like home/category/search where runtime freshness is not critical, while watch/player interactivity can remain client-side.
+- Verification: Planning only; no implementation yet.
+- Risks: Truly dynamic pieces (current playback state, user-specific history, live search behavior if any) still need client/server runtime work, so the static split must be selective.
+
+
+## 2026-04-29 (techlead SSR reset)
+- Scope: Follow the user's updated direction to restore the current performance changes first, then rebuild the slow paths using a server-side rendering/server-component approach.
+- Actions: Superseded the earlier audit-only instruction and issued a new implementation slice that starts from a clean baseline before moving heavy route work server-side.
+- Verification: Intake/planning only so far; no code changes yet.
+- Risks: Some routes are already server-rendered in App Router, so the refactor must target the exact client-bound work and avoid undoing useful performance wins unnecessarily.
+
+
+## 2026-04-29 (techlead SSR intake)
+- Scope: Assess the user-reported slow load issue and determine whether the right fix is server-side rendering, streaming, or reducing client-side hydration/bundle work.
+- Actions: Triaged the request as a performance task for the slow watch/category flows and prepared a developer investigation slice focused on the actual render path rather than assuming SSR is the only bottleneck.
+- Verification: Review/intake only so far; no implementation yet.
+- Risks: Next.js App Router already server-renders server components by default, so the real win may come from moving heavy client components/data work back to the server instead of a blanket SSR rewrite.
+
+
+## 2026-04-28 (developer popup pin control)
+- Scope: Add a visible Pin/Unpin control and state for the detached watch popup, and wire the popup title so the existing Windows topmost helper can target it.
+- Actions: Added a popup header pin toggle with visible pinned/unpinned state, persisted the pin request per movie in localStorage, updated the detached popup title to stay compatible with `tools/window-pin/PinHanhanPopup.ps1`, and surfaced an explicit fallback message when the browser cannot guarantee always-on-top behavior.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: The web popup still cannot force true OS-level always-on-top pinning by itself, so Windows topmost behavior still depends on the external helper being run by the user.
+
+## 2026-04-28 (developer popup pin control)
+- Scope: Add a visible Pin/Unpin control and state for the detached watch popup, and wire the popup title so the existing Windows topmost helper can target it.
+- Actions: Added a popup header pin toggle with visible pinned/unpinned state, persisted the pin request per movie in localStorage, updated the detached popup title to stay compatible with `tools/window-pin/PinHanhanPopup.ps1`, and surfaced an explicit fallback message when the browser cannot guarantee always-on-top behavior.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: The web popup still cannot force true OS-level always-on-top pinning by itself, so Windows topmost behavior still depends on the external helper being run by the user.
+
+## 2026-04-28 (techlead pin control follow-up)
+- Scope: Add an explicit Pin/Unpin control for the detached watch popup and connect it to the strongest available pin behavior.
+- Actions: Reopened the popup task because a detached window alone is not enough; the user wants a visible pin state and an actual control path for pinning.
+- Verification: Review findings only so far; implementation has not started yet.
+- Risks: Pinning is browser/platform constrained, so the UX must clearly show when the feature is supported versus best-effort only.
+
+## 2026-04-28 (techlead popup-window closeout)
+- Scope: Close the popup-direction follow-up after the detached browser popup route was implemented.
+- Actions: Confirmed the watch flow now uses a single detached popup route rather than an in-page pseudo-popup, and the earlier load-quality improvements remain in place.
+- Verification: Developer reported `npm.cmd run lint` and `npm.cmd run build` passing.
+- Risks: Popup blockers and browser support can still affect the detached window, but the product direction is now explicit.
+
+## 2026-04-28 (developer detached popup window)
+
+- Scope: Replace the watch-page in-page pseudo-popup with a true detached browser popup route and keep the watch player behavior narrow.
+- Actions: Removed the CSS-pinned popup surface from the main watch view, added a dedicated `/watch-popout/[id]` route that opens in a separate window, and wired popup close/state handoff so the main player can pause/resume around the detached surface.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: Browser popup blocking can prevent the detached window from opening, and closing the popup from the main page still falls back to the last known state if the popup did not post a final update.
+
+## 2026-04-28 (techlead detached-popup follow-up)
+- Scope: Correct the popup implementation so it matches the detached/pinned window intent rather than a CSS-pinned in-page surface.
+- Actions: Re-opened the watch popup task after review confirmed the current implementation still lives inside the web page; asked for a true detached popup window or equivalent detached surface without reintroducing dual popup modes.
+- Verification: Review findings only so far; implementation has not started yet.
+- Risks: The fix must preserve the existing load improvements and avoid confusing the player with both in-page and detached popup paths.
+
+## 2026-04-28 (developer popup-window restore)
+- Scope: Restore the watch popup to the product-correct floating/pinned window direction and keep the existing watch-load improvements intact.
+- Actions: Reworked the watch-page popup toggle from the in-page mini-player wording/behavior into a fixed floating window mode, added an explicit popup toolbar with a close action, and removed the old mini-player-specific styling paths so there is one clear popup direction.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: The popup is pinned via CSS rather than a separate browser window, so any future requirement for true detached-window behavior would need a larger follow-up.
+
+## 2026-04-28 (techlead popup-window restore)
+- Scope: Restore the product-correct watch popup direction and keep load quality acceptable across the main flows.
+- Actions: Reopened the watch popup as a pinned/floating window style requirement, because the inline mini-player direction was not aligned with the intended product behavior.
+- Verification: Review findings only so far; implementation has not started yet.
+- Risks: Avoid reintroducing a confusing dual-popup model; there should be one clear floating-window direction, not competing popup modes.
+
+## 2026-04-28 (developer product-quality follow-up)
+- Scope: Implement the simplified product-quality follow-up for watch/player UX, search matching/states, and narrow home/category polish.
+- Actions: Removed the browser-window popout path from the watch experience, kept a single in-page mini-player toggle alongside native fullscreen, expanded search to match accent-insensitive title/tag/category signals with clearer load/empty/error states, and tightened mobile hero/carousel/category responsiveness.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: Search still depends on the data returned by `/api/movies`, and the mini-player remains an in-page layout mode rather than a separate detached window.
+
+## 2026-04-28 (techlead product-quality follow-up)
+- Scope: Turn the latest product-quality review into a developer implementation slice covering watch/player popup direction, search completeness, and home/category polish.
+- Actions: Assigned the watch experience to a simpler product direction (native fullscreen + inline/miniplayer, no browser-window popout), asked for stronger search matching/states, and flagged obvious home/category polish issues for the same pass.
+- Verification: Review findings only so far; implementation has not started yet.
+- Risks: Avoid widening scope beyond the reported user-visible issues so the fix stays focused and shippable.
+
+## 2026-04-28 (techlead product-quality handoff)
+- Scope: Turn the latest product-quality review findings into an implementation task for the developer.
+- Actions: Identified three concrete risks—spoofable cron crawl auth, potentially hanging YouTube API bootstrap on watch/popout pages, and invalid nested `<main>` landmarks across layout/category/search/watch-popout—and assigned them as one narrow bugfix slice.
+- Verification: Findings came from the dedicated product-quality review; implementation has not started yet.
+- Risks: Keep the fix scoped to the reported issues so watch playback, routing, and crawl behavior do not regress.
+
+## 2026-04-28 (developer product-quality hardening)
+- Scope: Fix the spoofable cron auth path, add YouTube bootstrap timeout/error handling for watch and popout playback, and remove the nested `<main>` landmark wrapper.
+- Actions: Required `CRON_SECRET` for every cron crawl request before honoring `x-vercel-cron`, added a timeout/error-rejecting YouTube API loader plus graceful fallback messaging on the watch and popout pages, and changed the root layout wrapper from `<main>` to `<div>` so page-level `<main>` landmarks are no longer nested.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: The watch/player fallback only appears when the YouTube API never loads or times out, so normal playback behavior still depends on YouTube availability and browser/network conditions.
+
+## 2026-04-28 (techlead product-quality agent)
+- Scope: Add a dedicated product-quality review agent and wire it into the team workflow so product-fit and completeness checks are explicit instead of bundled into tester/creator work.
+- Actions: Added `.opencode/agents/product-quality.md`, created `.opencode/workplace/INBOX/product-quality.md`, updated `WORKING_RULES.md` with a product-quality role boundary and gate, and inserted the new review step into `review-flow.md` and `teamwork.md`.
+- Verification: File consistency checked against the edited agent, inbox, workflow, board, progress, and handoff docs; the new role is referenced in the review flow and team rules without replacing `tester`.
+- Risks: The new role overlaps slightly with creator review on release readiness, so future tasks should keep product-quality focused on acceptance fit and user-visible completeness.
+
 ## 2026-04-26 (developer watch warm-up)
 - Scope: Add a lightweight network warm-up for the watch player bootstrap without changing search behavior or adding heavy homepage preloads.
 - Actions: Added conservative `preconnect`/`dns-prefetch` hints for `www.youtube.com`, `www.youtube-nocookie.com`, and `s.ytimg.com` in the root layout so the YouTube iframe API/player bootstrap can reuse warmed connections while keeping the hints global and low-cost.
