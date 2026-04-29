@@ -1,5 +1,23 @@
 # Progress Timeline
 
+## 2026-04-30 (developer crawl quota refill/backfill)
+- Scope: Enforce a 10-kept-movies quota per category crawl run, even when duplicates or rejects would otherwise leave the batch short.
+- Actions: Raised the per-category crawl target to 10, split category discovery into an initial pass plus controlled refill/broad fallback waves, deduped repeated queries across waves, and added explicit deficit logging when a category still cannot reach quota after exhausting the controlled search space.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; `npm.cmd run crawl:dry` reached the new 10-kept quota for the first category and showed the updated duplicate/backfill logging, but the full dry-run timed out while still crawling later categories.
+- Risks: The broader refill path can still take a long time on noisy categories, so a full end-to-end crawl verification should be rerun with a longer timeout or production cron evidence if exact completion timing matters.
+
+## 2026-04-30 (techlead crawl quota escalation)
+- Scope: Enforce a hard crawl target of 10 kept movies per category per run, even when duplicates appear in the candidate pool.
+- Actions: Escalated the crawl issue into implementation work after confirming the current crawl underfills buckets because duplicates are skipped without refill.
+- Verification: Review-only so far; developer implementation pending.
+- Risks: Refill/backfill logic can increase crawl runtime and upstream query volume, so the search expansion strategy must stay controlled.
+
+## 2026-04-30 (product-quality crawl stagnation review)
+- Scope: Investigate why crawl is rediscovering old items and not producing new saved records.
+- Findings: The crawl baseline comes from the static JSON snapshot (`readMoviesFromJsonFile()` in `src/lib/crawl.server.js:329`), and the discovery loop relies on a fixed set of yt-search queries plus early batch stopping (`CATEGORY_BATCH_LIMIT = 5`) with no recency/paging signal. That makes old/high-visibility results dominate, so duplicates are skipped before newer candidates are reached.
+- Risk: Snapshot sync is still a dependency, but it looks secondary here; the primary failure is discovery ordering/noise rather than persistence itself.
+- Follow-up: The current crawler also has no refill/expansion loop when a category underfills after duplicate skips, so a 10-per-category goal needs both a larger minimum and broader fallback search when `kept < target`.
+
 ## 2026-04-30 (developer snapshot-refresh on crawl writes)
 - Scope: Refresh the static runtime snapshot automatically whenever crawl persistence writes updated DB data.
 - Actions: Added a shared snapshot writer, kept the standalone snapshot script as a thin wrapper around the shared helper, and hooked `replacePersistedMovies()` to rewrite `src/lib/movies.json` after a successful crawl/cron DB commit so the runtime snapshot stays aligned with the latest persisted batch.
