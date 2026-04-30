@@ -4,6 +4,7 @@ import { Pool } from 'pg';
 import { writeMovieSnapshot } from './movieSnapshot.server.js';
 
 const MOVIES_JSON_PATH = path.resolve('src/lib/movies.json');
+const CHANNEL_SEEDS_PATH = path.resolve('src/lib/channel-seeds.json');
 const BATCH_SIZE = 100;
 const DATABASE_URL_ENV_KEYS = [
   'POSTGRES_URL_NON_POOLING',
@@ -144,6 +145,36 @@ export function normalizeMovieRecord(movie = {}, sortOrder = 0) {
   };
 }
 
+function normalizeChannelRecord(channel = {}, sortOrder = 0) {
+  const slug = String(channel.slug || channel.id || '').trim();
+  const displayName = String(channel.displayName || channel.display_name || channel.name || slug || '').trim();
+  const status = String(channel.status || (channel.enabled === false ? 'disabled' : 'active')).trim() || 'active';
+
+  return {
+    id: String(channel.id || slug).trim(),
+    slug,
+    channelId: String(channel.channelId || channel.channel_id || '').trim(),
+    channelUrl: String(channel.channelUrl || channel.channel_url || channel.url || '').trim(),
+    displayName,
+    category: String(channel.category || channel.categorySlug || 'shared').trim() || 'shared',
+    status,
+    enabled: channel.enabled === undefined ? status !== 'disabled' : Boolean(channel.enabled),
+    priority: toSafeInteger(channel.priority ?? channel.sortOrder ?? channel.order, sortOrder) ?? sortOrder,
+    lastCrawledAt: channel.lastCrawledAt || channel.last_crawled_at || null,
+  };
+}
+
+export async function readChannelSeedsFromJsonFile() {
+  const raw = await readFile(CHANNEL_SEEDS_PATH, 'utf8');
+  const parsed = JSON.parse(raw);
+
+  if (!Array.isArray(parsed)) {
+    return [];
+  }
+
+  return parsed.map((channel, index) => normalizeChannelRecord(channel, index)).filter(channel => channel.slug);
+}
+
 async function ensureSchema(client) {
   await client.query(`
     CREATE TABLE IF NOT EXISTS crawl_runs (
@@ -182,6 +213,27 @@ async function ensureSchema(client) {
   await client.query(`CREATE INDEX IF NOT EXISTS movies_sort_order_idx ON movies (sort_order ASC, created_at DESC);`);
   await client.query(`CREATE INDEX IF NOT EXISTS movies_tags_idx ON movies (tags);`);
   await client.query(`CREATE INDEX IF NOT EXISTS movies_series_key_idx ON movies (series_key);`);
+
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS channels (
+      id TEXT PRIMARY KEY,
+      slug TEXT NOT NULL UNIQUE,
+      channel_id TEXT,
+      channel_url TEXT,
+      display_name TEXT NOT NULL,
+      category TEXT NOT NULL DEFAULT 'shared',
+      status TEXT NOT NULL DEFAULT 'active',
+      enabled BOOLEAN NOT NULL DEFAULT TRUE,
+      priority INTEGER NOT NULL DEFAULT 0,
+      last_crawled_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await client.query(`CREATE UNIQUE INDEX IF NOT EXISTS channels_channel_id_idx ON channels (channel_id) WHERE channel_id IS NOT NULL;`);
+  await client.query(`CREATE INDEX IF NOT EXISTS channels_enabled_priority_idx ON channels (enabled ASC, priority ASC, created_at DESC);`);
+  await client.query(`CREATE INDEX IF NOT EXISTS channels_category_idx ON channels (category);`);
 }
 
 async function withClient(work) {
@@ -205,6 +257,132 @@ export async function readMoviesFromJsonFile() {
   if (!Array.isArray(parsed)) return [];
 
   return parsed.map((movie, index) => normalizeMovieRecord(movie, index));
+}
+
+async function seedChannelRegistryFromJsonFile(client) {
+  const channels = await readChannelSeedsFromJsonFile();
+  if (channels.length === 0) {
+    return { seeded: false, channels: 0 };
+  }
+
+  const params = [];
+  const placeholders = channels.map((channel, index) => {
+    const base = index * 10;
+    params.push(
+      channel.id,
+      channel.slug,
+      channel.channelId || null,
+      channel.channelUrl || null,
+      channel.displayName || channel.slug,
+      channel.category || 'shared',
+      channel.status || 'active',
+      channel.enabled,
+      channel.priority,
+      channel.lastCrawledAt || null,
+    );
+
+    return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7}, $${base + 8}, $${base + 9}, $${base + 10})`;
+  });
+
+  await client.query(
+    `INSERT INTO channels (
+      id, slug, channel_id, channel_url, display_name, category, status, enabled, priority, last_crawled_at
+    ) VALUES ${placeholders.join(', ')}
+    ON CONFLICT (slug) DO UPDATE SET
+      channel_id = COALESCE(EXCLUDED.channel_id, channels.channel_id),
+      channel_url = COALESCE(EXCLUDED.channel_url, channels.channel_url),
+      display_name = EXCLUDED.display_name,
+      category = EXCLUDED.category,
+      status = EXCLUDED.status,
+      enabled = EXCLUDED.enabled,
+      priority = EXCLUDED.priority,
+      last_crawled_at = COALESCE(EXCLUDED.last_crawled_at, channels.last_crawled_at),
+      updated_at = NOW();`,
+    params,
+  );
+
+  return { seeded: true, channels: channels.length };
+}
+
+export async function loadChannelRegistry({ allowJsonFallback = true, includeDisabled = false } = {}) {
+  const connectionPool = getPool();
+
+  if (!connectionPool) {
+    if (allowJsonFallback) {
+      return readChannelSeedsFromJsonFile();
+    }
+
+    throw new Error('Database connection is not configured. Set POSTGRES_URL_NON_POOLING or DATABASE_URL for Postgres access.');
+  }
+
+  return withClient(async client => {
+    const seedCountResult = await client.query(`SELECT COUNT(*)::int AS count FROM channels;`);
+    if ((seedCountResult.rows[0]?.count || 0) === 0) {
+      await seedChannelRegistryFromJsonFile(client);
+    }
+
+    const result = await client.query(
+      `SELECT
+        id,
+        slug,
+        channel_id AS "channelId",
+        channel_url AS "channelUrl",
+        display_name AS "displayName",
+        category,
+        status,
+        enabled,
+        priority,
+        last_crawled_at AS "lastCrawledAt"
+      FROM channels
+      ${includeDisabled ? '' : 'WHERE enabled = TRUE'}
+      ORDER BY priority ASC, created_at ASC, slug ASC;`,
+    );
+
+    return result.rows.map((channel, index) => normalizeChannelRecord(channel, index));
+  });
+}
+
+export async function updateChannelRegistryEntry(slug, updates = {}) {
+  const normalizedSlug = String(slug || '').trim();
+  if (!normalizedSlug) {
+    return null;
+  }
+
+  return withClient(async client => {
+    await client.query(
+      `UPDATE channels
+       SET channel_id = COALESCE($2, channel_id),
+           channel_url = COALESCE($3, channel_url),
+           last_crawled_at = COALESCE($4, last_crawled_at),
+           updated_at = NOW()
+       WHERE slug = $1;`,
+      [
+        normalizedSlug,
+        updates.channelId || null,
+        updates.channelUrl || null,
+        updates.lastCrawledAt || new Date().toISOString(),
+      ],
+    );
+
+    const result = await client.query(
+      `SELECT
+        id,
+        slug,
+        channel_id AS "channelId",
+        channel_url AS "channelUrl",
+        display_name AS "displayName",
+        category,
+        status,
+        enabled,
+        priority,
+        last_crawled_at AS "lastCrawledAt"
+      FROM channels
+      WHERE slug = $1;`,
+      [normalizedSlug],
+    );
+
+    return result.rows[0] ? normalizeChannelRecord(result.rows[0], 0) : null;
+  });
 }
 
 export async function loadPersistedMovies({ allowJsonFallback = true } = {}) {

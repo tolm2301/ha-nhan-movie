@@ -1,0 +1,35 @@
+[
+  {
+    "id": "ha-nhan-cartoon",
+    "slug": "ha-nhan-cartoon",
+    "channelUrl": "https://www.youtube.com/@HaNhanCartoon",
+    "displayName": "HaNhanCartoon",
+    "category": "ha-nhan",
+    "status": "active",
+    "enabled": true,
+    "priority": 10,
+    "lastCrawledAt": null
+  },
+  {
+    "id": "hanhansubchannel",
+    "slug": "hanhansubchannel",
+    "channelUrl": "https://www.youtube.com/@Hanhansubchannel",
+    "displayName": "Hanhansubchannel",
+    "category": "ha-nhan",
+    "status": "active",
+    "enabled": true,
+    "priority": 20,
+    "lastCrawledAt": null
+  },
+  {
+    "id": "keodeovietsub",
+    "slug": "keodeovietsub",
+    "channelUrl": "https://www.youtube.com/@keodeovietsub",
+    "displayName": "keodeovietsub",
+    "category": "shared",
+    "status": "active",
+    "enabled": true,
+    "priority": 30,
+    "lastCrawledAt": null
+  }
+]

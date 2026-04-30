@@ -14,6 +14,7 @@
 - [ ] Enforce agreed 4-slot AdSense setup: home after rail 3, category after first block, watch after related, search after 8–12 results | Owner: developer | Priority: medium
 
 ## Review
+- [ ] Add DB-backed channel registry with repo seed bootstrap so crawl discovery stops depending on yt-search and ad hoc channel hunting | Owner: techlead | Priority: high
 - [ ] Split snapshot refresh from crawl so build/deploy generates it and hourly sync refreshes it independently | Owner: developer | Priority: high
 - [ ] Fix missing cheerio dependency so /api/cron/crawl can run on Vercel | Owner: developer | Priority: high
 - [ ] Fix Vercel cron auth so scheduled crawl runs can execute and refresh the snapshot automatically | Owner: developer | Priority: high

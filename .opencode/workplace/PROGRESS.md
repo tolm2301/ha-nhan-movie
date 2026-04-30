@@ -1,5 +1,17 @@
 # Progress Timeline
 
+## 2026-04-30 (developer channel registry crawl)
+- Scope: Replace yt-search-based crawl discovery with a DB-backed channel registry seeded from the repo.
+- Actions: Added `src/lib/channel-seeds.json`, expanded `src/lib/movieStore.server.js` with a `channels` table plus seed/bootstrap/load/update helpers, and reworked `src/lib/crawl.server.js` so category crawling consumes registry-backed YouTube channel feeds/uploads instead of search discovery. The crawl now records `last_crawled_at` on registry channels during real runs and keeps the repo seed as the bootstrap fallback when the table is empty.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; `node --input-type=module -e "import { readChannelSeedsFromJsonFile } from './src/lib/movieStore.server.js'; ..."` confirmed 3 repo seed channels are present.
+- Risks: Discovery still depends on YouTube page/feed markup staying parseable, and the initial curated seed list is intentionally small until the operational registry grows in Postgres.
+
+## 2026-04-30 (techlead channel registry direction)
+- Scope: Replace ad hoc channel hunting and yt-search dependence with a standard DB-backed channel registry seeded from the repo.
+- Actions: Chose a single canonical path: keep channel seeds in repo for bootstrap/review, store the operational registry in Postgres, and have crawl discovery read from that registry instead of inventing channels on the fly.
+- Verification: Planning/assignment only so far; developer implementation pending.
+- Risks: The implementation must stay minimal and preserve a bootstrap path so the registry can be recovered if the DB is empty.
+
 ## 2026-04-30 (developer snapshot decoupling)
 - Scope: Decouple snapshot freshness from crawl execution so build/deploy creates the runtime snapshot and a separate hourly sync refreshes it independently.
 - Actions: Added `.github/workflows/hourly-snapshot-sync.yml` to run `npm run snapshot:movies` hourly with DB secrets and commit `src/lib/movies.json` updates; updated README to document build/deploy snapshot regeneration, hourly sync ownership, and crawl as DB-only ingestion.

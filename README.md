@@ -13,6 +13,8 @@ Next.js movie site with automated YouTube crawling, build-time snapshot generati
 
 Runtime movie data now lives in Postgres (Supabase-compatible). Set the direct Supabase URL in `POSTGRES_URL_NON_POOLING` on Vercel (preferred) or `DATABASE_URL` if that is your server-only direct URL.
 
+The crawl registry also lives in Postgres as a `channels` table. When that table is empty, the app bootstraps it from `src/lib/channel-seeds.json` so crawl discovery has a repo-backed recovery path.
+
 ## AdSense
 
 The shared AdSense framework stays intact, but only four placements are active now: home after the third rail, category after the first block, watch after the related block, and search after 8–12 results. To enable them, set:
@@ -57,7 +59,7 @@ GitHub Actions workflow: `.github/workflows/daily-crawl.yml`
 - Runs every day at `02:00 UTC`
 - Runs the crawler directly in GitHub Actions and writes refreshed data to Postgres
 - Does not update the runtime snapshot; snapshot freshness is owned by build/deploy and the hourly sync workflow
-- Crawls are split by category (`Hà Nhân`, `Tu Tiên`, `Xuyên Không`, `Trọng Sinh`, `Liễu Như Yên`, `Hệ Thống`, `Khác`) and keep roughly 5 new movies per category per day; each bucket now uses a tiered keyword stack (`core`, `expanded`, `fallback-only`, `risky caps`) so broad discovery terms stay capped, the `Hà Nhân` bucket remains first-priority, runtime classification still prefers explicit brand/theme matches before any broader fallback, and the broadest discovery terms stay crawl-only
+- Crawls are split by category (`Hà Nhân`, `Tu Tiên`, `Xuyên Không`, `Trọng Sinh`, `Liễu Như Yên`, `Hệ Thống`, `Khác`) and use the DB-backed channel registry as the discovery source. Channel metadata is bootstrapped from `src/lib/channel-seeds.json` when the registry is empty, and crawl reads channel feeds/uploads instead of relying on yt-search for discovery.
 - Logs include the category batch name, run day, and how many items were added/skipped
 
 ## Hourly snapshot sync

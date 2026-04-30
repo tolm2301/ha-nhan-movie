@@ -1,14 +1,18 @@
-import 'cheerio';
-import ytSearch from 'yt-search';
-import { readMoviesFromJsonFile, replacePersistedMovies } from './movieStore.server.js';
+import { load as loadCheerio } from 'cheerio';
+import { loadChannelRegistry, readMoviesFromJsonFile, replacePersistedMovies, updateChannelRegistryEntry } from './movieStore.server.js';
 import { CATEGORY_TAXONOMY, getCategoryDefinitionBySlug, normalizeMovieCategory, resolveMovieCategory } from './movieCategories.js';
 import { hasRenderableThumbnail } from './thumbnailFilters.js';
 
 const EPISODE_REGEX = /(t\u1eadp|tap|episode|ep\.?|ph\u1ea7n)\s*(\d{1,4})/i;
 const MIN_VIDEO_SECONDS = 600;
 const MAX_STORED_VIDEOS = 1000;
+const CHANNEL_FEED_ENTRY_LIMIT = 12;
+const CHANNEL_VIDEO_DETAIL_LIMIT = 8;
 const RETRY_TIMES = 3;
 const RETRY_BASE_DELAY_MS = 250;
+
+const channelIdentityCache = new Map();
+const channelCandidateCache = new Map();
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -101,28 +105,24 @@ function isTransientCrawlError(error) {
 
 const CATEGORY_BATCH_LIMIT = 10;
 const CATEGORY_TRUSTED_AUTHOR_WORDS = ['ha nhan', 'h\u00e0 nh\u00e2n', 'review phim', 'hoat hinh', 'ho\u1ea1t h\u00ecnh', 'vietsub', 'anime', 'phim', 'cartoon'];
-const SHARED_SOURCE_ANCHORS = ['@keodeovietsub'];
-const SHARED_SOURCE_TARGETS = channelTargets(SHARED_SOURCE_ANCHORS);
-const CATEGORY_QUERY_CAPS = {
-  core: Infinity,
-  expanded: Infinity,
-  fallbackOnly: 2,
-  riskyCaps: 1,
-};
 
-function keywordTargets(queries = [], tier = 'core') {
-  return queries.map(query => ({ query, type: 'keyword', tier }));
+function getChannelKey(channel = {}) {
+  return channel.channelId || channel.channelUrl || channel.slug || channel.id || channel.displayName || '';
 }
 
-function channelTargets(queries = []) {
-  return queries.map(query => ({ query, type: 'channel' }));
+function channelTargets(channels = []) {
+  return channels.map(channel => ({
+    channel,
+    query: channel.displayName || channel.slug || getChannelKey(channel),
+    type: 'channel',
+  }));
 }
 
 function uniqueTargets(targets = []) {
   const seen = new Set();
 
   return targets.filter(target => {
-    const key = `${target.type}:${target.query}`;
+    const key = target.channel ? `channel:${getChannelKey(target.channel)}` : `${target.type}:${target.query}`;
     if (seen.has(key)) {
       return false;
     }
@@ -132,133 +132,264 @@ function uniqueTargets(targets = []) {
   });
 }
 
-function takeKeywordTargets(queries = [], tier = 'core') {
-  const cap = CATEGORY_QUERY_CAPS[tier] ?? Infinity;
-  return keywordTargets(queries.slice(0, cap), tier);
+function buildCategoryChannelTargets(categorySlug, channels = []) {
+  const enabledChannels = channels.filter(channel => channel?.enabled !== false);
+  const primary = enabledChannels.filter(channel => channel.category === categorySlug || channel.category === 'shared');
+  const fallback = enabledChannels.filter(channel => channel.category !== categorySlug && channel.category !== 'shared');
+
+  return {
+    initial: uniqueTargets(channelTargets(primary)),
+    refill: uniqueTargets(channelTargets(fallback)),
+  };
 }
 
-function buildCategoryKeywordTargets(slug) {
-  const category = CATEGORY_TAXONOMY.find(item => item.slug === slug);
-  if (!category) return [];
+function parseChannelFeedEntries(xml = '') {
+  const $ = loadCheerio(xml, { xmlMode: true });
 
-  return [
-    ...takeKeywordTargets(category.core, 'core'),
-    ...takeKeywordTargets(category.expanded, 'expanded'),
-    ...takeKeywordTargets(category.fallbackOnly, 'fallbackOnly'),
-    ...takeKeywordTargets(category.riskyCaps, 'riskyCaps'),
+  return $('entry')
+    .map((_, entry) => {
+      const $entry = $(entry);
+      const videoId = $entry.find('yt\\:videoId').first().text().trim() || $entry.find('videoId').first().text().trim();
+      const title = $entry.find('title').first().text().trim();
+      const publishedAt = $entry.find('published').first().text().trim();
+      const thumbnail = $entry.find('media\\:thumbnail').first().attr('url') || $entry.find('thumbnail').first().attr('url') || '';
+      const authorName = $entry.find('author name').first().text().trim() || '';
+
+      return {
+        videoId,
+        title,
+        publishedAt,
+        thumbnail,
+        authorName,
+      };
+    })
+    .get()
+    .filter(entry => entry.videoId);
+}
+
+function extractChannelIdFromText(text = '') {
+  const patterns = [
+    /"channelId":"(UC[^"]+)"/,
+    /"externalId":"(UC[^"]+)"/,
+    /"browseId":"(UC[^"]+)"/,
   ];
+
+  for (const pattern of patterns) {
+    const match = String(text || '').match(pattern);
+    if (match?.[1]) {
+      return match[1];
+    }
+  }
+
+  return null;
 }
 
-function buildCategoryRefillTargets(slug) {
-  if (!CATEGORY_TAXONOMY.some(item => item.slug === slug)) return [];
+function extractVideoSecondsFromText(text = '') {
+  const exactMatch = String(text || '').match(/"lengthSeconds":"(\d+)"/);
+  if (exactMatch?.[1]) {
+    return Number(exactMatch[1]);
+  }
 
-  const refillQueriesBySlug = {
-    'ha-nhan': ['Hà Nhân trọn bộ', 'Ha Nhan trọn bộ', 'Hà Nhân thuyết minh', 'Ha Nhan thuyết minh'],
-    'tu-tien': ['Tu Tiên trọn bộ', 'Tu Tien trọn bộ', 'Tiên Hiệp trọn bộ', 'Tiên Hiệp thuyết minh'],
-    'xuyen-khong': ['Xuyên Không trọn bộ', 'Xuyen Khong trọn bộ', 'Xuyên Không thuyết minh', 'Xuyên Sách thuyết minh'],
-    'trong-sinh': ['Trọng Sinh trọn bộ', 'Trong Sinh trọn bộ', 'Trọng Sinh thuyết minh', 'Trùng Sinh thuyết minh'],
-    'lieu-nhu-yen': ['Liễu Như Yên trọn bộ', 'Lieu Nhu Yen trọn bộ', 'Liễu Như Yên thuyết minh', 'Liễu Như Yên đầy đủ'],
-    'he-thong': ['Hệ Thống trọn bộ', 'He Thong trọn bộ', 'Hệ Thống thuyết minh', 'Hệ Thống đầy đủ'],
-    'khac': ['phim hoạt hình trọn bộ', 'anime vietsub', 'review phim vietsub', 'cartoon vietsub'],
+  const durationMatch = String(text || '').match(/"approxDurationMs":"(\d+)"/);
+  if (durationMatch?.[1]) {
+    return Math.max(1, Math.round(Number(durationMatch[1]) / 1000));
+  }
+
+  return null;
+}
+
+function normalizeChannelBaseUrl(channelUrl = '') {
+  return String(channelUrl || '').trim().replace(/\/$/, '');
+}
+
+function buildChannelVideosUrl(channel = {}) {
+  if (channel.channelId) {
+    return `https://www.youtube.com/channel/${channel.channelId}/videos`;
+  }
+
+  const baseUrl = normalizeChannelBaseUrl(channel.channelUrl);
+  if (baseUrl) {
+    return `${baseUrl}/videos`;
+  }
+
+  return '';
+}
+
+async function fetchTextWithRetry(url, context = {}) {
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= RETRY_TIMES; attempt += 1) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+
+    try {
+      const response = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          'accept-language': 'en-US,en;q=0.9,vi;q=0.8',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status} for ${url}`);
+      }
+
+      return {
+        ok: true,
+        result: await response.text(),
+      };
+    } catch (error) {
+      lastError = error;
+      const transient = isTransientCrawlError(error);
+      logCrawl('crawl_target_attempt_failed', {
+        ...context,
+        attempt,
+        maxAttempts: RETRY_TIMES,
+        transient,
+        retrying: transient && attempt < RETRY_TIMES,
+        error: serializeError(error),
+      });
+
+      if (transient && attempt < RETRY_TIMES) {
+        await wait(RETRY_BASE_DELAY_MS * attempt);
+        continue;
+      }
+
+      break;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  return {
+    ok: false,
+    error: lastError || new Error('Unknown crawl error'),
+  };
+}
+
+async function resolveChannelIdentity(channel, context = {}) {
+  const cacheKey = getChannelKey(channel);
+  if (channelIdentityCache.has(cacheKey)) {
+    return channelIdentityCache.get(cacheKey);
+  }
+
+  if (channel.channelId) {
+    const resolved = { ...channel, resolvedChannelId: channel.channelId };
+    channelIdentityCache.set(cacheKey, resolved);
+    return resolved;
+  }
+
+  const pageUrl = buildChannelVideosUrl(channel);
+  if (!pageUrl) {
+    return null;
+  }
+
+  const pageResult = await fetchTextWithRetry(pageUrl, {
+    ...context,
+    phase: 'resolve-channel-id',
+    pageUrl,
+  });
+
+  if (!pageResult.ok) {
+    return null;
+  }
+
+  const resolvedChannelId = extractChannelIdFromText(pageResult.result);
+  if (!resolvedChannelId) {
+    return null;
+  }
+
+  const resolved = {
+    ...channel,
+    channelId: resolvedChannelId,
+    channelUrl: channel.channelUrl || pageUrl.replace(/\/videos$/, ''),
+    resolvedChannelId,
   };
 
-  return keywordTargets(refillQueriesBySlug[slug] || [], 'refill');
+  channelIdentityCache.set(cacheKey, resolved);
+  return resolved;
 }
 
-function buildCategoryBroadTargets(slug) {
-  if (!CATEGORY_TAXONOMY.some(item => item.slug === slug)) return [];
+async function fetchChannelCandidates(channel, context = {}) {
+  const resolvedChannel = await resolveChannelIdentity(channel, context);
+  if (!resolvedChannel) {
+    return { ok: false, error: new Error(`Unable to resolve channel identity for ${channel.slug || channel.displayName || 'unknown channel'}`) };
+  }
 
-  const broadQueriesBySlug = {
-    'ha-nhan': ['Hà Nhân đầy đủ', 'Ha Nhan đầy đủ', 'Hà Nhân nguyên bộ', 'Ha Nhan nguyên bộ'],
-    'tu-tien': ['Phàm Nhân Tu Tiên', 'Đấu Phá trọn bộ', 'Tu Tiên nguyên bộ', 'Tien Hiep nguyên bộ'],
-    'xuyen-khong': ['Xuyên Không đầy đủ', 'Xuyên Sách trọn bộ', 'Xuyên Vào trọn bộ', 'Xuyên Thành trọn bộ'],
-    'trong-sinh': ['Trọng Sinh đầy đủ', 'Trùng Sinh trọn bộ', 'Tái Sinh trọn bộ', 'Trong Sinh đầy đủ'],
-    'lieu-nhu-yen': ['Liễu Như Yên nguyên bộ', 'Liễu Như Yên trọn bộ', 'Lieu Nhu Yen đầy đủ', 'Lieu Nhu Yen thuyết minh'],
-    'he-thong': ['Hệ Thống nguyên bộ', 'Hệ Thống phim', 'Hệ Thống anime', 'He Thong đầy đủ'],
-    'khac': ['phim hoạt hình đầy đủ', 'anime trọn bộ', 'cartoon trọn bộ', 'review phim đầy đủ'],
+  const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${encodeURIComponent(resolvedChannel.channelId)}`;
+  const feedResult = await fetchTextWithRetry(feedUrl, {
+    ...context,
+    phase: 'channel-feed',
+    feedUrl,
+  });
+
+  if (!feedResult.ok) {
+    return feedResult;
+  }
+
+  const entries = parseChannelFeedEntries(feedResult.result).slice(0, CHANNEL_FEED_ENTRY_LIMIT);
+  const videos = [];
+
+  for (const entry of entries) {
+    if (videos.length >= CHANNEL_VIDEO_DETAIL_LIMIT) {
+      break;
+    }
+
+    const entryTitle = entry.title || '';
+    if (isBadVideoTitle(entryTitle.toLowerCase())) {
+      continue;
+    }
+
+    const videoPageUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(entry.videoId)}&hl=en&bpctr=9999999999`;
+    const videoPageResult = await fetchTextWithRetry(videoPageUrl, {
+      ...context,
+      phase: 'video-page',
+      videoId: entry.videoId,
+    });
+
+    if (!videoPageResult.ok) {
+      continue;
+    }
+
+    const seconds = extractVideoSecondsFromText(videoPageResult.result);
+    if (!seconds) {
+      continue;
+    }
+
+    videos.push({
+      videoId: entry.videoId,
+      title: entry.title,
+      seconds,
+      author: { name: entry.authorName || resolvedChannel.displayName || 'channel' },
+      thumbnail: entry.thumbnail,
+      views: null,
+      publishedAt: entry.publishedAt,
+      channelId: resolvedChannel.channelId,
+      channelSlug: resolvedChannel.slug,
+    });
+  }
+
+  return {
+    ok: true,
+    result: {
+      channel: resolvedChannel,
+      videos,
+    },
   };
-
-  return keywordTargets(broadQueriesBySlug[slug] || [], 'broad');
 }
 
-const CATEGORY_CRAWL_PLANS = [
-  {
-    slug: 'ha-nhan',
-    reason: 'seed the day with Ha Nhan-owned and legacy Ha Nhan content first',
-    targets: uniqueTargets([
-      ...buildCategoryKeywordTargets('ha-nhan'),
-      ...channelTargets(['@HaNhanCartoon', '@Hanhansubchannel']),
-    ]),
-    refillTargets: uniqueTargets([
-      ...buildCategoryRefillTargets('ha-nhan'),
-      ...buildCategoryBroadTargets('ha-nhan'),
-    ]),
-  },
-  {
-    slug: 'tu-tien',
-    reason: 'keep Tu Tien / Tien Hiep content in its own daily batch right after Ha Nhan',
-    targets: uniqueTargets([
-      ...buildCategoryKeywordTargets('tu-tien'),
-      ...channelTargets(['@HaNhanCartoon', '@Hanhansubchannel']),
-    ]),
-    refillTargets: uniqueTargets([
-      ...buildCategoryRefillTargets('tu-tien'),
-      ...buildCategoryBroadTargets('tu-tien'),
-    ]),
-  },
-  {
-    slug: 'xuyen-khong',
-    reason: 'pull the Xuyen Khong batch separately from the Ha Nhan bucket',
-    targets: uniqueTargets(buildCategoryKeywordTargets('xuyen-khong')),
-    refillTargets: uniqueTargets([
-      ...buildCategoryRefillTargets('xuyen-khong'),
-      ...buildCategoryBroadTargets('xuyen-khong'),
-    ]),
-  },
-  {
-    slug: 'trong-sinh',
-    reason: 'pull the Trong Sinh batch separately from other story types',
-    targets: uniqueTargets(buildCategoryKeywordTargets('trong-sinh')),
-    refillTargets: uniqueTargets([
-      ...buildCategoryRefillTargets('trong-sinh'),
-      ...buildCategoryBroadTargets('trong-sinh'),
-    ]),
-  },
-  {
-    slug: 'lieu-nhu-yen',
-    reason: 'keep Li\u1ec5u Nh\u01b0 Y\u00ean content in its own daily batch',
-    targets: uniqueTargets(buildCategoryKeywordTargets('lieu-nhu-yen')),
-    refillTargets: uniqueTargets([
-      ...buildCategoryRefillTargets('lieu-nhu-yen'),
-      ...buildCategoryBroadTargets('lieu-nhu-yen'),
-    ]),
-  },
-  {
-    slug: 'he-thong',
-    reason: 'seed AI Chinese animated / short-form story content with trusted anchors first',
-    targets: uniqueTargets([
-      ...SHARED_SOURCE_TARGETS,
-      ...buildCategoryKeywordTargets('he-thong'),
-    ]),
-    refillTargets: uniqueTargets([
-      ...buildCategoryRefillTargets('he-thong'),
-      ...buildCategoryBroadTargets('he-thong'),
-    ]),
-  },
-  {
-    slug: 'khac',
-    reason: 'use broad fallback discovery only for uncategorized leftovers',
-    targets: uniqueTargets([
-      ...SHARED_SOURCE_TARGETS,
-      ...buildCategoryKeywordTargets('khac'),
-    ]),
-    refillTargets: uniqueTargets([
-      ...buildCategoryRefillTargets('khac'),
-      ...buildCategoryBroadTargets('khac'),
-    ]),
-  },
-];
+async function getChannelCandidates(channel, context = {}) {
+  const cacheKey = getChannelKey(channel);
+  if (channelCandidateCache.has(cacheKey)) {
+    return channelCandidateCache.get(cacheKey);
+  }
 
+  const result = await fetchChannelCandidates(channel, context);
+  const cached = result.ok ? result.result : { channel, videos: [], error: result.error };
+  channelCandidateCache.set(cacheKey, cached);
+  return cached;
+}
 function normalizeSeriesKey(title = '') {
   return title
     .toLowerCase()
@@ -344,61 +475,35 @@ function explainThumbnailDecision(movie = {}) {
   return { keep: true, reason: 'accepted' };
 }
 
-async function searchWithRetry(query, context = {}) {
-  let lastError = null;
-
-  for (let attempt = 1; attempt <= RETRY_TIMES; attempt += 1) {
-    try {
-      return {
-        ok: true,
-        result: await ytSearch(query),
-      };
-    } catch (error) {
-      lastError = error;
-      const transient = isTransientCrawlError(error);
-      logCrawl('crawl_target_attempt_failed', {
-        ...context,
-        attempt,
-        maxAttempts: RETRY_TIMES,
-        transient,
-        retrying: transient && attempt < RETRY_TIMES,
-        error: serializeError(error),
-      });
-
-      if (transient && attempt < RETRY_TIMES) {
-        await wait(RETRY_BASE_DELAY_MS * attempt);
-        continue;
-      }
-
-      break;
-    }
-  }
-
-  return {
-    ok: false,
-    error: lastError || new Error('Unknown crawl error'),
-  };
-}
-
 export async function runCrawl({ dryRun = false } = {}) {
   const runStartedAt = timestamp();
   const runDay = runStartedAt.slice(0, 10);
-  const categoryPlans = CATEGORY_CRAWL_PLANS.map(plan => {
-    const category = getCategoryDefinitionBySlug(plan.slug);
+  const registry = await loadChannelRegistry();
+  const enabledChannels = registry
+    .filter(channel => channel?.enabled !== false)
+    .sort((left, right) => (left.priority - right.priority) || String(left.slug).localeCompare(String(right.slug)));
+
+  const categoryPlans = CATEGORY_TAXONOMY.map(category => {
+    const channelTargetsByCategory = buildCategoryChannelTargets(category.slug, enabledChannels);
+    const categoryDefinition = getCategoryDefinitionBySlug(category.slug) || category;
     return {
-      ...plan,
-      tag: category?.tag || plan.slug,
+      slug: categoryDefinition.slug,
+      tag: categoryDefinition.tag,
+      reason: `crawl registry-backed channels for ${categoryDefinition.tag} first, then controlled fallback channels if needed`,
+      initialTargets: channelTargetsByCategory.initial,
+      refillTargets: channelTargetsByCategory.refill,
       batchLimit: CATEGORY_BATCH_LIMIT,
-      category,
+      category: categoryDefinition,
     };
   });
 
-  logCrawl('Bat dau crawl du lieu tu Youtube (Che do phan loai theo danh muc)...', {
+  logCrawl('Bat dau crawl du lieu tu channel registry (Che do phan loai theo danh muc)...', {
     runStartedAt,
     runDay,
     dryRun,
     batchLimitPerCategory: CATEGORY_BATCH_LIMIT,
-    categories: categoryPlans.map(plan => ({ slug: plan.slug, tag: plan.tag })),
+    categories: categoryPlans.map(plan => ({ slug: plan.slug, tag: plan.tag, initialSources: plan.initialTargets.length, fallbackSources: plan.refillTargets.length })),
+    registrySources: enabledChannels.length,
   });
 
   const oldData = await readMoviesFromJsonFile();
@@ -408,9 +513,10 @@ export async function runCrawl({ dryRun = false } = {}) {
   const runNewIds = new Set();
   const newVideos = [];
   const categorySummaries = [];
+  const touchedChannelSlugs = new Set();
 
   const crawlCategoryTargets = async (plan) => {
-    const { tag, slug, targets, refillTargets = [], reason } = plan;
+    const { tag, slug, initialTargets, refillTargets = [], reason } = plan;
     const keptVideos = [];
     let targetErrors = 0;
     let rejectedCount = 0;
@@ -418,8 +524,8 @@ export async function runCrawl({ dryRun = false } = {}) {
     const triedQueries = new Set();
     const targetQuota = CATEGORY_BATCH_LIMIT;
     const waves = [
-      { name: 'initial', reason, targets },
-      ...(refillTargets.length > 0 ? [{ name: 'refill', reason: 'controlled backfill search when the initial batch underfills', targets: refillTargets }] : []),
+      { name: 'initial', reason, targets: initialTargets },
+      ...(refillTargets.length > 0 ? [{ name: 'refill', reason: 'controlled backfill from the remaining registry channels', targets: refillTargets }] : []),
     ];
 
     logCrawl('crawl_category_batch_start', {
@@ -428,7 +534,8 @@ export async function runCrawl({ dryRun = false } = {}) {
       slug,
       batchLimit: targetQuota,
       reason,
-      targets: targets.map(target => target.query),
+      targets: initialTargets.map(target => target.query),
+      refillTargets: refillTargets.map(target => target.query),
     });
 
     for (const wave of waves) {
@@ -455,7 +562,7 @@ export async function runCrawl({ dryRun = false } = {}) {
           break;
         }
 
-        const targetKey = `${target.type}:${target.query}`;
+        const targetKey = `channel:${getChannelKey(target.channel)}`;
         if (triedQueries.has(targetKey)) {
           logCrawl('crawl_category_target_skipped', {
             runDay,
@@ -477,12 +584,13 @@ export async function runCrawl({ dryRun = false } = {}) {
           query: target.query,
           type: target.type,
           wave: wave.name,
+          channelSlug: target.channel?.slug || null,
         });
 
         try {
-          const searchResult = await searchWithRetry(target.query, { category: tag, slug, query: target.query, type: target.type, wave: wave.name, runDay });
+          const discovery = await getChannelCandidates(target.channel, { category: tag, slug, query: target.query, type: target.type, wave: wave.name, runDay });
 
-          if (!searchResult.ok) {
+          if (!discovery || !Array.isArray(discovery.videos)) {
             targetErrors += 1;
             logCrawl('crawl_category_target_skipped', {
               runDay,
@@ -492,15 +600,34 @@ export async function runCrawl({ dryRun = false } = {}) {
               type: target.type,
               wave: wave.name,
               reason: 'target failed after retries',
-              error: serializeError(searchResult.error),
+              error: serializeError(discovery?.error),
             });
             continue;
           }
 
-          const candidates = Array.isArray(searchResult.result?.videos) ? searchResult.result.videos : [];
+          const candidates = discovery.videos;
+
+          if (!dryRun && target.channel?.slug && !touchedChannelSlugs.has(target.channel.slug)) {
+            try {
+              await updateChannelRegistryEntry(target.channel.slug, {
+                channelId: discovery.channel?.channelId || target.channel.channelId || null,
+                channelUrl: discovery.channel?.channelUrl || target.channel.channelUrl || null,
+                lastCrawledAt: timestamp(),
+              });
+              touchedChannelSlugs.add(target.channel.slug);
+            } catch (error) {
+              logCrawl('crawl_channel_registry_update_failed', {
+                runDay,
+                category: tag,
+                slug,
+                channelSlug: target.channel.slug,
+                error: serializeError(error),
+              });
+            }
+          }
 
           if (candidates.length === 0) {
-            logCrawl('crawl_category_target_empty', { runDay, category: tag, slug, query: target.query, wave: wave.name });
+            logCrawl('crawl_category_target_empty', { runDay, category: tag, slug, query: target.query, wave: wave.name, channelSlug: target.channel?.slug || null });
             continue;
           }
 
@@ -606,6 +733,7 @@ export async function runCrawl({ dryRun = false } = {}) {
             slug,
             query: target.query,
             wave: wave.name,
+            channelSlug: target.channel?.slug || null,
             kept: keptCount,
             rejected: targetRejectedCount,
             candidates: candidates.length,
