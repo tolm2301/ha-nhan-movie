@@ -6,6 +6,12 @@
 - Verification: Pending `npm.cmd run lint` and `npm.cmd run build`.
 - Risks: The workflow depends on `CRON_SECRET` and the optional `CRON_URL` secret being configured in GitHub, so the schedule will fail until those repository secrets are set.
 
+## 2026-04-30 (developer direct GitHub Actions crawl)
+- Scope: Remove the Vercel API hop and run the crawl job directly from GitHub Actions.
+- Actions: Replaced the curl-to-Vercel step with a normal checkout/setup-node/npm-ci/npm-run-crawl workflow, kept scheduled and manual dispatch support, and updated the docs/workplace records to say GitHub Actions owns the crawl job directly.
+- Verification: `git diff --check` passed.
+- Risks: The crawl job now depends directly on GitHub Secrets for Postgres access, so missing `DATABASE_URL`/`POSTGRES_URL_NON_POOLING` will fail the schedule.
+
 ## 2026-04-30 (developer cheerio bundle trace fix)
 - Scope: Force Next/Vercel to include `cheerio` in the `/api/cron/crawl` server bundle so the yt-search transitive runtime require resolves.
 - Actions: Added a side-effect `import 'cheerio';` to `src/lib/crawl.server.js` so the server tracer sees the package directly instead of relying on yt-search's dynamic require path.

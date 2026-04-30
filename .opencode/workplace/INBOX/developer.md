@@ -10,6 +10,7 @@ Use this queue for implementation and bugfix tasks.
 
 ## Entries
 - (template) YYYY-MM-DD | From: techlead/designer | Scope: ... | Verify: ...
+- 2026-04-30 | From: techlead | Scope: Run the daily crawl directly in GitHub Actions instead of calling the Vercel API. Verify: the scheduled/manual GitHub Actions job runs `npm run crawl` directly, no Vercel curl remains, and DB secrets are wired correctly.
 - 2026-04-30 | From: techlead | Scope: Make every crawl category refill until it keeps 10 movies per run, and if duplicates appear the crawler must keep expanding search/fallback targets until the category quota is filled instead of stopping short. Verify: each category reaches 10 kept movies when possible, duplicates no longer cause underfilled runs, and lint/build plus crawl verification still pass.
 - 2026-04-30 | From: developer | Scope: Started implementation for the 10-per-category refill/backfill crawl quota. Verify: pending completion checks.
 - 2026-04-30 | From: techlead | Scope: Remove live Postgres queries from the runtime path by serving a JSON snapshot regenerated from DB at build time, with a JSON fallback for local/dev. Verify: runtime pages read the snapshot file only, snapshot regeneration works with or without DB access, and lint/build still pass.

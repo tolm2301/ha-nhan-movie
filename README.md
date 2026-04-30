@@ -48,18 +48,14 @@ Useful scripts:
 GitHub Actions workflow: `.github/workflows/daily-crawl.yml`
 
 - Runs every day at `02:00 UTC`
-- Calls `https://hanhan-movie.vercel.app/api/cron/crawl` by default, or a custom URL from `CRON_URL`
-- Sends `x-cron-secret: $CRON_SECRET` so the route stays secret-protected
-- Invokes the server-side crawl route and writes refreshed data to Postgres
+- Runs the crawler directly in GitHub Actions and writes refreshed data to Postgres
 - Crawls are split by category (`Hà Nhân`, `Tu Tiên`, `Xuyên Không`, `Trọng Sinh`, `Liễu Như Yên`, `Hệ Thống`, `Khác`) and keep roughly 5 new movies per category per day; each bucket now uses a tiered keyword stack (`core`, `expanded`, `fallback-only`, `risky caps`) so broad discovery terms stay capped, the `Hà Nhân` bucket remains first-priority, runtime classification still prefers explicit brand/theme matches before any broader fallback, and the broadest discovery terms stay crawl-only
 - Logs include the category batch name, run day, and how many items were added/skipped
-- Manual access to `/api/cron/crawl` still uses `CRON_SECRET` with `x-cron-secret`, `Authorization: Bearer`, or `?secret=`
 
 Required secret/env vars:
 
-- `POSTGRES_URL_NON_POOLING` (preferred on Vercel) or `DATABASE_URL`: direct Supabase Postgres connection string for server-side reads/writes
-- `CRON_SECRET` (required for GitHub Actions): manual-access secret for the cron route
-- `CRON_URL` (optional): override the default Vercel crawl endpoint URL used by GitHub Actions
+- `POSTGRES_URL_NON_POOLING` (preferred) or `DATABASE_URL`: direct Supabase Postgres connection string for the GitHub Actions crawl job
+- `CRON_SECRET` (optional): manual-access secret for `/api/cron/crawl` if you still use the endpoint by hand
 
 ## Deploy to Vercel (no token flow)
 
@@ -69,7 +65,7 @@ Deployment is handled by Vercel Git Integration (no GitHub Actions token require
 2. Set production branch to `main` (or `master`, depending on your repo).
 3. Every push to production branch is auto-deployed by Vercel.
 
-Because the crawler now writes to Postgres, deployment refreshes should be driven by the app reading that database instead of repo commits.
+Because the crawler now runs directly in GitHub Actions, deployment refreshes should be driven by the app reading that database instead of repo commits.
 
 No `VERCEL_TOKEN`, `VERCEL_ORG_ID`, or `VERCEL_PROJECT_ID` secrets are required for this setup.
 

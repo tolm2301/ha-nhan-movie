@@ -4,40 +4,33 @@ on:
   schedule:
     - cron: '0 2 * * *'
   workflow_dispatch:
-    inputs:
-      endpoint_url:
-        description: Optional crawl endpoint override
-        required: false
-        type: string
 
 jobs:
   crawl:
     runs-on: ubuntu-latest
+    env:
+      POSTGRES_URL_NON_POOLING: ${{ secrets.POSTGRES_URL_NON_POOLING || secrets.DATABASE_URL }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL || secrets.POSTGRES_URL_NON_POOLING }}
     steps:
-      - name: Trigger Vercel crawl endpoint
-        env:
-          DEFAULT_CRON_URL: ${{ secrets.CRON_URL || 'https://hanhan-movie.vercel.app/api/cron/crawl' }}
-          ENDPOINT_URL: ${{ inputs.endpoint_url }}
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
-        run: |
-          set -eu
-          if [ -z "$CRON_SECRET" ]; then
-            echo "CRON_SECRET is required"
-            exit 1
-          fi
-          CRON_URL="$DEFAULT_CRON_URL"
-          if [ -n "$ENDPOINT_URL" ]; then
-            CRON_URL="$ENDPOINT_URL"
-          fi
-          response_file="$(mktemp)"
-          status="$(curl -sS -o "$response_file" -w '%{http_code}' -X POST "$CRON_URL" -H "x-cron-secret: $CRON_SECRET")"
-          cat "$response_file"
-          rm -f "$response_file"
-          case "$status" in
-            2*)
-              ;;
-            *)
-              echo "Unexpected HTTP status: $status"
-              exit 1
-              ;;
-          esac
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run crawl
+        run: npm run crawl 2>&1 | tee crawl.log
+
+      - name: Upload crawl logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: crawl-log-${{ github.run_id }}
+          path: crawl.log
+          if-no-files-found: warn
