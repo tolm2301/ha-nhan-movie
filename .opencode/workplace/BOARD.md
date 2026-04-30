@@ -37,7 +37,7 @@
 - [ ] Temporary JSON-first runtime fallback for DB certificate failures | Owner: developer | Priority: high
 - [ ] Create local env setup for DB-backed crawl/runtime and ignore local env files | Owner: developer | Priority: high
 - [ ] Make sitemap URLs resolve to the Vercel production domain reliably | Owner: developer | Priority: medium
-- [ ] Move daily crawl trigger from GitHub Actions to Vercel Cron | Owner: developer | Priority: high
+- [ ] Move daily crawl trigger from Vercel Cron to GitHub Actions | Owner: developer | Priority: high
 - [ ] Migrate crawl data to Postgres and switch runtime reads to DB | Owner: developer | Priority: high
 - [ ] Harden crawl retries for transient network/DNS failures | Owner: developer | Priority: high
 - [ ] Rebuild crawler logging + Ha Nhân-first small-batch crawl behavior | Owner: developer | Priority: high

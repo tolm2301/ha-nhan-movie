@@ -45,23 +45,21 @@ Useful scripts:
 
 ## Batch crawl (daily)
 
-Vercel Cron: `/api/cron/crawl`
+GitHub Actions workflow: `.github/workflows/daily-crawl.yml`
 
 - Runs every day at `02:00 UTC`
+- Calls `https://hanhan-movie.vercel.app/api/cron/crawl` by default, or a custom URL from `CRON_URL`
+- Sends `x-cron-secret: $CRON_SECRET` so the route stays secret-protected
 - Invokes the server-side crawl route and writes refreshed data to Postgres
 - Crawls are split by category (`Hà Nhân`, `Tu Tiên`, `Xuyên Không`, `Trọng Sinh`, `Liễu Như Yên`, `Hệ Thống`, `Khác`) and keep roughly 5 new movies per category per day; each bucket now uses a tiered keyword stack (`core`, `expanded`, `fallback-only`, `risky caps`) so broad discovery terms stay capped, the `Hà Nhân` bucket remains first-priority, runtime classification still prefers explicit brand/theme matches before any broader fallback, and the broadest discovery terms stay crawl-only
 - Logs include the category batch name, run day, and how many items were added/skipped
-- Vercel Cron requests are accepted via `x-vercel-cron: 1`; optional manual access can use `CRON_SECRET` with `x-cron-secret`, `Authorization: Bearer`, or `?secret=`
-
-GitHub Actions workflow: `.github/workflows/daily-crawl.yml`
-
-- Retained only as a manual fallback
-- No longer owns the daily schedule
+- Manual access to `/api/cron/crawl` still uses `CRON_SECRET` with `x-cron-secret`, `Authorization: Bearer`, or `?secret=`
 
 Required secret/env vars:
 
 - `POSTGRES_URL_NON_POOLING` (preferred on Vercel) or `DATABASE_URL`: direct Supabase Postgres connection string for server-side reads/writes
-- `CRON_SECRET` (optional): manual-access secret for the cron route
+- `CRON_SECRET` (required for GitHub Actions): manual-access secret for the cron route
+- `CRON_URL` (optional): override the default Vercel crawl endpoint URL used by GitHub Actions
 
 ## Deploy to Vercel (no token flow)
 

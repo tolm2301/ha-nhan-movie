@@ -1,5 +1,11 @@
 # Progress Timeline
 
+## 2026-04-30 (developer cron migration to GitHub Actions)
+- Scope: Move the scheduled crawl trigger off Vercel Cron and onto GitHub Actions while keeping the crawl endpoint secret-protected.
+- Actions: Replaced the Vercel cron config with a scheduled/manual GitHub Actions workflow that POSTs to the Vercel crawl endpoint using `x-cron-secret`, and updated the README plus workplace tracking to reflect GitHub Actions ownership.
+- Verification: Pending `npm.cmd run lint` and `npm.cmd run build`.
+- Risks: The workflow depends on `CRON_SECRET` and the optional `CRON_URL` secret being configured in GitHub, so the schedule will fail until those repository secrets are set.
+
 ## 2026-04-30 (developer cheerio bundle trace fix)
 - Scope: Force Next/Vercel to include `cheerio` in the `/api/cron/crawl` server bundle so the yt-search transitive runtime require resolves.
 - Actions: Added a side-effect `import 'cheerio';` to `src/lib/crawl.server.js` so the server tracer sees the package directly instead of relying on yt-search's dynamic require path.
