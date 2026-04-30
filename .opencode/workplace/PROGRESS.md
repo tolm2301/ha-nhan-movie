@@ -1,5 +1,17 @@
 # Progress Timeline
 
+## 2026-04-30 (developer cheerio bundle trace fix)
+- Scope: Force Next/Vercel to include `cheerio` in the `/api/cron/crawl` server bundle so the yt-search transitive runtime require resolves.
+- Actions: Added a side-effect `import 'cheerio';` to `src/lib/crawl.server.js` so the server tracer sees the package directly instead of relying on yt-search's dynamic require path.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: The fix targets bundle tracing, so Vercel should be redeployed and the cron route rechecked to confirm the module is present in the production function.
+
+## 2026-04-30 (techlead cheerio resolution follow-up)
+- Scope: Determine why Vercel still reports `Cannot find module 'cheerio'` after the dependency was added.
+- Actions: Confirmed the package is present in package.json/package-lock locally, so the remaining issue is likely Next/Vercel tracing or bundling rather than a missing manifest entry.
+- Verification: Diagnosis only so far; developer investigation pending.
+- Risks: The fix may require an explicit bundling/tracing hint or a crawl implementation change if yt-search's internal require is not being traced.
+
 ## 2026-04-30 (developer cheerio runtime fix)
 - Scope: Add the missing runtime `cheerio` dependency so the Vercel cron crawl route can resolve the yt-search import chain on deployment.
 - Actions: Identified the runtime chain as `src/app/api/cron/crawl/route.js -> src/lib/crawl.server.js -> yt-search -> cheerio`, added `cheerio` to the app's runtime dependencies, and updated the lockfile root dependency list to match.

@@ -1,3 +1,4 @@
+import 'cheerio';
 import ytSearch from 'yt-search';
 import { readMoviesFromJsonFile, replacePersistedMovies } from './movieStore.server.js';
 import { CATEGORY_TAXONOMY, getCategoryDefinitionBySlug, normalizeMovieCategory, resolveMovieCategory } from './movieCategories.js';
