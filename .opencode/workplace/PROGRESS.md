@@ -1,5 +1,17 @@
 # Progress Timeline
 
+## 2026-04-30 (developer cheerio runtime fix)
+- Scope: Add the missing runtime `cheerio` dependency so the Vercel cron crawl route can resolve the yt-search import chain on deployment.
+- Actions: Identified the runtime chain as `src/app/api/cron/crawl/route.js -> src/lib/crawl.server.js -> yt-search -> cheerio`, added `cheerio` to the app's runtime dependencies, and updated the lockfile root dependency list to match.
+- Verification: Pending `npm.cmd run lint` and `npm.cmd run build`.
+- Risks: Runtime resolution should now succeed on a fresh Vercel install, but the deployed environment still needs a clean dependency install to pick up the new direct dependency.
+
+## 2026-04-30 (techlead cheerio runtime fix)
+- Scope: Restore Vercel cron crawl execution after runtime failure showed `Cannot find module 'cheerio'`.
+- Actions: Identified that the cron route reaches crawl logic but fails because the bundle is missing a runtime dependency.
+- Verification: Planning/assignment only so far; developer implementation pending.
+- Risks: The fix must be added to runtime dependencies and verified on Vercel after redeploy.
+
 ## 2026-04-30 (developer cron unblock)
 - Scope: Allow genuine Vercel Cron requests to reach the crawl route while keeping manual access secret-protected.
 - Actions: Reordered the cron auth gate so `x-vercel-cron: 1` bypasses the manual secret requirement, kept header/bearer/query secret auth for non-cron requests, and preserved the manual denial path when `CRON_SECRET` is absent.
