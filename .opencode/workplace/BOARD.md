@@ -14,6 +14,9 @@
 - [ ] Enforce agreed 4-slot AdSense setup: home after rail 3, category after first block, watch after related, search after 8–12 results | Owner: developer | Priority: medium
 
 ## Review
+- [ ] Fix Next image host config for ytimg subdomains used by hero thumbnails | Owner: developer | Priority: high
+- [ ] Remove all drama-related seed channels and keep only non-drama clip-style sources for release | Owner: developer | Priority: high
+- [ ] Remove DramaBox channels and restore the high-signal clip-style release seed set | Owner: techlead | Priority: high
 - [ ] Fix overly strict crawl filtering so new valid movies can survive to persistence | Owner: developer | Priority: high
 - [ ] Change crawl persistence to append/merge so existing movies are retained across runs | Owner: developer | Priority: high
 - [ ] Add DB-backed channel registry with repo seed bootstrap so crawl discovery stops depending on yt-search and ad hoc channel hunting | Owner: techlead | Priority: high

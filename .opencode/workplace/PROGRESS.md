@@ -1,5 +1,65 @@
 # Progress Timeline
 
+## 2026-04-30 (developer ytimg host allowlist)
+- Scope: Fix the runtime `next/image` host error for ytimg thumbnails used by hero/catalog cards.
+- Actions: Expanded `next.config.mjs` to allow the explicit YouTube thumbnail hosts actually used by the app: `i.ytimg.com` plus `i1.ytimg.com` through `i4.ytimg.com`.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: The allowlist is intentionally narrow, so any future thumbnail host outside `i.ytimg.com` and `i1`-`i4.ytimg.com` would still need a follow-up config update.
+
+## 2026-04-30 (techlead next image host fix)
+- Scope: Fix the runtime image-host error caused by ytimg subdomains like `i4.ytimg.com` not being allowed in Next's image config.
+- Actions: Confirmed the current `next.config.mjs` only allows `i.ytimg.com`, while the hero image is loading from `i4.ytimg.com`; the app needs the ytimg subdomains added so release can stop throwing the runtime error.
+- Verification: Diagnosis only so far; developer implementation pending.
+- Risks: The fix must preserve existing remote image safety while allowing all YouTube thumbnail subdomains actually emitted by the catalog.
+
+## 2026-04-30 (developer drama seed cleanup)
+- Scope: Remove drama-related channel seeds entirely and leave only non-drama clip-style sources that fit the product.
+- Actions: Pruned `src/lib/channel-seeds.json` down to the minimal non-drama set for release, keeping the existing Ha Nhân sources plus the generic clip-style source and removing the two drama-specific entries.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: The smaller bootstrap set may reduce discovery breadth if the remaining channel markup or availability changes.
+
+## 2026-04-30 (techlead drama seed cleanup)
+- Scope: Remove drama-related seed channels entirely and keep only the non-drama clip-style sources that match the site.
+- Actions: Responded to the release request by narrowing the registry further; the remaining seed list should exclude drama-specific sources and stay aligned with the site’s actual content.
+- Verification: Planning/assignment only so far; developer cleanup pending.
+- Risks: Over-pruning could reduce crawl breadth, but drama-specific seeds are off-target for this product.
+
+## 2026-04-30 (developer channel seed prune)
+- Scope: Restore the high-signal clip-style seed set for release and remove DramaBox sources.
+- Actions: Removed both DramaBox entries from `src/lib/channel-seeds.json`, kept the approved non-DramaBox clip-style sources, and kept the bootstrap list minimal and deduped for release.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: The smaller bootstrap set may reduce discovery breadth if one of the remaining channels slows down or changes markup.
+
+## 2026-04-30 (techlead creator path cancelled)
+- Scope: Drop the creator-led seed research path and finish the release cleanup with developer-only ownership.
+- Actions: Canceled the creator research direction, keeping only the high-signal clip-style seed pruning work for release.
+- Verification: Planning/assignment only so far; cleanup pending.
+- Risks: The seed list still needs a final pruning pass to ensure only clip-style high-signal sources remain.
+
+## 2026-04-30 (developer clip-style seed update)
+- Scope: Refine the channel registry bootstrap toward clip-style discovery sources only.
+- Actions: Added the six creator shortlist channels to `src/lib/channel-seeds.json`, kept them category-aligned as shared discovery seeds, and ordered them ahead of the older generic shared seed so clip-style channels are prioritized first in registry bootstrap.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: Channel titles can drift on YouTube, so future registry refreshes may need slug/display-name maintenance if the channels rename themselves.
+
+## 2026-04-30 (techlead channel seed expansion)
+- Scope: Ask creator to research and propose many additional YouTube channels/feeds to improve crawl coverage across categories.
+- Actions: Identified that live crawl now produces some new movies but still underfills most categories, so the next leverage point is expanding the curated channel seed set rather than changing crawl control flow.
+- Verification: Planning/assignment only so far; creator research pending.
+- Risks: Seed quality matters more than raw quantity; the list needs to stay relevant to the existing category taxonomy.
+
+## 2026-04-30 (developer channel-depth crawl fix)
+- Scope: Remove the live crawl bottleneck from search-backfill and make channel/feed discovery deeper so `npm.cmd run crawl` can keep moving.
+- Actions: Disabled search-backfill by default (`CRAWL_ENABLE_SEARCH_BACKFILL` opt-in only), kept append/merge persistence intact, and increased channel feed depth from 12/8 to 20/16 so the live crawl spends its time on channel/feed candidates instead of retrying failing search queries.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; real `npm.cmd run crawl` (`crawl-live-channel-depth.log`) completed with `newVideos:17` and `totalVideos:301`. Per-category kept counts were Hà Nhân `10`, Tu Tiên `1`, Xuyên Không `1`, Trọng Sinh `1`, Liễu Như Yên `0`, Hệ Thống `1`, Khác `3`.
+- Risks: Only Hà Nhân hit the full 10-kept quota; the other categories still depend on future source depth/coverage, so exact 10-per-category remains source-limited rather than blocked by crawl control flow.
+
+## 2026-04-30 (developer live crawl follow-up)
+- Scope: Verify the real crawl path against the 10-kept-per-category requirement and surface the live bottleneck.
+- Actions: Kept the append/merge persistence intact, added a search-backfill wave after registry channel refill, and fixed the dedupe key so search and channel targets are tracked independently. Ran real `npm.cmd run crawl` attempts (no dry-run); one fully completed run and one shorter timed capture were used for evidence.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed. The latest completed live crawl (`crawl-live-3.log`) finished with `totalVideos:284`, `newVideos:0`, and every category underfilled (`kept:0` for Hà Nhân, Tu Tiên, Xuyên Không, Trọng Sinh, Liễu Như Yên, Hệ Thống, Khác). The shorter current crawl window (`crawl-live-current.log`) did not reach a category completion before timeout and stalled in `Hà Nhân` search-backfill, with each search query failing after retries.
+- Risks: The current search-backfill path is the bottleneck; it adds runtime but is not yet producing kept items, so the 10-per-category goal still needs a stronger live discovery source.
+
 ## 2026-04-30 (developer thumbnail host allowlist fix)
 - Scope: Fix the crawl filter that was rejecting every valid YouTube thumbnail as `invalid thumbnail`.
 - Actions: Expanded `src/lib/thumbnailFilters.js` to accept YouTube image subdomains like `i1.ytimg.com` through `i4.ytimg.com` in addition to the existing hosts, while keeping the explicit broken-id/url blocklist and the frame-placeholder rejection.
