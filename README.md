@@ -1,6 +1,13 @@
 # Hanhan Movie
 
-Next.js movie site with automated YouTube crawling and Vercel Git-based deployment.
+Next.js movie site with automated YouTube crawling, build-time snapshot generation, and Vercel Git-based deployment.
+
+## Snapshot lifecycle
+
+- Runtime reads `src/lib/movies.json`.
+- Build/deploy runs `prebuild` first, so `npm run build` always refreshes the snapshot via `npm run snapshot:movies` before Next.js builds.
+- Hourly sync is handled by `.github/workflows/hourly-snapshot-sync.yml`, which refreshes the snapshot from Postgres and commits the updated JSON back to the repo.
+- Crawl is separate: `.github/workflows/daily-crawl.yml` updates the database only and is no longer the freshness owner for the runtime snapshot.
 
 ## Postgres data
 
@@ -39,23 +46,33 @@ Useful scripts:
 - `npm run crawl:dry`: run the crawler without writing to Postgres
 - `npm run migrate:movies`: backfill `src/lib/movies.json` into Postgres
 - `npm run dev:fresh`: crawl first, then run dev server
-- `npm run build`: standard Next.js production build
+- `npm run build`: standard Next.js production build; `prebuild` refreshes `src/lib/movies.json` first
 - `npm run build:fresh`: crawl first, then build
 - `npm run lint`: run ESLint
 
-## Batch crawl (daily)
+## Daily crawl (DB ingestion)
 
 GitHub Actions workflow: `.github/workflows/daily-crawl.yml`
 
 - Runs every day at `02:00 UTC`
 - Runs the crawler directly in GitHub Actions and writes refreshed data to Postgres
+- Does not update the runtime snapshot; snapshot freshness is owned by build/deploy and the hourly sync workflow
 - Crawls are split by category (`Hà Nhân`, `Tu Tiên`, `Xuyên Không`, `Trọng Sinh`, `Liễu Như Yên`, `Hệ Thống`, `Khác`) and keep roughly 5 new movies per category per day; each bucket now uses a tiered keyword stack (`core`, `expanded`, `fallback-only`, `risky caps`) so broad discovery terms stay capped, the `Hà Nhân` bucket remains first-priority, runtime classification still prefers explicit brand/theme matches before any broader fallback, and the broadest discovery terms stay crawl-only
 - Logs include the category batch name, run day, and how many items were added/skipped
+
+## Hourly snapshot sync
+
+GitHub Actions workflow: `.github/workflows/hourly-snapshot-sync.yml`
+
+- Runs every hour
+- Runs `npm run snapshot:movies` only
+- Requires Postgres credentials from GitHub Secrets and pushes the updated `src/lib/movies.json` back to the default branch
 
 Required secret/env vars:
 
 - `POSTGRES_URL_NON_POOLING` (preferred) or `DATABASE_URL`: direct Supabase Postgres connection string for the GitHub Actions crawl job
 - `CRON_SECRET` (optional): manual-access secret for `/api/cron/crawl` if you still use the endpoint by hand
+- `POSTGRES_URL_NON_POOLING` (preferred) or `DATABASE_URL`: direct Supabase Postgres connection string for the hourly snapshot sync job
 
 ## Deploy to Vercel (no token flow)
 
@@ -65,7 +82,7 @@ Deployment is handled by Vercel Git Integration (no GitHub Actions token require
 2. Set production branch to `main` (or `master`, depending on your repo).
 3. Every push to production branch is auto-deployed by Vercel.
 
-Because the crawler now runs directly in GitHub Actions, deployment refreshes should be driven by the app reading that database instead of repo commits.
+Because build/deploy regenerates the runtime snapshot first, and the hourly sync keeps `src/lib/movies.json` updated, Vercel deployments stay snapshot-driven without tying freshness to crawl runs.
 
 No `VERCEL_TOKEN`, `VERCEL_ORG_ID`, or `VERCEL_PROJECT_ID` secrets are required for this setup.
 
@@ -83,4 +100,4 @@ Workflow: `.github/workflows/ci.yml`
 - Build command: `npm run build`
 - Output directory: default (`.next`)
 
-This keeps crawling in the dedicated daily batch flow, instead of running it on every deployment.
+This keeps crawling in the dedicated daily batch flow and snapshot refresh in the separate hourly sync, instead of tying either one to Vercel deployment hooks.

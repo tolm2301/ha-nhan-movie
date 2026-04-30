@@ -1,5 +1,17 @@
 # Progress Timeline
 
+## 2026-04-30 (developer snapshot decoupling)
+- Scope: Decouple snapshot freshness from crawl execution so build/deploy creates the runtime snapshot and a separate hourly sync refreshes it independently.
+- Actions: Added `.github/workflows/hourly-snapshot-sync.yml` to run `npm run snapshot:movies` hourly with DB secrets and commit `src/lib/movies.json` updates; updated README to document build/deploy snapshot regeneration, hourly sync ownership, and crawl as DB-only ingestion.
+- Verification: `python -c "import pathlib, yaml; yaml.safe_load(pathlib.Path(r'C:/Users/ToLM/Documents/Project/ha-nhan-movie/.github/workflows/hourly-snapshot-sync.yml').read_text(encoding='utf-8')); yaml.safe_load(pathlib.Path(r'C:/Users/ToLM/Documents/Project/ha-nhan-movie/.github/workflows/daily-crawl.yml').read_text(encoding='utf-8')); print('yaml ok')"` passed; `git diff --check` passed with line-ending warnings only.
+- Risks: The hourly sync requires `POSTGRES_URL_NON_POOLING` or `DATABASE_URL` secrets plus repository write permission; branch protection could block the direct push and would need an alternate sync path.
+
+## 2026-04-30 (techlead snapshot decoupling)
+- Scope: Decouple runtime snapshot freshness from crawl execution so build/deploy creates the snapshot and a separate hourly sync keeps it fresh.
+- Actions: Agreed that crawl should no longer own snapshot freshness; build/deploy should regenerate the snapshot and an independent hourly job should sync it.
+- Verification: Planning/assignment only so far; developer implementation pending.
+- Risks: The hourly sync must not reintroduce runtime crawl coupling, and the snapshot path still needs to remain Vercel-safe.
+
 ## 2026-04-30 (developer cron migration to GitHub Actions)
 - Scope: Move the scheduled crawl trigger off Vercel Cron and onto GitHub Actions while keeping the crawl endpoint secret-protected.
 - Actions: Replaced the Vercel cron config with a scheduled/manual GitHub Actions workflow that POSTs to the Vercel crawl endpoint using `x-cron-secret`, and updated the README plus workplace tracking to reflect GitHub Actions ownership.
