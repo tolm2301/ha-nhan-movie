@@ -10,6 +10,8 @@ Use this queue for implementation and bugfix tasks.
 
 ## Entries
 - (template) YYYY-MM-DD | From: techlead/designer | Scope: ... | Verify: ...
+- 2026-04-30 | From: techlead | Scope: Fix the overly strict crawl filtering that rejects every candidate as `invalid thumbnail`, so new movies can survive to persistence and increase the catalog. Verify: live crawl produces at least some kept items, `newVideos` can exceed 0, and lint/build still pass.
+- 2026-04-30 | From: techlead | Scope: Change crawl persistence from replace-on-write to append/merge so existing movies are retained across runs and the catalog count can grow over time. Verify: repeat crawls no longer reset the catalog back to the same count, old movies remain present, and dedupe/upsert keeps ids stable with lint/build still passing.
 - 2026-04-30 | From: techlead | Scope: Run the daily crawl directly in GitHub Actions instead of calling the Vercel API. Verify: the scheduled/manual GitHub Actions job runs `npm run crawl` directly, no Vercel curl remains, and DB secrets are wired correctly.
 - 2026-04-30 | From: techlead | Scope: Make every crawl category refill until it keeps 10 movies per run, and if duplicates appear the crawler must keep expanding search/fallback targets until the category quota is filled instead of stopping short. Verify: each category reaches 10 kept movies when possible, duplicates no longer cause underfilled runs, and lint/build plus crawl verification still pass.
 - 2026-04-30 | From: developer | Scope: Started implementation for the 10-per-category refill/backfill crawl quota. Verify: pending completion checks.

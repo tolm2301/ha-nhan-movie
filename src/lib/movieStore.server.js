@@ -123,6 +123,19 @@ function chunk(items, size) {
   return batches;
 }
 
+function dedupeMoviesById(movies = []) {
+  const seen = new Set();
+
+  return movies.filter(movie => {
+    if (!movie?.id || seen.has(movie.id)) {
+      return false;
+    }
+
+    seen.add(movie.id);
+    return true;
+  });
+}
+
 function toSafeInteger(value, fallback = null) {
   const parsed = Number.parseInt(String(value ?? '').trim(), 10);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -421,7 +434,7 @@ export async function loadPersistedMovies({ allowJsonFallback = true } = {}) {
 
 export async function replacePersistedMovies(movies = [], runMeta = {}) {
   return withClient(async client => {
-    const normalizedMovies = movies.map((movie, index) => normalizeMovieRecord(movie, index)).filter(movie => movie.id);
+    const normalizedMovies = dedupeMoviesById(movies.map((movie, index) => normalizeMovieRecord(movie, index)).filter(movie => movie.id));
     const startedAt = runMeta.startedAt || new Date().toISOString();
     const finishedAt = runMeta.finishedAt || new Date().toISOString();
     const status = runMeta.status || 'completed';
@@ -440,8 +453,6 @@ export async function replacePersistedMovies(movies = [], runMeta = {}) {
       );
 
       const crawlRunId = runResult.rows[0]?.id || null;
-
-      await client.query('DELETE FROM movies;');
 
       for (const batch of chunk(normalizedMovies, BATCH_SIZE)) {
         const params = [];
@@ -471,16 +482,50 @@ export async function replacePersistedMovies(movies = [], runMeta = {}) {
         await client.query(
           `INSERT INTO movies (
             id, title, episodes, episode_label, episode_number, type, series_key, views, thumbnail, tags, rating, sort_order, crawl_run_id
-          ) VALUES ${placeholders.join(', ')}`,
+          ) VALUES ${placeholders.join(', ')}
+          ON CONFLICT (id) DO UPDATE SET
+            title = EXCLUDED.title,
+            episodes = EXCLUDED.episodes,
+            episode_label = EXCLUDED.episode_label,
+            episode_number = EXCLUDED.episode_number,
+            type = EXCLUDED.type,
+            series_key = EXCLUDED.series_key,
+            views = EXCLUDED.views,
+            thumbnail = EXCLUDED.thumbnail,
+            tags = EXCLUDED.tags,
+            rating = EXCLUDED.rating,
+            sort_order = EXCLUDED.sort_order,
+            crawl_run_id = COALESCE(EXCLUDED.crawl_run_id, movies.crawl_run_id),
+            updated_at = NOW();`,
           params,
         );
       }
+
+      const persistedMoviesResult = await client.query(`
+        SELECT
+          id,
+          title,
+          episodes,
+          episode_label AS "episodeLabel",
+          episode_number AS "episodeNumber",
+          type,
+          series_key AS "seriesKey",
+          views,
+          thumbnail,
+          tags,
+          rating,
+          sort_order AS "sortOrder"
+        FROM movies
+        ORDER BY sort_order ASC, created_at DESC, id ASC;
+      `);
+
+      const persistedMovies = persistedMoviesResult.rows.map((movie, index) => normalizeMovieRecord(movie, index));
 
       await client.query(
         `UPDATE crawl_runs
          SET finished_at = $1, status = $2, kept_count = $3, fetched_count = $4, metadata = $5
          WHERE id = $6;`,
-        [finishedAt, status, keptCount, fetchedCount, metadata, crawlRunId],
+        [finishedAt, status, persistedMovies.length, fetchedCount, metadata, crawlRunId],
       );
 
       await client.query('COMMIT');
@@ -488,17 +533,17 @@ export async function replacePersistedMovies(movies = [], runMeta = {}) {
       let snapshotError = null;
 
       try {
-        await writeMovieSnapshot(normalizedMovies, { source: 'db-write' });
+        await writeMovieSnapshot(persistedMovies, { source: 'db-merge' });
       } catch (error) {
         snapshotSynced = false;
         snapshotError = error instanceof Error ? { name: error.name, message: error.message } : { message: String(error) };
         console.error(`[${new Date().toISOString()}] snapshot_refresh_failed ${JSON.stringify({
-          source: 'db-write',
+          source: 'db-merge',
           error: snapshotError,
         })}`);
       }
 
-      return { crawlRunId, keptCount, fetchedCount, totalMovies: normalizedMovies.length, snapshotSynced, snapshotError };
+      return { crawlRunId, keptCount: persistedMovies.length, fetchedCount, totalMovies: persistedMovies.length, snapshotSynced, snapshotError };
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;

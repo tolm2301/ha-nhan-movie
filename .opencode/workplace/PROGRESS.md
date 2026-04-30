@@ -1,5 +1,35 @@
 # Progress Timeline
 
+## 2026-04-30 (developer thumbnail host allowlist fix)
+- Scope: Fix the crawl filter that was rejecting every valid YouTube thumbnail as `invalid thumbnail`.
+- Actions: Expanded `src/lib/thumbnailFilters.js` to accept YouTube image subdomains like `i1.ytimg.com` through `i4.ytimg.com` in addition to the existing hosts, while keeping the explicit broken-id/url blocklist and the frame-placeholder rejection.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; `npm.cmd run crawl:dry` now kept items again with `newVideos:17` and `totalVideos:284`, including `kept:9` for Hà Nhân, `kept:2` for Tu Tiên, `kept:1` for Xuyên Không, `kept:1` for Hệ Thống, and `kept:4` for Khác.
+- Risks: The thumbnail filter is now broader, so future non-standard but still image-backed YouTube variants may slip through unless they are explicitly bad or obviously placeholder-like.
+
+## 2026-04-30 (techlead crawl filter loosen)
+- Scope: Fix the overly strict crawl filtering that rejects every candidate as `invalid thumbnail`, preventing any new movies from surviving to persistence.
+- Actions: Reviewed the latest live crawl result (`267 -> 267`, `newVideos:0`, all categories `kept:0`) and identified discovery/filtering as the current blocker rather than append/merge persistence.
+- Verification: Planning/assignment only so far; developer implementation pending.
+- Risks: The fix must increase yield without letting obviously broken thumbnails flood the catalog.
+
+## 2026-04-30 (developer live crawl verification)
+- Scope: Verify whether the append/merge crawl persistence increases the persisted catalog size across a real crawl run.
+- Actions: Read the DB-backed catalog count before and after a live `npm.cmd run crawl` run.
+- Verification: Pre-crawl count was 267; post-crawl count was 267; delta was 0. Crawl output ended with `newVideos:0`, `existingKept:267`, and every category reporting `kept:0`, `added:0`, `duplicates:0`, `rejected:24`.
+- Risks: The current run did not surface any new valid videos because the candidate set was rejected before persistence, so the append/merge path was not exercised by new inserts in this sample.
+
+## 2026-04-30 (developer merge persistence)
+- Scope: Change crawl persistence from replace-on-write to append/merge so old movies stay retained across runs and duplicate ids do not multiply.
+- Actions: Reworked `src/lib/movieStore.server.js` to upsert each crawled movie by `id` instead of deleting the table, dedupe repeated ids within a run before writes, and refresh `src/lib/movies.json` from the full merged catalog after commit. Updated the README crawl note so the append/merge behavior is explicit.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; build prebuild snapshot refresh reported `source: "db"` with 267 movies, and a DB smoke check returned `count:267` with `uniqueIds:267`, confirming the runtime snapshot now reflects the retained catalog without duplicate ids.
+- Risks: I did not run a second live crawl during verification, so the append/merge behavior is validated by code path and build-time snapshot refresh rather than an end-to-end repeated crawl.
+
+## 2026-04-30 (techlead append semantics)
+- Scope: Change crawl persistence from replace-on-write to append/merge so old movies remain in the catalog after each run.
+- Actions: Confirmed the current persistence path overwrites the movies table, which explains why repeated crawls keep landing back at the same count instead of accumulating retained items.
+- Verification: Planning/assignment only so far; developer implementation pending.
+- Risks: Append semantics need dedupe/upsert behavior so repeated runs do not duplicate ids or inflate the catalog with exact repeats.
+
 ## 2026-04-30 (developer channel registry crawl)
 - Scope: Replace yt-search-based crawl discovery with a DB-backed channel registry seeded from the repo.
 - Actions: Added `src/lib/channel-seeds.json`, expanded `src/lib/movieStore.server.js` with a `channels` table plus seed/bootstrap/load/update helpers, and reworked `src/lib/crawl.server.js` so category crawling consumes registry-backed YouTube channel feeds/uploads instead of search discovery. The crawl now records `last_crawled_at` on registry channels during real runs and keeps the repo seed as the bootstrap fallback when the table is empty.

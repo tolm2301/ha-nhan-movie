@@ -44,7 +44,7 @@ npm run dev
 
 Useful scripts:
 
-- `npm run crawl`: run data crawler and persist the refreshed dataset to Postgres
+- `npm run crawl`: run data crawler and upsert the refreshed dataset into Postgres so older movie rows stay retained
 - `npm run crawl:dry`: run the crawler without writing to Postgres
 - `npm run migrate:movies`: backfill `src/lib/movies.json` into Postgres
 - `npm run dev:fresh`: crawl first, then run dev server
@@ -57,7 +57,7 @@ Useful scripts:
 GitHub Actions workflow: `.github/workflows/daily-crawl.yml`
 
 - Runs every day at `02:00 UTC`
-- Runs the crawler directly in GitHub Actions and writes refreshed data to Postgres
+- Runs the crawler directly in GitHub Actions and upserts refreshed data into Postgres so repeated runs grow the catalog without duplicating movie ids
 - Does not update the runtime snapshot; snapshot freshness is owned by build/deploy and the hourly sync workflow
 - Crawls are split by category (`Hà Nhân`, `Tu Tiên`, `Xuyên Không`, `Trọng Sinh`, `Liễu Như Yên`, `Hệ Thống`, `Khác`) and use the DB-backed channel registry as the discovery source. Channel metadata is bootstrapped from `src/lib/channel-seeds.json` when the registry is empty, and crawl reads channel feeds/uploads instead of relying on yt-search for discovery.
 - Logs include the category batch name, run day, and how many items were added/skipped
