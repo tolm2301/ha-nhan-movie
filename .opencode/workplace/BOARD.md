@@ -14,6 +14,7 @@
 - [ ] Enforce agreed 4-slot AdSense setup: home after rail 3, category after first block, watch after related, search after 8–12 results | Owner: developer | Priority: medium
 
 ## Review
+- [ ] Fix Vercel cron auth so scheduled crawl runs can execute and refresh the snapshot automatically | Owner: developer | Priority: high
 - [ ] Make every crawl category refill until it keeps 10 movies per run, treating duplicates as backfill triggers instead of stopping early | Owner: developer | Priority: high
 - [ ] Wire static snapshot regeneration into crawl/cron update flow | Owner: developer | Priority: high
 - [ ] Reduce watch page payload and push slower category/watch loads below warning threshold | Owner: developer | Priority: high

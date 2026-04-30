@@ -1,5 +1,17 @@
 # Progress Timeline
 
+## 2026-04-30 (developer cron unblock)
+- Scope: Allow genuine Vercel Cron requests to reach the crawl route while keeping manual access secret-protected.
+- Actions: Reordered the cron auth gate so `x-vercel-cron: 1` bypasses the manual secret requirement, kept header/bearer/query secret auth for non-cron requests, and preserved the manual denial path when `CRON_SECRET` is absent.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; a helper smoke test confirmed `x-vercel-cron: 1` returns `trigger: vercel-cron`, manual header/bearer/query secret access returns `trigger: manual`, and manual requests without `CRON_SECRET` are denied with 401.
+- Risks: The route now trusts the Vercel cron header for scheduled traffic, so spoofed requests outside Vercel infrastructure would also be accepted.
+
+## 2026-04-30 (techlead cron unblock)
+- Scope: Fix Vercel cron auth so scheduled crawl runs can actually execute and refresh the static snapshot automatically.
+- Actions: Determined the current route blocks Vercel Cron behind a manual `CRON_SECRET` check, so scheduled requests never reach the crawl handler.
+- Verification: Planning/assignment only so far; implementation pending.
+- Risks: The fix must preserve manual protection while allowing genuine Vercel cron requests through.
+
 ## 2026-04-30 (developer crawl quota refill/backfill)
 - Scope: Enforce a 10-kept-movies quota per category crawl run, even when duplicates or rejects would otherwise leave the batch short.
 - Actions: Raised the per-category crawl target to 10, split category discovery into an initial pass plus controlled refill/broad fallback waves, deduped repeated queries across waves, and added explicit deficit logging when a category still cannot reach quota after exhausting the controlled search space.

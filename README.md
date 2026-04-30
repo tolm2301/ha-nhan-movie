@@ -51,7 +51,7 @@ Vercel Cron: `/api/cron/crawl`
 - Invokes the server-side crawl route and writes refreshed data to Postgres
 - Crawls are split by category (`Hà Nhân`, `Tu Tiên`, `Xuyên Không`, `Trọng Sinh`, `Liễu Như Yên`, `Hệ Thống`, `Khác`) and keep roughly 5 new movies per category per day; each bucket now uses a tiered keyword stack (`core`, `expanded`, `fallback-only`, `risky caps`) so broad discovery terms stay capped, the `Hà Nhân` bucket remains first-priority, runtime classification still prefers explicit brand/theme matches before any broader fallback, and the broadest discovery terms stay crawl-only
 - Logs include the category batch name, run day, and how many items were added/skipped
-- Optional manual access can use `CRON_SECRET` with `x-cron-secret` or `?secret=`
+- Vercel Cron requests are accepted via `x-vercel-cron: 1`; optional manual access can use `CRON_SECRET` with `x-cron-secret`, `Authorization: Bearer`, or `?secret=`
 
 GitHub Actions workflow: `.github/workflows/daily-crawl.yml`
 

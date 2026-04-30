@@ -7,7 +7,18 @@ function normalizeToken(value = '') {
   return String(value).trim();
 }
 
-function getRequestMode(request) {
+export function isVercelCronRequest(request) {
+  return request.headers.get('x-vercel-cron') === '1';
+}
+
+export function getRequestMode(request) {
+  if (isVercelCronRequest(request)) {
+    return {
+      ok: true,
+      trigger: 'vercel-cron',
+    };
+  }
+
   const secret = normalizeToken(process.env.CRON_SECRET);
   if (!secret) {
     return {
@@ -15,7 +26,7 @@ function getRequestMode(request) {
       status: 401,
       body: {
         ok: false,
-        error: 'Cron access is disabled. Set CRON_SECRET for manual access or call through Vercel Cron.',
+        error: 'Set CRON_SECRET for manual access, or call through Vercel Cron.',
       },
     };
   }
@@ -39,7 +50,7 @@ function getRequestMode(request) {
 
   return {
     ok: true,
-    trigger: request.headers.get('x-vercel-cron') === '1' ? 'vercel-cron' : 'manual',
+    trigger: 'manual',
   };
 }
 
