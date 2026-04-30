@@ -17,4 +17,5 @@ Flow:
 Rules:
 - Keep one active in-progress owner at a time.
 - No separate tester role; developer owns verification.
+- Add `product-quality` when the task needs product-fit or completeness review.
 - Do not close task without verification evidence.

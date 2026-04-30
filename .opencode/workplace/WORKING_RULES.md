@@ -6,6 +6,7 @@ Effective date: 2026-04-22
 - `techlead`: intake, scope, acceptance criteria, owner assignment, final closeout only.
 - `designer`: UX/UI decisions and visual quality gate.
 - `developer`: implementation + explicit self-verification (lint/build/runtime or stated limit).
+- `product-quality`: product-fit review, completeness checks, and release-readiness judgment.
 - `creator`: production-readiness checks (docs/metadata/workflow/release notes).
 
 Rule: `techlead` does not directly implement product features unless explicitly approved by user due to emergency.
@@ -14,7 +15,7 @@ Rule: `techlead` does not directly implement product features unless explicitly 
 1. Intake (`techlead`)
 2. Assign (`techlead` -> execution role)
 3. Execute (assigned role)
-4. Verify (`developer`, then `creator` when relevant)
+4. Verify (`developer`, `product-quality` when relevant, then `creator` when relevant)
 5. Close (`techlead` only)
 
 ## 3) Ownership policy
@@ -40,6 +41,7 @@ Each handoff entry must include:
 ## 6) Quality gates
 - Designer gate: clarity, responsive behavior, hierarchy, interaction polish.
 - Developer gate: correctness, server/client boundary safety, lint/build/runtime evidence.
+- Product-quality gate: acceptance fit, completeness, user-visible gaps, release judgment.
 - Creator gate: docs/metadata/release readiness and operational clarity.
 - Techlead gate: architecture fit, consistency, residual risk acceptance.
 

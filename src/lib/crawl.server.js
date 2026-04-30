@@ -1,6 +1,6 @@
 import ytSearch from 'yt-search';
 import { readMoviesFromJsonFile, replacePersistedMovies } from './movieStore.server.js';
-import { getCategoryDefinitionBySlug, normalizeMovieCategory, resolveMovieCategory } from './movieCategories.js';
+import { CATEGORY_TAXONOMY, getCategoryDefinitionBySlug, normalizeMovieCategory, resolveMovieCategory } from './movieCategories.js';
 import { hasRenderableThumbnail } from './thumbnailFilters.js';
 
 const EPISODE_REGEX = /(t\u1eadp|tap|episode|ep\.?|ph\u1ea7n)\s*(\d{1,4})/i;
@@ -98,66 +98,163 @@ function isTransientCrawlError(error) {
   return message.includes('socket hang up') || message.includes('timeout') || message.includes('network error');
 }
 
-const CATEGORY_BATCH_LIMIT = 5;
+const CATEGORY_BATCH_LIMIT = 10;
 const CATEGORY_TRUSTED_AUTHOR_WORDS = ['ha nhan', 'h\u00e0 nh\u00e2n', 'review phim', 'hoat hinh', 'ho\u1ea1t h\u00ecnh', 'vietsub', 'anime', 'phim', 'cartoon'];
 const SHARED_SOURCE_ANCHORS = ['@keodeovietsub'];
 const SHARED_SOURCE_TARGETS = channelTargets(SHARED_SOURCE_ANCHORS);
+const CATEGORY_QUERY_CAPS = {
+  core: Infinity,
+  expanded: Infinity,
+  fallbackOnly: 2,
+  riskyCaps: 1,
+};
 
-function keywordTargets(queries = []) {
-  return queries.map(query => ({ query, type: 'keyword' }));
+function keywordTargets(queries = [], tier = 'core') {
+  return queries.map(query => ({ query, type: 'keyword', tier }));
 }
 
 function channelTargets(queries = []) {
   return queries.map(query => ({ query, type: 'channel' }));
 }
 
+function uniqueTargets(targets = []) {
+  const seen = new Set();
+
+  return targets.filter(target => {
+    const key = `${target.type}:${target.query}`;
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
+
+function takeKeywordTargets(queries = [], tier = 'core') {
+  const cap = CATEGORY_QUERY_CAPS[tier] ?? Infinity;
+  return keywordTargets(queries.slice(0, cap), tier);
+}
+
+function buildCategoryKeywordTargets(slug) {
+  const category = CATEGORY_TAXONOMY.find(item => item.slug === slug);
+  if (!category) return [];
+
+  return [
+    ...takeKeywordTargets(category.core, 'core'),
+    ...takeKeywordTargets(category.expanded, 'expanded'),
+    ...takeKeywordTargets(category.fallbackOnly, 'fallbackOnly'),
+    ...takeKeywordTargets(category.riskyCaps, 'riskyCaps'),
+  ];
+}
+
+function buildCategoryRefillTargets(slug) {
+  if (!CATEGORY_TAXONOMY.some(item => item.slug === slug)) return [];
+
+  const refillQueriesBySlug = {
+    'ha-nhan': ['Hà Nhân trọn bộ', 'Ha Nhan trọn bộ', 'Hà Nhân thuyết minh', 'Ha Nhan thuyết minh'],
+    'tu-tien': ['Tu Tiên trọn bộ', 'Tu Tien trọn bộ', 'Tiên Hiệp trọn bộ', 'Tiên Hiệp thuyết minh'],
+    'xuyen-khong': ['Xuyên Không trọn bộ', 'Xuyen Khong trọn bộ', 'Xuyên Không thuyết minh', 'Xuyên Sách thuyết minh'],
+    'trong-sinh': ['Trọng Sinh trọn bộ', 'Trong Sinh trọn bộ', 'Trọng Sinh thuyết minh', 'Trùng Sinh thuyết minh'],
+    'lieu-nhu-yen': ['Liễu Như Yên trọn bộ', 'Lieu Nhu Yen trọn bộ', 'Liễu Như Yên thuyết minh', 'Liễu Như Yên đầy đủ'],
+    'he-thong': ['Hệ Thống trọn bộ', 'He Thong trọn bộ', 'Hệ Thống thuyết minh', 'Hệ Thống đầy đủ'],
+    'khac': ['phim hoạt hình trọn bộ', 'anime vietsub', 'review phim vietsub', 'cartoon vietsub'],
+  };
+
+  return keywordTargets(refillQueriesBySlug[slug] || [], 'refill');
+}
+
+function buildCategoryBroadTargets(slug) {
+  if (!CATEGORY_TAXONOMY.some(item => item.slug === slug)) return [];
+
+  const broadQueriesBySlug = {
+    'ha-nhan': ['Hà Nhân đầy đủ', 'Ha Nhan đầy đủ', 'Hà Nhân nguyên bộ', 'Ha Nhan nguyên bộ'],
+    'tu-tien': ['Phàm Nhân Tu Tiên', 'Đấu Phá trọn bộ', 'Tu Tiên nguyên bộ', 'Tien Hiep nguyên bộ'],
+    'xuyen-khong': ['Xuyên Không đầy đủ', 'Xuyên Sách trọn bộ', 'Xuyên Vào trọn bộ', 'Xuyên Thành trọn bộ'],
+    'trong-sinh': ['Trọng Sinh đầy đủ', 'Trùng Sinh trọn bộ', 'Tái Sinh trọn bộ', 'Trong Sinh đầy đủ'],
+    'lieu-nhu-yen': ['Liễu Như Yên nguyên bộ', 'Liễu Như Yên trọn bộ', 'Lieu Nhu Yen đầy đủ', 'Lieu Nhu Yen thuyết minh'],
+    'he-thong': ['Hệ Thống nguyên bộ', 'Hệ Thống phim', 'Hệ Thống anime', 'He Thong đầy đủ'],
+    'khac': ['phim hoạt hình đầy đủ', 'anime trọn bộ', 'cartoon trọn bộ', 'review phim đầy đủ'],
+  };
+
+  return keywordTargets(broadQueriesBySlug[slug] || [], 'broad');
+}
+
 const CATEGORY_CRAWL_PLANS = [
   {
     slug: 'ha-nhan',
     reason: 'seed the day with Ha Nhan-owned and legacy Ha Nhan content first',
-    targets: [
-      ...keywordTargets(['H\u00e0 Nh\u00e2n', 'Ha Nhan', 'H\u00e0 Nh\u00e2n phim', 'Ha Nhan phim', 'H\u00e0 Nh\u00e2n full', 'Ha Nhan full', 'H\u00e0 Nh\u00e2n series', 'Ha Nhan series', 'H\u00e0 Nh\u00e2n t\u1eadp', 'Ha Nhan tap', 'H\u00e0 Nh\u00e2n vietsub', 'Ha Nhan vietsub']),
+    targets: uniqueTargets([
+      ...buildCategoryKeywordTargets('ha-nhan'),
       ...channelTargets(['@HaNhanCartoon', '@Hanhansubchannel']),
-    ],
+    ]),
+    refillTargets: uniqueTargets([
+      ...buildCategoryRefillTargets('ha-nhan'),
+      ...buildCategoryBroadTargets('ha-nhan'),
+    ]),
   },
   {
     slug: 'tu-tien',
     reason: 'keep Tu Tien / Tien Hiep content in its own daily batch right after Ha Nhan',
-    targets: [
-      ...keywordTargets(['Tu Tiên', 'tu tien', 'Tiên Hiệp', 'tien hiep', 'Hà Nhân tu tiên', 'Ha Nhan tu tien', 'Hà Nhân tiên hiệp', 'Ha Nhan tien hiep']),
+    targets: uniqueTargets([
+      ...buildCategoryKeywordTargets('tu-tien'),
       ...channelTargets(['@HaNhanCartoon', '@Hanhansubchannel']),
-    ],
+    ]),
+    refillTargets: uniqueTargets([
+      ...buildCategoryRefillTargets('tu-tien'),
+      ...buildCategoryBroadTargets('tu-tien'),
+    ]),
   },
   {
     slug: 'xuyen-khong',
     reason: 'pull the Xuyen Khong batch separately from the Ha Nhan bucket',
-    targets: keywordTargets(['Xuy\u00ean Kh\u00f4ng', 'xuyen khong', 'H\u00e0 Nh\u00e2n xuy\u00ean kh\u00f4ng', 'Ha Nhan xuyen khong']),
+    targets: uniqueTargets(buildCategoryKeywordTargets('xuyen-khong')),
+    refillTargets: uniqueTargets([
+      ...buildCategoryRefillTargets('xuyen-khong'),
+      ...buildCategoryBroadTargets('xuyen-khong'),
+    ]),
   },
   {
     slug: 'trong-sinh',
     reason: 'pull the Trong Sinh batch separately from other story types',
-    targets: keywordTargets(['Tr\u1ecdng Sinh', 'trong sinh', 'H\u00e0 Nh\u00e2n tr\u1ecdng sinh', 'Ha Nhan trong sinh']),
+    targets: uniqueTargets(buildCategoryKeywordTargets('trong-sinh')),
+    refillTargets: uniqueTargets([
+      ...buildCategoryRefillTargets('trong-sinh'),
+      ...buildCategoryBroadTargets('trong-sinh'),
+    ]),
   },
   {
     slug: 'lieu-nhu-yen',
     reason: 'keep Li\u1ec5u Nh\u01b0 Y\u00ean content in its own daily batch',
-    targets: keywordTargets(['Li\u1ec5u Nh\u01b0 Y\u00ean', 'lieu nhu yen', 'H\u00e0 Nh\u00e2n Li\u1ec5u Nh\u01b0 Y\u00ean', 'Ha Nhan Lieu Nhu Yen']),
+    targets: uniqueTargets(buildCategoryKeywordTargets('lieu-nhu-yen')),
+    refillTargets: uniqueTargets([
+      ...buildCategoryRefillTargets('lieu-nhu-yen'),
+      ...buildCategoryBroadTargets('lieu-nhu-yen'),
+    ]),
   },
   {
     slug: 'he-thong',
     reason: 'seed AI Chinese animated / short-form story content with trusted anchors first',
-    targets: [
+    targets: uniqueTargets([
       ...SHARED_SOURCE_TARGETS,
-      ...keywordTargets(['Hệ Thống', 'he thong', 'system', 'xuyen khong he thong', 'trong sinh he thong']),
-    ],
+      ...buildCategoryKeywordTargets('he-thong'),
+    ]),
+    refillTargets: uniqueTargets([
+      ...buildCategoryRefillTargets('he-thong'),
+      ...buildCategoryBroadTargets('he-thong'),
+    ]),
   },
   {
     slug: 'khac',
     reason: 'use broad fallback discovery only for uncategorized leftovers',
-    targets: [
+    targets: uniqueTargets([
       ...SHARED_SOURCE_TARGETS,
-      ...keywordTargets(['phim hoat hinh', 'anime 2d', 'vietsub', 'series', 'full', 'review phim']),
-    ],
+      ...buildCategoryKeywordTargets('khac'),
+    ]),
+    refillTargets: uniqueTargets([
+      ...buildCategoryRefillTargets('khac'),
+      ...buildCategoryBroadTargets('khac'),
+    ]),
   },
 ];
 
@@ -312,178 +409,253 @@ export async function runCrawl({ dryRun = false } = {}) {
   const categorySummaries = [];
 
   const crawlCategoryTargets = async (plan) => {
-    const { tag, slug, targets, reason } = plan;
+    const { tag, slug, targets, refillTargets = [], reason } = plan;
     const keptVideos = [];
     let targetErrors = 0;
     let rejectedCount = 0;
     let duplicateCount = 0;
+    const triedQueries = new Set();
+    const targetQuota = CATEGORY_BATCH_LIMIT;
+    const waves = [
+      { name: 'initial', reason, targets },
+      ...(refillTargets.length > 0 ? [{ name: 'refill', reason: 'controlled backfill search when the initial batch underfills', targets: refillTargets }] : []),
+    ];
 
     logCrawl('crawl_category_batch_start', {
       runDay,
       category: tag,
       slug,
-      batchLimit: CATEGORY_BATCH_LIMIT,
+      batchLimit: targetQuota,
       reason,
       targets: targets.map(target => target.query),
     });
 
-    for (const target of targets) {
-      if (keptVideos.length >= CATEGORY_BATCH_LIMIT) {
-        logCrawl('crawl_category_batch_limit_reached', { runDay, category: tag, slug, kept: keptVideos.length, batchLimit: CATEGORY_BATCH_LIMIT });
+    for (const wave of waves) {
+      if (keptVideos.length >= targetQuota) {
         break;
       }
 
-      logCrawl('crawl_category_target_start', {
+      const deficitBeforeWave = targetQuota - keptVideos.length;
+      logCrawl(wave.name === 'initial' ? 'crawl_category_batch_wave_start' : 'crawl_category_refill_start', {
         runDay,
         category: tag,
         slug,
-        query: target.query,
-        type: target.type,
+        wave: wave.name,
+        reason: wave.reason,
+        target: targetQuota,
+        kept: keptVideos.length,
+        deficit: deficitBeforeWave,
+        targets: wave.targets.map(target => target.query),
       });
 
-      try {
-        const searchResult = await searchWithRetry(target.query, { category: tag, slug, query: target.query, type: target.type, runDay });
+      for (const target of wave.targets) {
+        if (keptVideos.length >= targetQuota) {
+          logCrawl('crawl_category_batch_limit_reached', { runDay, category: tag, slug, kept: keptVideos.length, batchLimit: targetQuota });
+          break;
+        }
 
-        if (!searchResult.ok) {
-          targetErrors += 1;
+        const targetKey = `${target.type}:${target.query}`;
+        if (triedQueries.has(targetKey)) {
           logCrawl('crawl_category_target_skipped', {
             runDay,
             category: tag,
             slug,
             query: target.query,
             type: target.type,
-            reason: 'target failed after retries',
-            error: serializeError(searchResult.error),
+            reason: 'already tried in a prior wave',
           });
           continue;
         }
 
-        const candidates = Array.isArray(searchResult.result?.videos) ? searchResult.result.videos : [];
+        triedQueries.add(targetKey);
 
-        if (candidates.length === 0) {
-          logCrawl('crawl_category_target_empty', { runDay, category: tag, slug, query: target.query });
-          continue;
-        }
-
-        let keptCount = 0;
-        let targetRejectedCount = 0;
-
-        for (const video of candidates) {
-          if (keptVideos.length >= CATEGORY_BATCH_LIMIT) {
-            break;
-          }
-
-          const qualityDecision = explainVideoDecision(video, target.type, CATEGORY_TRUSTED_AUTHOR_WORDS);
-          const videoLabel = video?.title || video?.videoId || 'khong ro tieu de';
-
-          if (!qualityDecision.keep) {
-            rejectedCount += 1;
-            targetRejectedCount += 1;
-            logCrawl('  - reject', {
-              runDay,
-              category: tag,
-              slug,
-              query: target.query,
-              title: videoLabel,
-              seconds: video?.seconds ?? null,
-              author: video?.author?.name ?? null,
-              reason: qualityDecision.reason,
-            });
-            continue;
-          }
-
-          const thumbnailDecision = explainThumbnailDecision({ id: video.videoId, thumbnail: video.thumbnail });
-          if (!thumbnailDecision.keep) {
-            rejectedCount += 1;
-            targetRejectedCount += 1;
-            logCrawl('  - reject', {
-              runDay,
-              category: tag,
-              slug,
-              query: target.query,
-              title: videoLabel,
-              thumbnail: video?.thumbnail ?? null,
-              reason: thumbnailDecision.reason,
-            });
-            continue;
-          }
-
-          const resolvedCategory = resolveMovieCategory(video);
-          if (resolvedCategory.slug !== slug) {
-            rejectedCount += 1;
-            targetRejectedCount += 1;
-            logCrawl('  - reject', {
-              runDay,
-              category: tag,
-              slug,
-              query: target.query,
-              title: videoLabel,
-              resolvedCategory: resolvedCategory.tag,
-              reason: `resolved to ${resolvedCategory.tag}`,
-            });
-            continue;
-          }
-
-          if (existingIds.has(video.videoId) || runNewIds.has(video.videoId)) {
-            duplicateCount += 1;
-            logCrawl('  - skip duplicate', {
-              runDay,
-              category: tag,
-              slug,
-              query: target.query,
-              title: videoLabel,
-              reason: existingIds.has(video.videoId) ? 'already in catalog' : 'already selected in this run',
-            });
-            continue;
-          }
-
-          const normalized = normalizeVideoData(video, resolvedCategory);
-          runNewIds.add(video.videoId);
-          keptVideos.push(normalized);
-          newVideos.push(normalized);
-          keptCount += 1;
-
-          logCrawl('  + keep', {
-            runDay,
-            category: tag,
-            slug,
-            query: target.query,
-            title: normalized.title,
-            seconds: video?.seconds ?? null,
-            author: video?.author?.name ?? null,
-            keptForCategory: keptVideos.length,
-            batchLimit: CATEGORY_BATCH_LIMIT,
-          });
-        }
-
-        logCrawl('crawl_category_target_summary', {
-          runDay,
-          category: tag,
-          slug,
-          query: target.query,
-          kept: keptCount,
-          rejected: targetRejectedCount,
-          candidates: candidates.length,
-        });
-      } catch (error) {
-        targetErrors += 1;
-        logCrawl('crawl_category_target_error', {
+        logCrawl('crawl_category_target_start', {
           runDay,
           category: tag,
           slug,
           query: target.query,
           type: target.type,
-          error: serializeError(error),
+          wave: wave.name,
+        });
+
+        try {
+          const searchResult = await searchWithRetry(target.query, { category: tag, slug, query: target.query, type: target.type, wave: wave.name, runDay });
+
+          if (!searchResult.ok) {
+            targetErrors += 1;
+            logCrawl('crawl_category_target_skipped', {
+              runDay,
+              category: tag,
+              slug,
+              query: target.query,
+              type: target.type,
+              wave: wave.name,
+              reason: 'target failed after retries',
+              error: serializeError(searchResult.error),
+            });
+            continue;
+          }
+
+          const candidates = Array.isArray(searchResult.result?.videos) ? searchResult.result.videos : [];
+
+          if (candidates.length === 0) {
+            logCrawl('crawl_category_target_empty', { runDay, category: tag, slug, query: target.query, wave: wave.name });
+            continue;
+          }
+
+          let keptCount = 0;
+          let targetRejectedCount = 0;
+
+          for (const video of candidates) {
+            if (keptVideos.length >= targetQuota) {
+              break;
+            }
+
+            const qualityDecision = explainVideoDecision(video, target.type, CATEGORY_TRUSTED_AUTHOR_WORDS);
+            const videoLabel = video?.title || video?.videoId || 'khong ro tieu de';
+
+            if (!qualityDecision.keep) {
+              rejectedCount += 1;
+              targetRejectedCount += 1;
+              logCrawl('  - reject', {
+                runDay,
+                category: tag,
+                slug,
+                query: target.query,
+                wave: wave.name,
+                title: videoLabel,
+                seconds: video?.seconds ?? null,
+                author: video?.author?.name ?? null,
+                reason: qualityDecision.reason,
+              });
+              continue;
+            }
+
+            const thumbnailDecision = explainThumbnailDecision({ id: video.videoId, thumbnail: video.thumbnail });
+            if (!thumbnailDecision.keep) {
+              rejectedCount += 1;
+              targetRejectedCount += 1;
+              logCrawl('  - reject', {
+                runDay,
+                category: tag,
+                slug,
+                query: target.query,
+                wave: wave.name,
+                title: videoLabel,
+                thumbnail: video?.thumbnail ?? null,
+                reason: thumbnailDecision.reason,
+              });
+              continue;
+            }
+
+            const resolvedCategory = resolveMovieCategory(video);
+            if (resolvedCategory.slug !== slug) {
+              rejectedCount += 1;
+              targetRejectedCount += 1;
+              logCrawl('  - reject', {
+                runDay,
+                category: tag,
+                slug,
+                query: target.query,
+                wave: wave.name,
+                title: videoLabel,
+                resolvedCategory: resolvedCategory.tag,
+                reason: `resolved to ${resolvedCategory.tag}`,
+              });
+              continue;
+            }
+
+            if (existingIds.has(video.videoId) || runNewIds.has(video.videoId)) {
+              duplicateCount += 1;
+              logCrawl('  - skip duplicate', {
+                runDay,
+                category: tag,
+                slug,
+                query: target.query,
+                wave: wave.name,
+                title: videoLabel,
+                reason: existingIds.has(video.videoId) ? 'already in catalog' : 'already selected in this run',
+              });
+              continue;
+            }
+
+            const normalized = normalizeVideoData(video, resolvedCategory);
+            runNewIds.add(video.videoId);
+            keptVideos.push(normalized);
+            newVideos.push(normalized);
+            keptCount += 1;
+
+            logCrawl('  + keep', {
+              runDay,
+              category: tag,
+              slug,
+              query: target.query,
+              wave: wave.name,
+              title: normalized.title,
+              seconds: video?.seconds ?? null,
+              author: video?.author?.name ?? null,
+              keptForCategory: keptVideos.length,
+              batchLimit: targetQuota,
+            });
+          }
+
+          logCrawl('crawl_category_target_summary', {
+            runDay,
+            category: tag,
+            slug,
+            query: target.query,
+            wave: wave.name,
+            kept: keptCount,
+            rejected: targetRejectedCount,
+            candidates: candidates.length,
+          });
+        } catch (error) {
+          targetErrors += 1;
+          logCrawl('crawl_category_target_error', {
+            runDay,
+            category: tag,
+            slug,
+            query: target.query,
+            type: target.type,
+            wave: wave.name,
+            error: serializeError(error),
+          });
+        }
+      }
+
+      if (keptVideos.length < targetQuota) {
+        logCrawl('crawl_category_refill_needed', {
+          runDay,
+          category: tag,
+          slug,
+          wave: wave.name,
+          target: targetQuota,
+          kept: keptVideos.length,
+          deficit: targetQuota - keptVideos.length,
         });
       }
+    }
+
+    if (keptVideos.length < targetQuota) {
+      logCrawl('crawl_category_underfilled', {
+        runDay,
+        category: tag,
+        slug,
+        target: targetQuota,
+        kept: keptVideos.length,
+        deficit: targetQuota - keptVideos.length,
+        triedQueries: triedQueries.size,
+      });
     }
 
     const summary = {
       runDay,
       category: tag,
       slug,
-      batchLimit: CATEGORY_BATCH_LIMIT,
+      target: targetQuota,
+      batchLimit: targetQuota,
       kept: keptVideos.length,
+      deficit: Math.max(0, targetQuota - keptVideos.length),
       added: keptVideos.length,
       duplicates: duplicateCount,
       rejected: rejectedCount,

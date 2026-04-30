@@ -3,6 +3,8 @@
   cursor: pointer;
   display: block;
   transition: transform 0.2s ease;
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 360px;
 }
 
 .card:hover {

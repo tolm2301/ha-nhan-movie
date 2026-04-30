@@ -1,40 +1,71 @@
-const CATEGORY_DEFINITIONS = [
+const CATEGORY_TAXONOMY = [
   {
     slug: 'ha-nhan',
     tag: 'Hà Nhân',
-    keywords: ['ha nhan', 'hanhan'],
+    core: ['Ha Nhân', 'Hà Nhân', 'Hanhan'],
+    expanded: ['Hà Nhân sub', 'Hà Nhân vietsub', 'Ha Nhan sub', 'Ha Nhan vietsub', 'Hà Nhân phim', 'Ha Nhan phim', 'Hà Nhân full', 'Ha Nhan full', 'Hà Nhân series', 'Ha Nhan series', 'Hà Nhân tập', 'Ha Nhan tap'],
+    fallbackOnly: ['phim Hà Nhân', 'full Hà Nhân', 'series Hà Nhân', 'tập Hà Nhân', 'vietsub Hà Nhân', 'sub Hà Nhân'],
+    riskyCaps: ['phim', 'full', 'series', 'vietsub'],
   },
   {
     slug: 'tu-tien',
     tag: 'Tu Tiên',
-    keywords: ['tu tien', 'tien hiep'],
+    core: ['Tu Tiên', 'Tu Tien', 'Tiên Hiệp', 'Tien Hiep'],
+    expanded: ['Tu Tiên sub', 'Tu Tiên vietsub', 'Tu Tiên phim', 'Tu Tiên full', 'Tu Tiên series', 'Tu Tiên tập', 'Tu Tien sub', 'Tu Tien vietsub', 'Tu Tien phim', 'Tu Tien full', 'Tu Tien series', 'Tu Tien tap', 'Tiên Hiệp sub', 'Tiên Hiệp vietsub', 'Phàm Nhân', 'Phế Vật', 'Đấu Phá', 'Tiên Nghịch', 'Thôn Thiên Ký', 'Thế Giới Hoàn Mỹ', 'Trường Sinh Giới', 'Thần Mộ', 'Yêu Thần Ký', 'Tiên Võ Truyện', 'Già Thiên', 'Tiên Sinh Bất Tử', 'Tiên Vương', 'Thiên Đô Dị Lục', 'Võ Thần Chúa Tể', 'Đồ Đệ Của Ta Đều Là Đại Lão', 'Ta Có Thể Giác Ngộ Vô Hạn', 'Tiến Hóa Siêu Phàm', 'Thăng Cấp Mạnh Nhất', 'Thương Nguyên Đồ', 'Cửu Dạ Thần Truyện', 'Nhất Thế Độc Tôn'],
+    fallbackOnly: ['phim Tu Tiên', 'full Tu Tiên', 'series Tu Tiên', 'tập Tu Tiên', 'vietsub Tu Tiên', 'sub Tu Tiên'],
+    riskyCaps: ['phim', 'full', 'series', 'vietsub'],
   },
   {
     slug: 'xuyen-khong',
     tag: 'Xuyên Không',
-    keywords: ['xuyen khong'],
+    core: ['Xuyên Không', 'Xuyen Khong'],
+    expanded: ['Xuyên Không sub', 'Xuyên Không vietsub', 'Xuyên Không phim', 'Xuyên Không full', 'Xuyên Không series', 'Xuyên Không tập', 'Xuyen Khong sub', 'Xuyen Khong vietsub', 'Xuyen Khong phim', 'Xuyen Khong full', 'Xuyen Khong series', 'Xuyen Khong tap', 'Xuyên Sách', 'Xuyên Qua', 'Xuyên Vào', 'Xuyên Thành', 'Xuyên Về', 'Xuyên Việt', 'Xuyên Sang', 'Xuyên Làm'],
+    fallbackOnly: ['phim Xuyên Không', 'full Xuyên Không', 'series Xuyên Không', 'tập Xuyên Không', 'vietsub Xuyên Không', 'sub Xuyên Không'],
+    riskyCaps: ['phim', 'full', 'series', 'vietsub'],
   },
   {
     slug: 'trong-sinh',
     tag: 'Trọng Sinh',
-    keywords: ['trong sinh'],
+    core: ['Trọng Sinh', 'Trong Sinh'],
+    expanded: ['Trọng Sinh sub', 'Trọng Sinh vietsub', 'Trọng Sinh phim', 'Trọng Sinh full', 'Trọng Sinh series', 'Trọng Sinh tập', 'Trong Sinh sub', 'Trong Sinh vietsub', 'Trong Sinh phim', 'Trong Sinh full', 'Trong Sinh series', 'Trong Sinh tap', 'Trùng Sinh', 'Tái Sinh'],
+    fallbackOnly: ['phim Trọng Sinh', 'full Trọng Sinh', 'series Trọng Sinh', 'tập Trọng Sinh', 'vietsub Trọng Sinh', 'sub Trọng Sinh'],
+    riskyCaps: ['phim', 'full', 'series', 'vietsub'],
   },
   {
     slug: 'lieu-nhu-yen',
     tag: 'Liễu Như Yên',
-    keywords: ['lieu nhu yen'],
+    core: ['Liễu Như Yên', 'Lieu Nhu Yen'],
+    expanded: ['Liễu Như Yên sub', 'Liễu Như Yên vietsub', 'Liễu Như Yên phim', 'Liễu Như Yên full', 'Liễu Như Yên series', 'Liễu Như Yên tập', 'Lieu Nhu Yen sub', 'Lieu Nhu Yen vietsub', 'Lieu Nhu Yen phim', 'Lieu Nhu Yen full', 'Lieu Nhu Yen series', 'Lieu Nhu Yen tap'],
+    fallbackOnly: ['phim Liễu Như Yên', 'full Liễu Như Yên', 'series Liễu Như Yên', 'tập Liễu Như Yên', 'vietsub Liễu Như Yên', 'sub Liễu Như Yên'],
+    riskyCaps: ['phim', 'full', 'series', 'vietsub'],
   },
   {
     slug: 'he-thong',
     tag: 'Hệ Thống',
-    keywords: ['he thong'],
+    core: ['Hệ Thống', 'He Thong'],
+    expanded: ['Hệ Thống AI', 'He Thong AI', 'Hệ Thống anime', 'He Thong anime', 'Hệ Thống phim', 'He Thong phim', 'Kích Hoạt Hệ Thống', 'Thức Tỉnh Hệ Thống', 'Bật Hệ Thống', 'Có Hệ Thống', 'Nhận Hệ Thống', 'Hệ Thống VIP', 'Hệ Thống Tu Luyện', 'Hệ Thống Điểm Danh', 'Hệ Thống Nhặt Rác', 'Hệ Thống Dọn Rác', 'Hệ Thống Lựa Chọn', 'Hệ Thống Vô Hạn', 'Hệ Thống Thôn Phệ', 'Hệ Thống Triệu Hồi', 'Hệ Thống Ngự Thần', 'Hệ Thống Khế Ước', 'Hệ Thống Độc Quyền', 'xuyên không hệ thống', 'xuyen khong he thong', 'trọng sinh hệ thống', 'trong sinh he thong'],
+    fallbackOnly: ['phim hệ thống', 'hệ thống phim', 'anime hệ thống', 'series hệ thống', 'vietsub hệ thống', 'sub hệ thống'],
+    riskyCaps: ['system', 'ai', 'anime', 'phim', 'series'],
   },
   {
     slug: 'khac',
     tag: 'Khác',
-    keywords: [],
+    core: [],
+    expanded: ['phim hoạt hình', 'anime 2d', 'review phim'],
+    fallbackOnly: ['vietsub', 'series', 'full'],
+    riskyCaps: ['phim', 'anime', 'hoat hinh', 'cartoon'],
   },
 ];
+
+const CATEGORY_DEFINITIONS = CATEGORY_TAXONOMY.map(category => ({
+  slug: category.slug,
+  tag: category.tag,
+  coreKeywords: category.core.map(normalizeText),
+  expandedKeywords: category.expanded.map(normalizeText),
+  fallbackOnlyKeywords: category.fallbackOnly.map(normalizeText),
+  riskyCaps: category.riskyCaps.map(normalizeText),
+  keywords: [...category.core, ...category.expanded, ...category.fallbackOnly].map(normalizeText),
+}));
 
 const CATEGORY_BY_SLUG = new Map(CATEGORY_DEFINITIONS.map(category => [category.slug, category]));
 const CATEGORY_BY_TAG = new Map(CATEGORY_DEFINITIONS.map(category => [normalizeText(category.tag), category]));
@@ -53,6 +84,10 @@ function hasKeyword(text, keyword) {
   return text.includes(keyword);
 }
 
+function matchesAnyKeyword(text, keywords = []) {
+  return keywords.some(keyword => hasKeyword(text, keyword));
+}
+
 function matchesHeThongCategory(text, rawTag) {
   if (CATEGORY_BY_TAG.has(rawTag)) {
     return CATEGORY_BY_TAG.get(rawTag)?.slug === 'he-thong';
@@ -62,11 +97,23 @@ function matchesHeThongCategory(text, rawTag) {
     return true;
   }
 
-  return hasKeyword(text, 'he thong') || HE_THONG_LEGACY_KEYWORDS.some(keyword => text.includes(keyword));
+  return matchesAnyKeyword(text, CATEGORY_BY_SLUG.get('he-thong')?.coreKeywords || []) ||
+    matchesAnyKeyword(text, CATEGORY_BY_SLUG.get('he-thong')?.expandedKeywords || []) ||
+    matchesAnyKeyword(text, CATEGORY_BY_SLUG.get('he-thong')?.fallbackOnlyKeywords || []) ||
+    HE_THONG_LEGACY_KEYWORDS.some(keyword => text.includes(keyword));
 }
 
 function matchesHaNhanCategory(titleText = '') {
-  return CATEGORY_DEFINITIONS[0].keywords.some(keyword => hasKeyword(titleText, keyword));
+  const category = CATEGORY_BY_SLUG.get('ha-nhan');
+  return matchesAnyKeyword(titleText, category?.coreKeywords || []) ||
+    matchesAnyKeyword(titleText, category?.expandedKeywords || []) ||
+    matchesAnyKeyword(titleText, category?.fallbackOnlyKeywords || []);
+}
+
+function matchesCategoryByPriority(text, category) {
+  return matchesAnyKeyword(text, category.coreKeywords) ||
+    matchesAnyKeyword(text, category.expandedKeywords) ||
+    matchesAnyKeyword(text, category.fallbackOnlyKeywords);
 }
 
 export function getCategoryDefinitionBySlug(slug = '') {
@@ -83,24 +130,21 @@ export function resolveMovieCategory(movie = {}) {
     return CATEGORY_BY_SLUG.get('ha-nhan');
   }
 
-  if (matchesHeThongCategory(combinedText, tagText)) {
-    return CATEGORY_BY_SLUG.get('he-thong');
-  }
+  const orderedSlugs = ['lieu-nhu-yen', 'trong-sinh', 'xuyen-khong', 'he-thong', 'tu-tien'];
+  for (const slug of orderedSlugs) {
+    const category = CATEGORY_BY_SLUG.get(slug);
+    if (!category) continue;
 
-  if (hasKeyword(combinedText, 'tu tien') || hasKeyword(combinedText, 'tien hiep')) {
-    return CATEGORY_BY_SLUG.get('tu-tien');
-  }
+    if (slug === 'he-thong') {
+      if (matchesHeThongCategory(combinedText, tagText)) {
+        return category;
+      }
+      continue;
+    }
 
-  if (hasKeyword(combinedText, 'lieu nhu yen')) {
-    return CATEGORY_BY_SLUG.get('lieu-nhu-yen');
-  }
-
-  if (hasKeyword(combinedText, 'trong sinh')) {
-    return CATEGORY_BY_SLUG.get('trong-sinh');
-  }
-
-  if (hasKeyword(combinedText, 'xuyen khong')) {
-    return CATEGORY_BY_SLUG.get('xuyen-khong');
+    if (matchesCategoryByPriority(combinedText, category)) {
+      return category;
+    }
   }
 
   if (taggedCategory && taggedCategory.slug !== 'ha-nhan') {
@@ -132,4 +176,4 @@ export function buildCategoryBuckets(movies = []) {
   });
 }
 
-export { CATEGORY_DEFINITIONS, normalizeText };
+export { CATEGORY_DEFINITIONS, CATEGORY_TAXONOMY, normalizeText };

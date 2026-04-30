@@ -6,9 +6,11 @@
   "scripts": {
     "crawl": "node scripts/crawl.mjs",
     "crawl:dry": "node scripts/crawl.mjs --dry-run",
+    "snapshot:movies": "node scripts/generate-movies-snapshot.mjs",
     "migrate:movies": "node scripts/migrate-movies-to-postgres.mjs",
     "dev": "next dev",
-    "dev:fresh": "npm run crawl && next dev",
+    "dev:fresh": "npm run crawl && npm run snapshot:movies && next dev",
+    "prebuild": "npm run snapshot:movies",
     "build": "next build",
     "build:fresh": "npm run crawl && next build",
     "start": "next start",

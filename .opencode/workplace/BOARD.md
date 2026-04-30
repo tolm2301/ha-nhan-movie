@@ -14,8 +14,14 @@
 - [ ] Enforce agreed 4-slot AdSense setup: home after rail 3, category after first block, watch after related, search after 8–12 results | Owner: developer | Priority: medium
 
 ## Review
+- [ ] Fix Vercel cron auth so scheduled crawl runs can execute and refresh the snapshot automatically | Owner: developer | Priority: high
+- [ ] Make every crawl category refill until it keeps 10 movies per run, treating duplicates as backfill triggers instead of stopping early | Owner: developer | Priority: high
+- [ ] Wire static snapshot regeneration into crawl/cron update flow | Owner: developer | Priority: high
+- [ ] Reduce watch page payload and push slower category/watch loads below warning threshold | Owner: developer | Priority: high
+- [ ] Test current UI performance and route transitions, prioritizing load speed first | Owner: techlead | Priority: high
 - [ ] Wire exact Google AdSense snippet values into the existing integration | Owner: techlead | Priority: medium
 - [ ] Move AdSense account verification into Next metadata export | Owner: developer | Priority: medium
+- [ ] Reclassify catalog items to the expanded seven-bucket taxonomy | Owner: developer | Priority: high
 - [ ] Add `Tu Tiên` as a first-class taxonomy bucket and home rail after `Hà Nhân` | Owner: techlead | Priority: medium
 - [ ] Add SEO metadata, robots/sitemap, and structured data for home/category/watch pages | Owner: techlead | Priority: medium
 - [ ] Add watch skip backward/forward controls to the watch player | Owner: techlead | Priority: medium
@@ -39,6 +45,13 @@
 
 ## Done
 - [ ] (template) Task title | Owner: techlead | Finished: YYYY-MM-DD
+- [x] Move runtime movie reads off the DB critical path by serving a static snapshot with ISR freshness, keeping DB as the update source only | Owner: developer | Finished: 2026-04-30
+- [x] Restore current performance changes to baseline, then refactor slow routes toward static generation/ISR or server components where it actually reduces load time | Owner: developer | Finished: 2026-04-29
+- [x] Add visible Pin/Unpin control for detached watch popup | Owner: developer | Finished: 2026-04-28
+- [x] Restore detached popup window watch UX and keep load quality acceptable | Owner: developer | Finished: 2026-04-28
+- [x] Fix player/watch UX, improve search quality, and polish home/category from product-quality review | Owner: developer | Finished: 2026-04-28
+- [x] Fix product-quality findings: cron auth spoofing, YouTube API timeout handling, and nested main landmarks | Owner: developer | Finished: 2026-04-28
+- [x] Add a dedicated product-quality review agent and wire it into workflow docs | Owner: techlead | Finished: 2026-04-28
 - [x] Add Windows topmost helper tool for mini popup window pinning | Owner: creator | Finished: 2026-04-22
 - [x] Fix popup sync handshake so main player stays paused until popup closes | Owner: developer | Finished: 2026-04-22
 - [x] Switch popup mode to mini web window with reliable return sync | Owner: developer | Finished: 2026-04-22
@@ -53,3 +66,4 @@
 - [x] Fix watch page fullscreen to true window fullscreen and improve popup display controls | Owner: developer | Finished: 2026-04-22
 - [x] Fix category bar wrapping and remove Tấu Hài from crawl-derived categories | Owner: designer | Finished: 2026-04-21
 - [x] Review UI and crawled data flow optimization | Owner: techlead | Finished: 2026-04-21
+ - [ ] Optimize home load, watch readiness, and mobile category overflow | Owner: developer | Priority: high

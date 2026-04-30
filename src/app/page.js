@@ -1,11 +1,11 @@
 import Hero from '@/components/Hero/Hero';
 import MovieCarousel from '@/components/MovieCarousel/MovieCarousel';
-import RecentWatchedSection from '@/components/RecentWatchedSection/RecentWatchedSection';
+import RecentWatchedSection from '@/components/RecentWatchedSection/RecentWatchedSectionLazy';
 import AdSlot from '@/components/Adsense/AdSlot';
 import { getMovieCatalog } from '@/lib/data';
 import { buildMetadata, buildWebsiteJsonLd, toJsonLd } from '@/lib/seo';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 export async function generateMetadata() {
   const catalog = await getMovieCatalog();
