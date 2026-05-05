@@ -154,17 +154,6 @@
     "lastCrawledAt": null
   },
   {
-    "id": "ngocduchannel",
-    "slug": "ngoc-duc-channel",
-    "channelUrl": "https://www.youtube.com/channel/UCa2bRekBfyB99cxF9mUnQow",
-    "displayName": "Ngọc Đức Channel",
-    "category": "trong-sinh",
-    "status": "active",
-    "enabled": true,
-    "priority": 150,
-    "lastCrawledAt": null
-  },
-  {
     "id": "lieunhuyensub",
     "slug": "lieu-nhu-yen-sub",
     "channelUrl": "https://www.youtube.com/@LieuNhuYensub-6789",
@@ -173,39 +162,6 @@
     "status": "active",
     "enabled": true,
     "priority": 160,
-    "lastCrawledAt": null
-  },
-  {
-    "id": "lieunhuyenketruyen",
-    "slug": "lieu-nhu-yen-ke-truyen",
-    "channelUrl": "https://www.youtube.com/@LieuNhuYen777",
-    "displayName": "Liễu Như Yên Kể Truyện",
-    "category": "lieu-nhu-yen",
-    "status": "active",
-    "enabled": true,
-    "priority": 170,
-    "lastCrawledAt": null
-  },
-  {
-    "id": "lieunhuyenreview",
-    "slug": "lieu-nhu-yen-review",
-    "channelUrl": "https://www.youtube.com/channel/UC97SYHoPmPuTMQY812JWu5A",
-    "displayName": "Liễu Như Yên Review",
-    "category": "lieu-nhu-yen",
-    "status": "active",
-    "enabled": true,
-    "priority": 180,
-    "lastCrawledAt": null
-  },
-  {
-    "id": "lieunhuyenaudio",
-    "slug": "lieu-nhu-yen-audio",
-    "channelUrl": "https://www.youtube.com/channel/UCKrAmyqvMVkFikSTYcx3CZg",
-    "displayName": "Liễu Như Yên Audio",
-    "category": "lieu-nhu-yen",
-    "status": "active",
-    "enabled": true,
-    "priority": 190,
     "lastCrawledAt": null
   },
   {
@@ -220,39 +176,6 @@
     "lastCrawledAt": null
   },
   {
-    "id": "hethongreview",
-    "slug": "he-thong-review",
-    "channelUrl": "https://www.youtube.com/channel/UCa1W5b7X8PzdOZTl-rJyk2A",
-    "displayName": "Hệ Thống Review",
-    "category": "he-thong",
-    "status": "active",
-    "enabled": true,
-    "priority": 210,
-    "lastCrawledAt": null
-  },
-  {
-    "id": "hethongreviewphim",
-    "slug": "he-thong-review-phim",
-    "channelUrl": "https://www.youtube.com/@hethongreviewphim",
-    "displayName": "Hệ Thống Review Phim",
-    "category": "he-thong",
-    "status": "active",
-    "enabled": true,
-    "priority": 220,
-    "lastCrawledAt": null
-  },
-  {
-    "id": "hethongthuctinh",
-    "slug": "he-thong-thuc-tinh",
-    "channelUrl": "https://www.youtube.com/@hethongthuctinh",
-    "displayName": "Hệ Thống Thức Tỉnh",
-    "category": "he-thong",
-    "status": "active",
-    "enabled": true,
-    "priority": 230,
-    "lastCrawledAt": null
-  },
-  {
     "id": "hethongtutien",
     "slug": "he-thong-tu-tien",
     "channelUrl": "https://www.youtube.com/@HeThongTuTien",
@@ -261,28 +184,6 @@
     "status": "active",
     "enabled": true,
     "priority": 240,
-    "lastCrawledAt": null
-  },
-  {
-    "id": "laphongaudio",
-    "slug": "la-phong-audio",
-    "channelUrl": "https://www.youtube.com/@LaphongAudio",
-    "displayName": "La Phong Audio",
-    "category": "he-thong",
-    "status": "active",
-    "enabled": true,
-    "priority": 250,
-    "lastCrawledAt": null
-  },
-  {
-    "id": "hethongthuctinh2",
-    "slug": "he-thong-review-2",
-    "channelUrl": "https://www.youtube.com/@hethongreview2",
-    "displayName": "Hệ Thống Review 2",
-    "category": "he-thong",
-    "status": "active",
-    "enabled": true,
-    "priority": 260,
     "lastCrawledAt": null
   }
 ]

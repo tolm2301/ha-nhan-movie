@@ -13,6 +13,8 @@
 - [ ] Enforce agreed 4-slot AdSense setup: home after rail 3, category after first block, watch after related, search after 8–12 results | Owner: developer | Priority: medium
 
 ## Review
+- [ ] Strictly clean crawl registry to 2D movie/animation sources only | Owner: techlead | Priority: high
+- [ ] Make production crawl feed-only and source-first; remove ytsearch/search backfill from the daily crawl path | Owner: developer | Priority: high
 - [ ] Tighten crawler theme filtering and rejection reasons | Owner: developer | Priority: high
 - [ ] Fix Next image host config for ytimg subdomains used by hero thumbnails | Owner: developer | Priority: high
 - [ ] Remove all drama-related seed channels and keep only non-drama clip-style sources for release | Owner: developer | Priority: high

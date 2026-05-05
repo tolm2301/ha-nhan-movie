@@ -1,5 +1,17 @@
 # Progress Timeline
 
+## 2026-05-05 (developer strict registry cleanup)
+- Scope: Remove non-fit crawler seed entries so the registry keeps only explicit 2D movie/animation/video sources; keep the repo seed file as the registry source of truth.
+- Actions: Pruned `src/lib/channel-seeds.json` to remove audio, kể truyện, and review-only entries, leaving only the explicit movie/cartoon/video-style seeds already aligned to the crawl categories. No sync logic change was needed because `src/lib/movieStore.server.js` already re-upserts the repo seed file and disables stale DB rows when the seed list changes.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run crawl:dry` passed and the crawl log showed only the cleaned seed queries in registry order; a targeted content scan found no `Audio`, `Review`, or `Kể Truyện` matches in `src/lib/channel-seeds.json`.
+- Risks: A few remaining names are category-aligned but still brand-based rather than strictly descriptive, so future source reviews may still trim or replace them if they stop publishing film-like video content.
+
+## 2026-05-05 (developer free production crawl pivot)
+- Scope: Make the production crawl feed-only and source-first: read only from the verified channel registry, remove ytsearch/search-backfill from the production crawl flow, and report floor deficits when feed sources cannot reach the daily floor.
+- Actions: Removed the yt-search import and all search fallback helpers from `src/lib/crawl.server.js`, kept registry feed discovery plus refill waves only, preserved floor/deficit reporting, and removed the search-backfill workflow env flag from `.github/workflows/daily-crawl.yml`.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run crawl:dry` passed and the final crawl summary still reported registry-driven category runs with `floorHit`/`remainingDeficit` values, while the captured log contained no `search-backfill`, `ytsearch`, or `CRAWL_ENABLE_SEARCH_BACKFILL` matches.
+- Risks: Categories that cannot reach the floor from verified feeds now stay underfilled by design, so daily yield depends on the curated registry coverage rather than generic search discovery.
+
 ## 2026-05-05 (developer verified category registry curation)
 - Scope: Replace the tiny placeholder crawl seed set with verified, category-aligned YouTube sources so the crawler can actually hit the 5-new-movies-per-category floor without leaning on generic source hunting.
 - Actions: Rebuilt `src/lib/channel-seeds.json` into a curated registry covering Hà Nhân, Tu Tiên, Xuyên Không, Trọng Sinh, Liễu Như Yên, and Hệ Thống from verified public YouTube search results; preserved the registry sync path so DB rows stay aligned to the repo seed source of truth.
@@ -11,6 +23,18 @@
 - Actions: Updated `README.md` to state the daily floor and clarify that crawl/backfill is intended to satisfy category quotas first.
 - Verification: Documentation-only change; no code path or runtime behavior changed.
 - Risks: The docs now reflect the target, but actual category yield still depends on upstream source availability and the current crawl implementation.
+
+## 2026-05-05 (creator crawler pivot docs update)
+- Scope: Reflect the feed-only/source-first crawler pivot in user-facing docs and note that quota deficits are now reported honestly instead of being masked by search backfill or free-form discovery.
+- Actions: Updated `README.md` to say the crawler starts from the curated source registry, consumes channel feeds/uploads directly, and reports deficits without search backfill; queued the handoff note for techlead.
+- Verification: Documentation-only change; no runtime verification required.
+- Risks: If the crawler behavior changes again, the README wording will need a quick sync so it stays aligned with the operational path.
+
+## 2026-05-05 (creator registry cleanup docs note)
+- Scope: Document the registry cleanup rule so the crawler registry is clearly limited to 2D movie/animation video sources and excludes audio, review, and truyện sources.
+- Actions: Updated `README.md` to state the registry filter explicitly and keep the source-list guidance aligned with the cleanup.
+- Verification: Documentation-only change; no runtime verification required.
+- Risks: If the allowed source types expand later, the README and workplace notes should be updated together.
 
 ## 2026-05-05 (developer crawl floor reduction)
 - Scope: Shift the daily crawl quota from a 10-item batch target to a hard 5-new-movies-per-category floor, and keep reporting when categories hit or miss that floor.

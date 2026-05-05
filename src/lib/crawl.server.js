@@ -1,5 +1,4 @@
 import { load as loadCheerio } from 'cheerio';
-import ytSearch from 'yt-search';
 import { loadChannelRegistry, readMoviesFromJsonFile, replacePersistedMovies, updateChannelRegistryEntry } from './movieStore.server.js';
 import { CATEGORY_TAXONOMY, getCategoryDefinitionBySlug, normalizeMovieCategory, normalizeText, resolveMovieCategory } from './movieCategories.js';
 import { hasRenderableThumbnail } from './thumbnailFilters.js';
@@ -9,8 +8,6 @@ const MIN_VIDEO_SECONDS = 600;
 const MAX_STORED_VIDEOS = 1000;
 const CHANNEL_FEED_ENTRY_LIMIT = 20;
 const CHANNEL_VIDEO_DETAIL_LIMIT = 16;
-const SEARCH_RESULT_LIMIT = 20;
-const SEARCH_BACKFILL_ENABLED = process.env.CRAWL_ENABLE_SEARCH_BACKFILL === '1';
 const RETRY_TIMES = 3;
 const RETRY_BASE_DELAY_MS = 250;
 
@@ -213,19 +210,6 @@ function buildCategoryChannelTargets(categorySlug, channels = []) {
     initial: uniqueTargets(channelTargets(primary)),
     refill: uniqueTargets(channelTargets(fallback)),
   };
-}
-
-function buildCategorySearchTargets(category = {}) {
-  const queries = [category.tag, ...(category.core || []), ...(category.expanded || []), ...(category.fallbackOnly || [])]
-    .map(query => String(query || '').trim())
-    .filter(Boolean);
-
-  return uniqueTargets(
-    queries.map(query => ({
-      query,
-      type: 'search',
-    })),
-  );
 }
 
 function parseChannelFeedEntries(xml = '') {
@@ -464,10 +448,6 @@ async function fetchChannelCandidates(channel, context = {}) {
   };
 }
 
-function buildYouTubeSearchUrl(query = '') {
-  return `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}&hl=en&bpctr=9999999999`;
-}
-
 function extractBalancedJson(text = '', startIndex = 0) {
   let depth = 0;
   let inString = false;
@@ -571,169 +551,6 @@ function parseViewsText(value = '') {
 
   const multiplier = match[2]?.toLowerCase() === 'm' ? 1_000_000 : match[2]?.toLowerCase() === 'k' ? 1_000 : 1;
   return Math.round(amount * multiplier);
-}
-
-function extractYouTubeSearchData(html = '') {
-  const $ = loadCheerio(html);
-  const scriptTexts = $('script')
-    .map((_, script) => $(script).text())
-    .get();
-
-  for (const scriptText of scriptTexts) {
-    const markerIndex = scriptText.indexOf('ytInitialData');
-    if (markerIndex === -1) {
-      continue;
-    }
-
-    const jsonStart = scriptText.indexOf('{', markerIndex);
-    if (jsonStart === -1) {
-      continue;
-    }
-
-    const jsonText = extractBalancedJson(scriptText, jsonStart);
-    if (!jsonText) {
-      continue;
-    }
-
-    try {
-      return JSON.parse(jsonText);
-    } catch {
-      continue;
-    }
-  }
-
-  return null;
-}
-
-function collectVideoRenderers(node, videos = [], seen = new Set()) {
-  if (!node || typeof node !== 'object') {
-    return videos;
-  }
-
-  if (Array.isArray(node)) {
-    for (const item of node) {
-      collectVideoRenderers(item, videos, seen);
-    }
-
-    return videos;
-  }
-
-  if (node.videoRenderer && typeof node.videoRenderer === 'object') {
-    const renderer = node.videoRenderer;
-    const videoId = renderer.videoId || '';
-    if (videoId && !seen.has(videoId)) {
-      seen.add(videoId);
-      videos.push(renderer);
-    }
-  }
-
-  for (const value of Object.values(node)) {
-    if (value && typeof value === 'object') {
-      collectVideoRenderers(value, videos, seen);
-    }
-  }
-
-  return videos;
-}
-
-function parseSearchRenderer(renderer = {}) {
-  const videoId = String(renderer.videoId || '').trim();
-  if (!videoId) {
-    return null;
-  }
-
-  const title = getRendererText(renderer.title);
-  const authorName = getRendererText(renderer.ownerText);
-  const thumbnail = Array.isArray(renderer.thumbnail?.thumbnails) ? renderer.thumbnail.thumbnails.at(-1)?.url || '' : '';
-  const seconds = parseDurationText(renderer.lengthText);
-  if (!seconds) {
-    return null;
-  }
-
-  return {
-    videoId,
-    title,
-    seconds,
-    author: { name: authorName || 'search' },
-    thumbnail,
-    views: parseViewsText(renderer.viewCountText),
-    publishedAt: getRendererText(renderer.publishedTimeText) || null,
-  };
-}
-
-async function fetchSearchCandidates(query, context = {}) {
-  const searchUrl = buildYouTubeSearchUrl(query);
-  const pageResult = await fetchTextWithRetry(searchUrl, {
-    ...context,
-    phase: 'search-page',
-    searchUrl,
-  });
-
-  if (pageResult.ok) {
-    const initialData = extractYouTubeSearchData(pageResult.result);
-    const renderers = collectVideoRenderers(initialData || {}).slice(0, SEARCH_RESULT_LIMIT);
-    const videos = renderers.map(parseSearchRenderer).filter(Boolean);
-
-    if (videos.length > 0) {
-      return {
-        ok: true,
-        result: {
-          query,
-          videos,
-        },
-      };
-    }
-  }
-
-  let lastError = pageResult.ok ? null : pageResult.error;
-
-  for (let attempt = 1; attempt <= RETRY_TIMES; attempt += 1) {
-    try {
-      const result = await ytSearch(query);
-      const videos = Array.isArray(result?.videos) ? result.videos.slice(0, SEARCH_RESULT_LIMIT).map(video => ({
-        videoId: video.videoId,
-        title: video.title,
-        seconds: video.seconds,
-        author: video.author,
-        thumbnail: video.thumbnail || video.image || '',
-        views: video.views ?? null,
-        publishedAt: video.ago || video.timestamp || null,
-      })) : [];
-
-      if (videos.length > 0) {
-        return {
-          ok: true,
-          result: {
-            query,
-            videos,
-          },
-        };
-      }
-    } catch (error) {
-      lastError = error;
-      const transient = isTransientCrawlError(error);
-      logCrawl('crawl_target_attempt_failed', {
-        ...context,
-        attempt,
-        maxAttempts: RETRY_TIMES,
-        transient,
-        retrying: transient && attempt < RETRY_TIMES,
-        error: serializeError(error),
-      });
-
-      if (transient && attempt < RETRY_TIMES) {
-        await wait(RETRY_BASE_DELAY_MS * attempt);
-        continue;
-      }
-
-      break;
-    }
-  }
-
-  return {
-    ok: false,
-    error: lastError || new Error('Unknown search crawl error'),
-  };
 }
 
 async function getChannelCandidates(channel, context = {}) {
@@ -864,15 +681,13 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
 
   const categoryPlans = CATEGORY_TAXONOMY.map(category => {
     const channelTargetsByCategory = buildCategoryChannelTargets(category.slug, enabledChannels);
-    const searchTargetsByCategory = buildCategorySearchTargets(category);
     const categoryDefinition = getCategoryDefinitionBySlug(category.slug) || category;
     return {
       slug: categoryDefinition.slug,
       tag: categoryDefinition.tag,
-      reason: `crawl registry-backed channels for ${categoryDefinition.tag} first, then controlled fallback channels if needed`,
+      reason: `crawl verified registry feeds for ${categoryDefinition.tag} first, then controlled fallback channels if needed`,
       initialTargets: channelTargetsByCategory.initial,
       refillTargets: channelTargetsByCategory.refill,
-      searchTargets: SEARCH_BACKFILL_ENABLED ? searchTargetsByCategory : [],
       batchLimit: CATEGORY_BATCH_LIMIT,
       category: categoryDefinition,
     };
@@ -884,9 +699,8 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
     dryRun,
     batchLimitPerCategory: CATEGORY_BATCH_LIMIT,
     minimumNewMoviesPerCategory: CATEGORY_MIN_NEW_MOVIES_PER_DAY,
-    categories: categoryPlans.map(plan => ({ slug: plan.slug, tag: plan.tag, minimumNewMoviesPerCategory: CATEGORY_MIN_NEW_MOVIES_PER_DAY, initialSources: plan.initialTargets.length, fallbackSources: plan.refillTargets.length, searchSources: plan.searchTargets.length, searchBackfillEnabled: SEARCH_BACKFILL_ENABLED })),
+    categories: categoryPlans.map(plan => ({ slug: plan.slug, tag: plan.tag, minimumNewMoviesPerCategory: CATEGORY_MIN_NEW_MOVIES_PER_DAY, initialSources: plan.initialTargets.length, fallbackSources: plan.refillTargets.length })),
     registrySources: enabledChannels.length,
-    searchBackfillEnabled: SEARCH_BACKFILL_ENABLED,
   });
 
   const oldData = await readMoviesFromJsonFile();
@@ -899,7 +713,7 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
   const touchedChannelSlugs = new Set();
 
   const crawlCategoryTargets = async (plan) => {
-    const { tag, slug, initialTargets, refillTargets = [], searchTargets = [], reason } = plan;
+    const { tag, slug, initialTargets, refillTargets = [], reason } = plan;
     const keptVideos = [];
     let targetErrors = 0;
     let rejectedCount = 0;
@@ -914,7 +728,6 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
     const waves = [
       { name: 'initial', reason, targets: initialTargets },
       ...(refillTargets.length > 0 ? [{ name: 'refill', reason: 'controlled backfill from the remaining registry channels', targets: refillTargets }] : []),
-      ...(searchTargets.length > 0 ? [{ name: 'search-backfill', reason: 'taxonomy-driven search fallback for remaining deficit', targets: searchTargets }] : []),
     ];
 
     logCrawl('crawl_category_started', {
@@ -926,7 +739,6 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
       reason,
       targets: initialTargets.map(target => target.query),
       refillTargets: refillTargets.map(target => target.query),
-      searchTargets: searchTargets.map(target => target.query),
     });
 
     for (const wave of waves) {
@@ -1015,9 +827,7 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
         waveSummary.targets += 1;
 
         try {
-          const discovery = target.type === 'search'
-            ? await fetchSearchCandidates(target.query, { category: tag, slug, query: target.query, type: target.type, wave: wave.name, runDay })
-            : await getChannelCandidates(target.channel, { category: tag, slug, query: target.query, type: target.type, wave: wave.name, runDay });
+          const discovery = await getChannelCandidates(target.channel, { category: tag, slug, query: target.query, type: target.type, wave: wave.name, runDay });
 
           if (!discovery || !Array.isArray(discovery.videos)) {
             targetErrors += 1;
