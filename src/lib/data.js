@@ -161,6 +161,7 @@ export function buildMovieCatalog(movies = []) {
 }
 
 const getLoadedCatalog = cache(async () => {
+  // Runtime reads the generated snapshot file only; DB refreshes happen out of band.
   return buildMovieCatalog(await readMoviesFromJsonFile());
 });
 

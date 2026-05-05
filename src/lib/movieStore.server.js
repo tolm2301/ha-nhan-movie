@@ -141,6 +141,18 @@ function toSafeInteger(value, fallback = null) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function readSnapshotMovies(value) {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  if (value && typeof value === 'object' && Array.isArray(value.movies)) {
+    return value.movies;
+  }
+
+  return [];
+}
+
 export function normalizeMovieRecord(movie = {}, sortOrder = 0) {
   return {
     id: String(movie.id || '').trim(),
@@ -267,9 +279,9 @@ async function withClient(work) {
 export async function readMoviesFromJsonFile() {
   const raw = await readFile(MOVIES_JSON_PATH, 'utf8');
   const parsed = JSON.parse(raw);
-  if (!Array.isArray(parsed)) return [];
+  const movies = readSnapshotMovies(parsed);
 
-  return parsed.map((movie, index) => normalizeMovieRecord(movie, index));
+  return movies.map((movie, index) => normalizeMovieRecord(movie, index));
 }
 
 async function seedChannelRegistryFromJsonFile(client) {
@@ -441,7 +453,14 @@ export async function replacePersistedMovies(movies = [], runMeta = {}) {
     const keptCount = Number.isFinite(runMeta.keptCount) ? runMeta.keptCount : normalizedMovies.length;
     const fetchedCount = Number.isFinite(runMeta.fetchedCount) ? runMeta.fetchedCount : normalizedMovies.length;
     const source = runMeta.source || 'scripts/crawl.mjs';
-    const metadata = runMeta.metadata || {};
+    const syncSnapshot = runMeta.syncSnapshot !== false;
+    const metadata = {
+      ...((runMeta.metadata && typeof runMeta.metadata === 'object') ? runMeta.metadata : {}),
+    };
+
+    if (runMeta.summary) {
+      metadata.summary = runMeta.summary;
+    }
 
     await client.query('BEGIN');
     try {
@@ -529,21 +548,25 @@ export async function replacePersistedMovies(movies = [], runMeta = {}) {
       );
 
       await client.query('COMMIT');
-      let snapshotSynced = true;
+      let snapshotSynced = syncSnapshot;
+      let snapshotSkipped = !syncSnapshot;
       let snapshotError = null;
 
-      try {
-        await writeMovieSnapshot(persistedMovies, { source: 'db-merge' });
-      } catch (error) {
-        snapshotSynced = false;
-        snapshotError = error instanceof Error ? { name: error.name, message: error.message } : { message: String(error) };
-        console.error(`[${new Date().toISOString()}] snapshot_refresh_failed ${JSON.stringify({
-          source: 'db-merge',
-          error: snapshotError,
-        })}`);
+      if (syncSnapshot) {
+        try {
+          await writeMovieSnapshot(persistedMovies, { source: 'db', generatedAt: finishedAt });
+        } catch (error) {
+          snapshotSynced = false;
+          snapshotSkipped = false;
+          snapshotError = error instanceof Error ? { name: error.name, message: error.message } : { message: String(error) };
+          console.error(`[${new Date().toISOString()}] snapshot_refresh_failed ${JSON.stringify({
+            source: 'db',
+            error: snapshotError,
+          })}`);
+        }
       }
 
-      return { crawlRunId, keptCount: persistedMovies.length, fetchedCount, totalMovies: persistedMovies.length, snapshotSynced, snapshotError };
+      return { crawlRunId, keptCount: persistedMovies.length, fetchedCount, totalMovies: persistedMovies.length, snapshotSynced, snapshotSkipped, snapshotError };
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;

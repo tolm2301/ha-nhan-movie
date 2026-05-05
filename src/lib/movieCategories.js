@@ -130,6 +130,10 @@ export function resolveMovieCategory(movie = {}) {
     return CATEGORY_BY_SLUG.get('ha-nhan');
   }
 
+  if (taggedCategory && taggedCategory.slug !== 'khac') {
+    return taggedCategory;
+  }
+
   const orderedSlugs = ['lieu-nhu-yen', 'trong-sinh', 'xuyen-khong', 'he-thong', 'tu-tien'];
   for (const slug of orderedSlugs) {
     const category = CATEGORY_BY_SLUG.get(slug);

@@ -9,11 +9,11 @@
 - [ ] Implement watch-player double-click seek interaction | Owner: creator | Priority: medium
 - [ ] Add keyboard arrow controls to watch player | Owner: creator | Priority: medium
 - [ ] Expand Ha Nhân search/tag taxonomy for crawl discovery | Owner: creator | Priority: medium
-- [ ] Tighten crawler theme filtering and rejection reasons | Owner: developer | Priority: high
 - [ ] Enforce 30-video floor with tiered crawl fallback | Owner: developer | Priority: high
 - [ ] Enforce agreed 4-slot AdSense setup: home after rail 3, category after first block, watch after related, search after 8–12 results | Owner: developer | Priority: medium
 
 ## Review
+- [ ] Tighten crawler theme filtering and rejection reasons | Owner: developer | Priority: high
 - [ ] Fix Next image host config for ytimg subdomains used by hero thumbnails | Owner: developer | Priority: high
 - [ ] Remove all drama-related seed channels and keep only non-drama clip-style sources for release | Owner: developer | Priority: high
 - [ ] Remove DramaBox channels and restore the high-signal clip-style release seed set | Owner: techlead | Priority: high
@@ -53,6 +53,9 @@
 
 ## Done
 - [ ] (template) Task title | Owner: techlead | Finished: YYYY-MM-DD
+- [x] Harden DB->snapshot->runtime contract with versioned snapshot metadata and fallback handling | Owner: developer | Finished: 2026-05-05
+- [x] Split crawl ingestion from snapshot refresh so GitHub Actions crawl skips snapshot writes and hourly sync only updates when data changes | Owner: developer | Finished: 2026-05-05
+- [x] Improve crawl observability with standardized run/category/wave/target summaries | Owner: developer | Finished: 2026-05-05
 - [x] Move runtime movie reads off the DB critical path by serving a static snapshot with ISR freshness, keeping DB as the update source only | Owner: developer | Finished: 2026-04-30
 - [x] Restore current performance changes to baseline, then refactor slow routes toward static generation/ISR or server components where it actually reduces load time | Owner: developer | Finished: 2026-04-29
 - [x] Add visible Pin/Unpin control for detached watch popup | Owner: developer | Finished: 2026-04-28

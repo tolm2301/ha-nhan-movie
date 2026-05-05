@@ -7,7 +7,7 @@ Next.js movie site with automated YouTube crawling, build-time snapshot generati
 - Runtime reads `src/lib/movies.json`.
 - Build/deploy runs `prebuild` first, so `npm run build` always refreshes the snapshot via `npm run snapshot:movies` before Next.js builds.
 - Hourly sync is handled by `.github/workflows/hourly-snapshot-sync.yml`, which refreshes the snapshot from Postgres and commits the updated JSON back to the repo.
-- Crawl is separate: `.github/workflows/daily-crawl.yml` updates the database only and is no longer the freshness owner for the runtime snapshot.
+- Crawl is separate: `.github/workflows/daily-crawl.yml` updates the database only (`npm run crawl -- --no-snapshot`) and is no longer the freshness owner for the runtime snapshot.
 
 ## Postgres data
 
@@ -68,7 +68,8 @@ GitHub Actions workflow: `.github/workflows/hourly-snapshot-sync.yml`
 
 - Runs every hour
 - Runs `npm run snapshot:movies` only
-- Requires Postgres credentials from GitHub Secrets and pushes the updated `src/lib/movies.json` back to the default branch
+- Requires Postgres credentials from GitHub Secrets and pushes `src/lib/movies.json` only when the snapshot content actually changes
+- Uploads the snapshot log as an artifact for debugging
 
 Required secret/env vars:
 

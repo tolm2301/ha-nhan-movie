@@ -10,7 +10,8 @@ const { writeMovieSnapshot } = await import('../src/lib/movieSnapshot.server.js'
 async function loadSnapshotMovies() {
   if (!hasDatabaseConfig()) {
     return {
-      source: 'json',
+      source: 'snapshot-fallback',
+      fallbackReason: 'database-unavailable',
       movies: await readMoviesFromJsonFile(),
     };
   }
@@ -18,24 +19,26 @@ async function loadSnapshotMovies() {
   try {
     return {
       source: 'db',
+      fallbackReason: null,
       movies: await loadPersistedMovies({ allowJsonFallback: false }),
     };
   } catch (error) {
     console.warn(`[${new Date().toISOString()}] snapshot_generation_db_failed ${JSON.stringify({
-      fallback: 'json',
+      fallback: 'snapshot-fallback',
       error: error instanceof Error ? { name: error.name, message: error.message } : { message: String(error) },
     })}`);
 
     return {
-      source: 'json',
+      source: 'snapshot-fallback',
+      fallbackReason: error instanceof Error ? error.message : String(error),
       movies: await readMoviesFromJsonFile(),
     };
   }
 }
 
 async function main() {
-  const { source, movies } = await loadSnapshotMovies();
-  const result = await writeMovieSnapshot(movies, { source });
+  const { source, fallbackReason, movies } = await loadSnapshotMovies();
+  const result = await writeMovieSnapshot(movies, { source, fallbackReason });
   console.log(JSON.stringify(result, null, 2));
 }
 

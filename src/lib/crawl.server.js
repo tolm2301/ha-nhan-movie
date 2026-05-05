@@ -1,7 +1,7 @@
 import { load as loadCheerio } from 'cheerio';
 import ytSearch from 'yt-search';
 import { loadChannelRegistry, readMoviesFromJsonFile, replacePersistedMovies, updateChannelRegistryEntry } from './movieStore.server.js';
-import { CATEGORY_TAXONOMY, getCategoryDefinitionBySlug, normalizeMovieCategory, resolveMovieCategory } from './movieCategories.js';
+import { CATEGORY_TAXONOMY, getCategoryDefinitionBySlug, normalizeMovieCategory, normalizeText, resolveMovieCategory } from './movieCategories.js';
 import { hasRenderableThumbnail } from './thumbnailFilters.js';
 
 const EPISODE_REGEX = /(t\u1eadp|tap|episode|ep\.?|ph\u1ea7n)\s*(\d{1,4})/i;
@@ -31,6 +31,67 @@ function logCrawl(message, details) {
 
   const serialized = typeof details === 'string' ? details : JSON.stringify(details);
   console.log(`[${timestamp()}] ${message} ${serialized}`);
+}
+
+function incrementCountMap(map, key, amount = 1) {
+  const normalizedKey = key || 'unknown';
+  map[normalizedKey] = (map[normalizedKey] || 0) + amount;
+  return map;
+}
+
+function sortCountMap(map = {}) {
+  return Object.fromEntries(Object.entries(map).sort(([left], [right]) => String(left).localeCompare(String(right))));
+}
+
+function createCategoryRunStats() {
+  return {
+    kept: 0,
+    rejected: 0,
+    duplicates: 0,
+    errors: 0,
+    rejectReasons: {},
+    duplicateReasons: {},
+    errorReasons: {},
+  };
+}
+
+function createTargetRunStats({ runDay, category, slug, query, type, wave, channelSlug }) {
+  return {
+    runDay,
+    category,
+    slug,
+    query,
+    type,
+    wave,
+    channelSlug,
+    status: 'started',
+    candidates: 0,
+    kept: 0,
+    rejected: 0,
+    duplicates: 0,
+    errors: 0,
+    rejectReasons: {},
+    duplicateReasons: {},
+    error: null,
+  };
+}
+
+function summarizeCategoryResults(categorySummaries = []) {
+  return categorySummaries.reduce((totals, category) => {
+    totals.categories += 1;
+    totals.kept += category.kept || 0;
+    totals.rejected += category.rejected || 0;
+    totals.duplicates += category.duplicates || 0;
+    totals.errors += category.errors || 0;
+
+    return totals;
+  }, {
+    categories: 0,
+    kept: 0,
+    rejected: 0,
+    duplicates: 0,
+    errors: 0,
+  });
 }
 
 export function serializeError(error) {
@@ -688,7 +749,23 @@ function normalizeSeriesKey(title = '') {
     .trim();
 }
 
-function isBadVideoTitle(title = '') {
+function escapeRegExp(value = '') {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function matchesBadVideoTitleKeyword(title = '', keyword = '') {
+  const normalizedTitle = normalizeText(title);
+  const normalizedKeyword = normalizeText(keyword);
+
+  if (!normalizedTitle || !normalizedKeyword) {
+    return false;
+  }
+
+  const pattern = new RegExp(`(^|[^a-z0-9])${escapeRegExp(normalizedKeyword)}(?=$|[^a-z0-9])`);
+  return pattern.test(normalizedTitle);
+}
+
+function findBadVideoTitleKeyword(title = '') {
   const badWords = [
     '#marriage', 'tiktok', 'remix', 'music video', 'karaoke',
     'h\u00e0n qu\u1ed1c', 'nh\u1ea1c', 'live stream', 'vlog', 'podcast',
@@ -697,7 +774,12 @@ function isBadVideoTitle(title = '') {
     'reaction', 'highlight', 'clip ng\u1eafn', 'tin hot', 'news',
     'g\u1ea5u tr\u00fac', 'panda', 't\u1ea5u h\u00e0i', 'gau hai',
   ];
-  return badWords.some(word => title.includes(word));
+
+  return badWords.find(word => matchesBadVideoTitleKeyword(title, word)) || '';
+}
+
+function isBadVideoTitle(title = '') {
+  return Boolean(findBadVideoTitleKeyword(title));
 }
 
 function explainVideoDecision(video, targetType, trustedAuthorWords) {
@@ -714,9 +796,10 @@ function explainVideoDecision(video, targetType, trustedAuthorWords) {
   }
 
   const title = (video.title || '').toLowerCase();
+  const blockedTitleKeyword = findBadVideoTitleKeyword(title);
 
-  if (isBadVideoTitle(title)) {
-    return { keep: false, reason: 'blocked by low-quality title keyword' };
+  if (blockedTitleKeyword) {
+    return { keep: false, reason: `blocked by low-quality title keyword (${blockedTitleKeyword})` };
   }
 
   const authorName = (video.author?.name || '').toLowerCase();
@@ -763,7 +846,7 @@ function explainThumbnailDecision(movie = {}) {
   return { keep: true, reason: 'accepted' };
 }
 
-export async function runCrawl({ dryRun = false } = {}) {
+export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
   const runStartedAt = timestamp();
   const runDay = runStartedAt.slice(0, 10);
   const registry = await loadChannelRegistry();
@@ -787,17 +870,18 @@ export async function runCrawl({ dryRun = false } = {}) {
     };
   });
 
-  logCrawl('Bat dau crawl du lieu tu channel registry (Che do phan loai theo danh muc)...', {
+  logCrawl('crawl_run_started', {
     runStartedAt,
     runDay,
     dryRun,
     batchLimitPerCategory: CATEGORY_BATCH_LIMIT,
     categories: categoryPlans.map(plan => ({ slug: plan.slug, tag: plan.tag, initialSources: plan.initialTargets.length, fallbackSources: plan.refillTargets.length, searchSources: plan.searchTargets.length, searchBackfillEnabled: SEARCH_BACKFILL_ENABLED })),
     registrySources: enabledChannels.length,
+    searchBackfillEnabled: SEARCH_BACKFILL_ENABLED,
   });
 
   const oldData = await readMoviesFromJsonFile();
-  logCrawl('Phat hien list video cu.', { existingVideos: oldData.length, source: 'json' });
+  logCrawl('crawl_existing_catalog_loaded', { existingVideos: oldData.length, source: 'json' });
 
   const existingIds = new Set(oldData.map(video => video.id));
   const runNewIds = new Set();
@@ -813,13 +897,18 @@ export async function runCrawl({ dryRun = false } = {}) {
     let duplicateCount = 0;
     const triedQueries = new Set();
     const targetQuota = CATEGORY_BATCH_LIMIT;
+    const categoryRejectReasons = {};
+    const categoryDuplicateReasons = {};
+    const categoryErrorReasons = {};
+    const targetSummaries = [];
+    const waveSummaries = [];
     const waves = [
       { name: 'initial', reason, targets: initialTargets },
       ...(refillTargets.length > 0 ? [{ name: 'refill', reason: 'controlled backfill from the remaining registry channels', targets: refillTargets }] : []),
       ...(searchTargets.length > 0 ? [{ name: 'search-backfill', reason: 'taxonomy-driven search fallback for remaining deficit', targets: searchTargets }] : []),
     ];
 
-    logCrawl('crawl_category_batch_start', {
+    logCrawl('crawl_category_started', {
       runDay,
       category: tag,
       slug,
@@ -827,6 +916,7 @@ export async function runCrawl({ dryRun = false } = {}) {
       reason,
       targets: initialTargets.map(target => target.query),
       refillTargets: refillTargets.map(target => target.query),
+      searchTargets: searchTargets.map(target => target.query),
     });
 
     for (const wave of waves) {
@@ -835,7 +925,25 @@ export async function runCrawl({ dryRun = false } = {}) {
       }
 
       const deficitBeforeWave = targetQuota - keptVideos.length;
-      logCrawl(wave.name === 'initial' ? 'crawl_category_batch_wave_start' : 'crawl_category_refill_start', {
+      const waveSummary = {
+        runDay,
+        category: tag,
+        slug,
+        wave: wave.name,
+        reason: wave.reason,
+        target: targetQuota,
+        startKept: keptVideos.length,
+        endKept: keptVideos.length,
+        deficitBefore: deficitBeforeWave,
+        deficitAfter: deficitBeforeWave,
+        targets: 0,
+        kept: 0,
+        rejected: 0,
+        duplicates: 0,
+        errors: 0,
+      };
+
+      logCrawl('crawl_category_wave_started', {
         runDay,
         category: tag,
         slug,
@@ -854,7 +962,22 @@ export async function runCrawl({ dryRun = false } = {}) {
         }
 
         const targetKey = `${target.type || 'channel'}:${target.query || getChannelKey(target.channel)}`;
+        const targetSummary = createTargetRunStats({
+          runDay,
+          category: tag,
+          slug,
+          query: target.query,
+          type: target.type,
+          wave: wave.name,
+          channelSlug: target.channel?.slug || null,
+        });
+
         if (triedQueries.has(targetKey)) {
+          targetSummary.status = 'skipped';
+          targetSummary.error = { reason: 'already tried in a prior wave' };
+          targetSummaries.push(targetSummary);
+          waveSummary.targets += 1;
+
           logCrawl('crawl_category_target_skipped', {
             runDay,
             category: tag,
@@ -878,6 +1001,8 @@ export async function runCrawl({ dryRun = false } = {}) {
           channelSlug: target.channel?.slug || null,
         });
 
+        waveSummary.targets += 1;
+
         try {
           const discovery = target.type === 'search'
             ? await fetchSearchCandidates(target.query, { category: tag, slug, query: target.query, type: target.type, wave: wave.name, runDay })
@@ -885,6 +1010,12 @@ export async function runCrawl({ dryRun = false } = {}) {
 
           if (!discovery || !Array.isArray(discovery.videos)) {
             targetErrors += 1;
+            waveSummary.errors += 1;
+            targetSummary.errors += 1;
+            targetSummary.status = 'error';
+            targetSummary.error = serializeError(discovery?.error);
+            incrementCountMap(categoryErrorReasons, discovery?.error?.name || discovery?.error?.type || 'target failed after retries');
+            targetSummaries.push(targetSummary);
             logCrawl('crawl_category_target_skipped', {
               runDay,
               category: tag,
@@ -898,13 +1029,14 @@ export async function runCrawl({ dryRun = false } = {}) {
             continue;
           }
 
-            const candidates = discovery.videos;
+          const candidates = discovery.videos;
+          targetSummary.candidates = candidates.length;
 
-            if (!dryRun && target.channel?.slug && !touchedChannelSlugs.has(target.channel.slug)) {
-              try {
-                await updateChannelRegistryEntry(target.channel.slug, {
-                  channelId: discovery.channel?.channelId || target.channel.channelId || null,
-                  channelUrl: discovery.channel?.channelUrl || target.channel.channelUrl || null,
+          if (!dryRun && target.channel?.slug && !touchedChannelSlugs.has(target.channel.slug)) {
+            try {
+              await updateChannelRegistryEntry(target.channel.slug, {
+                channelId: discovery.channel?.channelId || target.channel.channelId || null,
+                channelUrl: discovery.channel?.channelUrl || target.channel.channelUrl || null,
                 lastCrawledAt: timestamp(),
               });
               touchedChannelSlugs.add(target.channel.slug);
@@ -920,6 +1052,8 @@ export async function runCrawl({ dryRun = false } = {}) {
           }
 
           if (candidates.length === 0) {
+            targetSummary.status = 'empty';
+            targetSummaries.push(targetSummary);
             logCrawl('crawl_category_target_empty', { runDay, category: tag, slug, query: target.query, wave: wave.name, channelSlug: target.channel?.slug || null });
             continue;
           }
@@ -938,6 +1072,10 @@ export async function runCrawl({ dryRun = false } = {}) {
             if (!qualityDecision.keep) {
               rejectedCount += 1;
               targetRejectedCount += 1;
+              waveSummary.rejected += 1;
+              targetSummary.rejected += 1;
+              incrementCountMap(categoryRejectReasons, qualityDecision.reason);
+              incrementCountMap(targetSummary.rejectReasons, qualityDecision.reason);
               logCrawl('  - reject', {
                 runDay,
                 category: tag,
@@ -956,6 +1094,10 @@ export async function runCrawl({ dryRun = false } = {}) {
             if (!thumbnailDecision.keep) {
               rejectedCount += 1;
               targetRejectedCount += 1;
+              waveSummary.rejected += 1;
+              targetSummary.rejected += 1;
+              incrementCountMap(categoryRejectReasons, thumbnailDecision.reason);
+              incrementCountMap(targetSummary.rejectReasons, thumbnailDecision.reason);
               logCrawl('  - reject', {
                 runDay,
                 category: tag,
@@ -973,6 +1115,10 @@ export async function runCrawl({ dryRun = false } = {}) {
             if (resolvedCategory.slug !== slug) {
               rejectedCount += 1;
               targetRejectedCount += 1;
+              waveSummary.rejected += 1;
+              targetSummary.rejected += 1;
+              incrementCountMap(categoryRejectReasons, `resolved to ${resolvedCategory.tag}`);
+              incrementCountMap(targetSummary.rejectReasons, `resolved to ${resolvedCategory.tag}`);
               logCrawl('  - reject', {
                 runDay,
                 category: tag,
@@ -988,6 +1134,10 @@ export async function runCrawl({ dryRun = false } = {}) {
 
             if (existingIds.has(video.videoId) || runNewIds.has(video.videoId)) {
               duplicateCount += 1;
+              waveSummary.duplicates += 1;
+              targetSummary.duplicates += 1;
+              incrementCountMap(categoryDuplicateReasons, existingIds.has(video.videoId) ? 'already in catalog' : 'already selected in this run');
+              incrementCountMap(targetSummary.duplicateReasons, existingIds.has(video.videoId) ? 'already in catalog' : 'already selected in this run');
               logCrawl('  - skip duplicate', {
                 runDay,
                 category: tag,
@@ -1005,6 +1155,8 @@ export async function runCrawl({ dryRun = false } = {}) {
             keptVideos.push(normalized);
             newVideos.push(normalized);
             keptCount += 1;
+            waveSummary.kept += 1;
+            targetSummary.kept += 1;
 
             logCrawl('  + keep', {
               runDay,
@@ -1020,6 +1172,7 @@ export async function runCrawl({ dryRun = false } = {}) {
             });
           }
 
+          targetSummary.status = 'completed';
           logCrawl('crawl_category_target_summary', {
             runDay,
             category: tag,
@@ -1029,10 +1182,21 @@ export async function runCrawl({ dryRun = false } = {}) {
             channelSlug: target.channel?.slug || null,
             kept: keptCount,
             rejected: targetRejectedCount,
+            duplicates: targetSummary.duplicates,
+            errors: targetSummary.errors,
             candidates: candidates.length,
+            rejectReasons: sortCountMap(targetSummary.rejectReasons),
+            duplicateReasons: sortCountMap(targetSummary.duplicateReasons),
           });
+          targetSummaries.push(targetSummary);
         } catch (error) {
           targetErrors += 1;
+          waveSummary.errors += 1;
+          targetSummary.errors += 1;
+          targetSummary.status = 'error';
+          targetSummary.error = serializeError(error);
+          incrementCountMap(categoryErrorReasons, error?.name || error?.code || 'target error');
+          targetSummaries.push(targetSummary);
           logCrawl('crawl_category_target_error', {
             runDay,
             category: tag,
@@ -1045,6 +1209,10 @@ export async function runCrawl({ dryRun = false } = {}) {
         }
       }
 
+      waveSummary.endKept = keptVideos.length;
+      waveSummary.deficitAfter = Math.max(0, targetQuota - keptVideos.length);
+      waveSummaries.push(waveSummary);
+
       if (keptVideos.length < targetQuota) {
         logCrawl('crawl_category_refill_needed', {
           runDay,
@@ -1056,6 +1224,8 @@ export async function runCrawl({ dryRun = false } = {}) {
           deficit: targetQuota - keptVideos.length,
         });
       }
+
+      logCrawl('crawl_category_wave_summary', waveSummary);
     }
 
     if (keptVideos.length < targetQuota) {
@@ -1082,10 +1252,15 @@ export async function runCrawl({ dryRun = false } = {}) {
       duplicates: duplicateCount,
       rejected: rejectedCount,
       errors: targetErrors,
+      rejectReasons: sortCountMap(categoryRejectReasons),
+      duplicateReasons: sortCountMap(categoryDuplicateReasons),
+      errorReasons: sortCountMap(categoryErrorReasons),
+      waves: waveSummaries,
+      targets: targetSummaries,
     };
 
     categorySummaries.push(summary);
-    logCrawl('crawl_category_batch_complete', summary);
+    logCrawl('crawl_category_summary', summary);
     return keptVideos;
   };
 
@@ -1110,20 +1285,30 @@ export async function runCrawl({ dryRun = false } = {}) {
     return explainVideoDecision(fakeVideoLike, 'channel', CATEGORY_TRUSTED_AUTHOR_WORDS).keep && hasRenderableThumbnail(video);
   }).map(video => normalizeMovieCategory(video));
 
-  logCrawl('Tong ket video moi.', {
-    newVideos: newVideos.length,
-    totalFetched: newVideos.length,
-    existingKept: keptOldVideos.length,
-    categorySummaries,
-  });
-
   const finalData = [...newVideos, ...keptOldVideos]
     .slice(0, MAX_STORED_VIDEOS)
     .map(video => normalizeMovieCategory(video));
 
+  const runSummary = {
+    runStartedAt,
+    runDay,
+    dryRun,
+    snapshotSyncEnabled: syncSnapshot,
+    existingVideos: oldData.length,
+    existingKept: keptOldVideos.length,
+    newVideos: newVideos.length,
+    totalFetched: newVideos.length,
+    totalVideos: finalData.length,
+    categoryCount: categorySummaries.length,
+    totals: summarizeCategoryResults(categorySummaries),
+    categorySummaries,
+  };
+
+  logCrawl('crawl_run_summary', runSummary);
+
   if (dryRun) {
     const finishedAt = timestamp();
-    logCrawl('Dry run crawl, khong ghi vao Postgres.', { runStartedAt, runDay, finishedAt, totalVideos: finalData.length, categorySummaries });
+    logCrawl('crawl_run_finished', { ...runSummary, finishedAt, persistedTo: 'dry-run' });
     return {
       runStartedAt,
       runDay,
@@ -1134,6 +1319,7 @@ export async function runCrawl({ dryRun = false } = {}) {
       categorySummaries,
       dryRun: true,
       persistedTo: 'dry-run',
+      summary: { ...runSummary, finishedAt, persistedTo: 'dry-run' },
     };
   }
 
@@ -1145,11 +1331,12 @@ export async function runCrawl({ dryRun = false } = {}) {
       keptCount: finalData.length,
       fetchedCount: newVideos.length,
       source: 'scripts/crawl.mjs',
-      metadata: { mode: 'category-batches', dryRun: false, runDay, categorySummaries },
+      syncSnapshot,
+      metadata: { mode: 'category-batches', dryRun: false, runDay, summary: runSummary },
     });
 
     const finishedAt = timestamp();
-    logCrawl('Xong crawl.', { runStartedAt, runDay, finishedAt, totalVideos: finalData.length, persistedTo: 'postgres', categorySummaries });
+    logCrawl('crawl_run_finished', { ...runSummary, finishedAt, persistedTo: 'postgres', crawlRunId: persisted.crawlRunId });
 
     return {
       runStartedAt,
@@ -1162,16 +1349,18 @@ export async function runCrawl({ dryRun = false } = {}) {
       dryRun: false,
       persistedTo: 'postgres',
       crawlRunId: persisted.crawlRunId,
+      summary: { ...runSummary, finishedAt, persistedTo: 'postgres', crawlRunId: persisted.crawlRunId },
     };
   } catch (error) {
     console.error(`[${timestamp()}] crawl_persist_failed ${JSON.stringify({
       runStartedAt,
       totalVideos: finalData.length,
+      summary: runSummary,
       error: serializeError(error),
     })}`);
 
     const finishedAt = timestamp();
-    logCrawl('Xong crawl.', { runStartedAt, runDay, finishedAt, totalVideos: finalData.length, persistedTo: 'json-fallback', categorySummaries });
+    logCrawl('crawl_run_finished', { ...runSummary, finishedAt, persistedTo: 'json-fallback' });
 
     return {
       runStartedAt,
@@ -1184,6 +1373,7 @@ export async function runCrawl({ dryRun = false } = {}) {
       dryRun: false,
       persistedTo: 'json-fallback',
       persistenceError: serializeError(error),
+      summary: { ...runSummary, finishedAt, persistedTo: 'json-fallback' },
     };
   }
 }

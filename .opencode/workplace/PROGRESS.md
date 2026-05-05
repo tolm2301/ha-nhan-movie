@@ -1,5 +1,29 @@
 # Progress Timeline
 
+# 2026-05-05 (developer phase 4 workflow automation)
+- Scope: Make the GitHub Actions crawl/snapshot jobs match the real contract: crawl ingests DB only, hourly sync owns snapshot refresh, and unchanged snapshots should not churn commits.
+- Actions: Added a `--no-snapshot` crawl flag for the scheduled GitHub Actions crawl path, taught the crawl persistence path to skip snapshot writes when that flag is set, made snapshot writes no-op when the content/source metadata is unchanged, and updated both workflows plus README guidance to reflect the separate ownership and artifact/log behavior.
+- Verification: `git diff --check` passed with only line-ending warnings; workflow YAML parsed successfully; `npm.cmd run lint` passed; `npm.cmd run build` passed and the prebuild snapshot refresh reported `updated: false` instead of rewriting unchanged data.
+- Risks: Crawl runs now rely on the separate hourly/build snapshot path for runtime freshness, so if the sync job is delayed the JSON snapshot will lag behind the database until the next refresh.
+
+## 2026-05-05 (developer snapshot contract hardening)
+- Scope: Make DB writes, `src/lib/movies.json`, and runtime loading share a stable snapshot contract with explicit version/source metadata and clear fallback behavior.
+- Actions: Added a versioned snapshot envelope in `src/lib/movieSnapshot.server.js`, taught `src/lib/movieStore.server.js` to read either the legacy array or the new envelope, refreshed snapshots from `replacePersistedMovies()` with an explicit DB source stamp, and made the snapshot generator fall back to the existing snapshot file with a clear fallback reason when DB access is unavailable.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run snapshot:movies` passed and regenerated `src/lib/movies.json` from the fallback snapshot path with 301 movies; `npm.cmd run build` passed and the prebuild snapshot refresh completed successfully.
+- Risks: `src/lib/movies.json` is now an envelope object instead of a plain array, but runtime loading still accepts the legacy array shape for backward compatibility; build-time snapshot refresh will intentionally preserve the last snapshot when Postgres is unavailable.
+
+## 2026-05-05 (developer crawl quality pass)
+- Scope: Make crawl candidate rejection and category resolution a little more precise so exact tags win over broader fallback matches and title rejects are reported more clearly.
+- Actions: Prioritized explicit non-`Khác` category tags in `src/lib/movieCategories.js`, kept `Khác` as a fallback category, and changed low-quality title filtering in `src/lib/crawl.server.js` to match whole keywords and include the matched keyword in the reject reason.
+- Verification: `npm.cmd run lint` passed; a Node smoke check confirmed `Tu Tiên` tags now beat `Xuyên Không` text, `Liễu Như Yên` still resolves correctly, and `Some Movie trailer` stays rejected; `npm.cmd run crawl:dry` passed and the updated crawl summary/log shape remained compatible.
+- Risks: Exact non-`Khác` tags are now trusted earlier, so a mis-tagged source could override a more specific keyword match.
+
+## 2026-05-05 (developer crawl observability phase 1)
+- Scope: Standardize crawl logs and crawl-run summary so per-category, per-wave, and per-target counts plus reject/duplicate/error reasons are easy to inspect.
+- Actions: Added structured crawl-run start/summary/finish logs in `src/lib/crawl.server.js`, captured per-category wave/target summaries with reason counts, and persisted the summary under `crawl_runs.metadata.summary` via `src/lib/movieStore.server.js`.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run crawl:dry` passed and emitted `crawl_run_summary` / `crawl_run_finished` plus per-category and per-wave summaries.
+- Risks: The crawl logs are now more verbose by design, so dry-run output may be long; the summary shape should stay backward-compatible because it only adds metadata.
+
 ## 2026-04-30 (developer ytimg host allowlist)
 - Scope: Fix the runtime `next/image` host error for ytimg thumbnails used by hero/catalog cards.
 - Actions: Expanded `next.config.mjs` to allow the explicit YouTube thumbnail hosts actually used by the app: `i.ytimg.com` plus `i1.ytimg.com` through `i4.ytimg.com`.

@@ -39,7 +39,7 @@ jobs:
         run: npm ci
 
       - name: Refresh runtime snapshot
-        run: npm run snapshot:movies
+        run: npm run snapshot:movies 2>&1 | tee snapshot.log
 
       - name: Commit snapshot changes
         run: |
@@ -53,3 +53,11 @@ jobs:
           git add src/lib/movies.json
           git commit -m "chore: refresh movie snapshot"
           git push origin HEAD:"$GITHUB_REF_NAME"
+
+      - name: Upload snapshot logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hourly-snapshot-sync-log-${{ github.run_id }}
+          path: snapshot.log
+          if-no-files-found: warn
