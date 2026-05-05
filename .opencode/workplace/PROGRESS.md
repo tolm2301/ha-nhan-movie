@@ -1,5 +1,11 @@
 # Progress Timeline
 
+## 2026-05-05 (developer feed-only crawler pivot)
+- Scope: Remove the remaining per-video watch-page fetches from the production crawl so the registry-driven crawl reads only channel feed/Atom XML and reports any floor deficit honestly.
+- Actions: Updated `src/lib/crawl.server.js` to stop resolving video durations from `watch?v=` pages, keep only feed-parsed candidates, and allow direct channel-ID resolution without page fetches; added a tiny registry sync helper in `src/lib/movieStore.server.js` so direct `/channel/UC...` seed URLs still hydrate `channelId` for feed-only crawling.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run crawl:dry` passed and the captured log contained no `watch?v=`, `video-page`, `ytsearch`, or `search-backfill` matches while still emitting `crawl_category_summary` / `crawl_run_summary` with `floorHit` and `remainingDeficit`; `npm.cmd run build` passed after the code change.
+- Risks: Handle-based seed entries still need a stored `channelId` somewhere in the registry path; if one is missing, the channel will now be skipped instead of falling back to a watch-page lookup.
+
 ## 2026-05-05 (developer strict registry cleanup)
 - Scope: Remove non-fit crawler seed entries so the registry keeps only explicit 2D movie/animation/video sources; keep the repo seed file as the registry source of truth.
 - Actions: Pruned `src/lib/channel-seeds.json` to remove audio, kể truyện, and review-only entries, leaving only the explicit movie/cartoon/video-style seeds already aligned to the crawl categories. No sync logic change was needed because `src/lib/movieStore.server.js` already re-upserts the repo seed file and disables stale DB rows when the seed list changes.

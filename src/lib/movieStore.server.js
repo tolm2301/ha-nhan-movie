@@ -141,6 +141,27 @@ function toSafeInteger(value, fallback = null) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function extractChannelIdFromChannelUrl(channelUrl = '') {
+  const normalizedUrl = String(channelUrl || '').trim();
+  if (!normalizedUrl) {
+    return null;
+  }
+
+  const patterns = [
+    /youtube\.com\/channel\/(UC[\w-]+)/i,
+    /[?&]channel_id=(UC[\w-]+)/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = normalizedUrl.match(pattern);
+    if (match?.[1]) {
+      return match[1];
+    }
+  }
+
+  return null;
+}
+
 function readSnapshotMovies(value) {
   if (Array.isArray(value)) {
     return value;
@@ -178,7 +199,7 @@ function normalizeChannelRecord(channel = {}, sortOrder = 0) {
   return {
     id: String(channel.id || slug).trim(),
     slug,
-    channelId: String(channel.channelId || channel.channel_id || '').trim(),
+    channelId: String(channel.channelId || channel.channel_id || extractChannelIdFromChannelUrl(channel.channelUrl || channel.channel_url || channel.url || '') || '').trim(),
     channelUrl: String(channel.channelUrl || channel.channel_url || channel.url || '').trim(),
     displayName,
     category: String(channel.category || channel.categorySlug || 'shared').trim() || 'shared',

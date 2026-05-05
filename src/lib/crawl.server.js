@@ -4,10 +4,8 @@ import { CATEGORY_TAXONOMY, getCategoryDefinitionBySlug, normalizeMovieCategory,
 import { hasRenderableThumbnail } from './thumbnailFilters.js';
 
 const EPISODE_REGEX = /(t\u1eadp|tap|episode|ep\.?|ph\u1ea7n)\s*(\d{1,4})/i;
-const MIN_VIDEO_SECONDS = 600;
 const MAX_STORED_VIDEOS = 1000;
 const CHANNEL_FEED_ENTRY_LIMIT = 20;
-const CHANNEL_VIDEO_DETAIL_LIMIT = 16;
 const RETRY_TIMES = 3;
 const RETRY_BASE_DELAY_MS = 250;
 
@@ -236,52 +234,29 @@ function parseChannelFeedEntries(xml = '') {
     .filter(entry => entry.videoId);
 }
 
-function extractChannelIdFromText(text = '') {
+function normalizeChannelBaseUrl(channelUrl = '') {
+  return String(channelUrl || '').trim().replace(/\/$/, '');
+}
+
+function extractChannelIdFromChannelUrl(channelUrl = '') {
+  const normalizedUrl = normalizeChannelBaseUrl(channelUrl);
+  if (!normalizedUrl) {
+    return null;
+  }
+
   const patterns = [
-    /"channelId":"(UC[^"]+)"/,
-    /"externalId":"(UC[^"]+)"/,
-    /"browseId":"(UC[^"]+)"/,
+    /youtube\.com\/channel\/(UC[\w-]+)/i,
+    /[?&]channel_id=(UC[\w-]+)/i,
   ];
 
   for (const pattern of patterns) {
-    const match = String(text || '').match(pattern);
+    const match = normalizedUrl.match(pattern);
     if (match?.[1]) {
       return match[1];
     }
   }
 
   return null;
-}
-
-function extractVideoSecondsFromText(text = '') {
-  const exactMatch = String(text || '').match(/"lengthSeconds":"(\d+)"/);
-  if (exactMatch?.[1]) {
-    return Number(exactMatch[1]);
-  }
-
-  const durationMatch = String(text || '').match(/"approxDurationMs":"(\d+)"/);
-  if (durationMatch?.[1]) {
-    return Math.max(1, Math.round(Number(durationMatch[1]) / 1000));
-  }
-
-  return null;
-}
-
-function normalizeChannelBaseUrl(channelUrl = '') {
-  return String(channelUrl || '').trim().replace(/\/$/, '');
-}
-
-function buildChannelVideosUrl(channel = {}) {
-  if (channel.channelId) {
-    return `https://www.youtube.com/channel/${channel.channelId}/videos`;
-  }
-
-  const baseUrl = normalizeChannelBaseUrl(channel.channelUrl);
-  if (baseUrl) {
-    return `${baseUrl}/videos`;
-  }
-
-  return '';
 }
 
 async function fetchTextWithRetry(url, context = {}) {
@@ -337,7 +312,7 @@ async function fetchTextWithRetry(url, context = {}) {
   };
 }
 
-async function resolveChannelIdentity(channel, context = {}) {
+async function resolveChannelIdentity(channel) {
   const cacheKey = getChannelKey(channel);
   if (channelIdentityCache.has(cacheKey)) {
     return channelIdentityCache.get(cacheKey);
@@ -349,31 +324,16 @@ async function resolveChannelIdentity(channel, context = {}) {
     return resolved;
   }
 
-  const pageUrl = buildChannelVideosUrl(channel);
-  if (!pageUrl) {
-    return null;
-  }
-
-  const pageResult = await fetchTextWithRetry(pageUrl, {
-    ...context,
-    phase: 'resolve-channel-id',
-    pageUrl,
-  });
-
-  if (!pageResult.ok) {
-    return null;
-  }
-
-  const resolvedChannelId = extractChannelIdFromText(pageResult.result);
-  if (!resolvedChannelId) {
+  const channelIdFromUrl = extractChannelIdFromChannelUrl(channel.channelUrl);
+  if (!channelIdFromUrl) {
     return null;
   }
 
   const resolved = {
     ...channel,
-    channelId: resolvedChannelId,
-    channelUrl: channel.channelUrl || pageUrl.replace(/\/videos$/, ''),
-    resolvedChannelId,
+    channelId: channelIdFromUrl,
+    channelUrl: channel.channelUrl || `https://www.youtube.com/channel/${channelIdFromUrl}`,
+    resolvedChannelId: channelIdFromUrl,
   };
 
   channelIdentityCache.set(cacheKey, resolved);
@@ -381,9 +341,9 @@ async function resolveChannelIdentity(channel, context = {}) {
 }
 
 async function fetchChannelCandidates(channel, context = {}) {
-  const resolvedChannel = await resolveChannelIdentity(channel, context);
+  const resolvedChannel = await resolveChannelIdentity(channel);
   if (!resolvedChannel) {
-    return { ok: false, error: new Error(`Unable to resolve channel identity for ${channel.slug || channel.displayName || 'unknown channel'}`) };
+    return { ok: false, error: new Error(`Unable to resolve feed channel identity for ${channel.slug || channel.displayName || 'unknown channel'}`) };
   }
 
   const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${encodeURIComponent(resolvedChannel.channelId)}`;
@@ -401,35 +361,14 @@ async function fetchChannelCandidates(channel, context = {}) {
   const videos = [];
 
   for (const entry of entries) {
-    if (videos.length >= CHANNEL_VIDEO_DETAIL_LIMIT) {
-      break;
-    }
-
     const entryTitle = entry.title || '';
     if (isBadVideoTitle(entryTitle.toLowerCase())) {
-      continue;
-    }
-
-    const videoPageUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(entry.videoId)}&hl=en&bpctr=9999999999`;
-    const videoPageResult = await fetchTextWithRetry(videoPageUrl, {
-      ...context,
-      phase: 'video-page',
-      videoId: entry.videoId,
-    });
-
-    if (!videoPageResult.ok) {
-      continue;
-    }
-
-    const seconds = extractVideoSecondsFromText(videoPageResult.result);
-    if (!seconds) {
       continue;
     }
 
     videos.push({
       videoId: entry.videoId,
       title: entry.title,
-      seconds,
       author: { name: entry.authorName || resolvedChannel.displayName || 'channel' },
       thumbnail: entry.thumbnail,
       views: null,
@@ -612,14 +551,6 @@ function explainVideoDecision(video, targetType, trustedAuthorWords) {
     return { keep: false, reason: 'missing videoId' };
   }
 
-  if (!video.seconds) {
-    return { keep: false, reason: 'missing duration' };
-  }
-
-  if (video.seconds < MIN_VIDEO_SECONDS) {
-    return { keep: false, reason: `too short (${video.seconds}s < ${MIN_VIDEO_SECONDS}s)` };
-  }
-
   const title = (video.title || '').toLowerCase();
   const blockedTitleKeyword = findBadVideoTitleKeyword(title);
 
@@ -685,7 +616,7 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
     return {
       slug: categoryDefinition.slug,
       tag: categoryDefinition.tag,
-      reason: `crawl verified registry feeds for ${categoryDefinition.tag} first, then controlled fallback channels if needed`,
+      reason: `crawl verified registry feeds for ${categoryDefinition.tag} only and reports any deficit honestly`,
       initialTargets: channelTargetsByCategory.initial,
       refillTargets: channelTargetsByCategory.refill,
       batchLimit: CATEGORY_BATCH_LIMIT,
@@ -727,7 +658,7 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
     const waveSummaries = [];
     const waves = [
       { name: 'initial', reason, targets: initialTargets },
-      ...(refillTargets.length > 0 ? [{ name: 'refill', reason: 'controlled backfill from the remaining registry channels', targets: refillTargets }] : []),
+      ...(refillTargets.length > 0 ? [{ name: 'refill', reason: 'remaining verified registry feeds', targets: refillTargets }] : []),
     ];
 
     logCrawl('crawl_category_started', {
@@ -1104,7 +1035,6 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
     const fakeVideoLike = {
       videoId: video.id,
       title: video.title || '',
-      seconds: video.type === 'full' ? MIN_VIDEO_SECONDS : MIN_VIDEO_SECONDS + 1,
       author: { name: 'trusted old data' },
     };
     return explainVideoDecision(fakeVideoLike, 'channel', CATEGORY_TRUSTED_AUTHOR_WORDS).keep && hasRenderableThumbnail(video);
