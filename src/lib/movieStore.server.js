@@ -284,10 +284,10 @@ export async function readMoviesFromJsonFile() {
   return movies.map((movie, index) => normalizeMovieRecord(movie, index));
 }
 
-async function seedChannelRegistryFromJsonFile(client) {
-  const channels = await readChannelSeedsFromJsonFile();
+async function syncChannelRegistryFromJsonFile(client, channels = []) {
   if (channels.length === 0) {
-    return { seeded: false, channels: 0 };
+    await client.query(`UPDATE channels SET enabled = FALSE, status = 'disabled', updated_at = NOW();`);
+    return { channels: 0, staleDisabled: 0 };
   }
 
   const params = [];
@@ -326,7 +326,16 @@ async function seedChannelRegistryFromJsonFile(client) {
     params,
   );
 
-  return { seeded: true, channels: channels.length };
+  const staleDisabledResult = await client.query(
+    `UPDATE channels
+     SET enabled = FALSE,
+         status = 'disabled',
+         updated_at = NOW()
+     WHERE slug <> ALL($1::text[]);`,
+    [channels.map(channel => channel.slug)],
+  );
+
+  return { channels: channels.length, staleDisabled: staleDisabledResult.rowCount || 0 };
 }
 
 export async function loadChannelRegistry({ allowJsonFallback = true, includeDisabled = false } = {}) {
@@ -341,9 +350,13 @@ export async function loadChannelRegistry({ allowJsonFallback = true, includeDis
   }
 
   return withClient(async client => {
-    const seedCountResult = await client.query(`SELECT COUNT(*)::int AS count FROM channels;`);
-    if ((seedCountResult.rows[0]?.count || 0) === 0) {
-      await seedChannelRegistryFromJsonFile(client);
+    const seedChannels = await readChannelSeedsFromJsonFile();
+    if (seedChannels.length > 0) {
+      await syncChannelRegistryFromJsonFile(client, seedChannels);
+    }
+
+    if (seedChannels.length === 0) {
+      return [];
     }
 
     const result = await client.query(
@@ -359,8 +372,10 @@ export async function loadChannelRegistry({ allowJsonFallback = true, includeDis
         priority,
         last_crawled_at AS "lastCrawledAt"
       FROM channels
-      ${includeDisabled ? '' : 'WHERE enabled = TRUE'}
+      WHERE slug = ANY($1::text[])
+      ${includeDisabled ? '' : 'AND enabled = TRUE'}
       ORDER BY priority ASC, created_at ASC, slug ASC;`,
+      [seedChannels.map(channel => channel.slug)],
     );
 
     return result.rows.map((channel, index) => normalizeChannelRecord(channel, index));

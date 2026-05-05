@@ -1,5 +1,35 @@
 # Progress Timeline
 
+## 2026-05-05 (developer verified category registry curation)
+- Scope: Replace the tiny placeholder crawl seed set with verified, category-aligned YouTube sources so the crawler can actually hit the 5-new-movies-per-category floor without leaning on generic source hunting.
+- Actions: Rebuilt `src/lib/channel-seeds.json` into a curated registry covering Hà Nhân, Tu Tiên, Xuyên Không, Trọng Sinh, Liễu Như Yên, and Hệ Thống from verified public YouTube search results; preserved the registry sync path so DB rows stay aligned to the repo seed source of truth.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run crawl:dry` passed and the final crawl summary reported `floorHit:true` for all 7 categories with `newVideos:35`, `floorMet:7`, and `floorMissed:0`.
+- Risks: The registry is now much stronger, but daily yield still depends on those channels staying active and continuing to publish category-aligned videos.
+
+## 2026-05-05 (creator docs crawl goal update)
+- Scope: Align user-facing crawler docs with the current operational goal: at least 5 new movies per category per day, using category-first quota fulfillment instead of generic source hunting.
+- Actions: Updated `README.md` to state the daily floor and clarify that crawl/backfill is intended to satisfy category quotas first.
+- Verification: Documentation-only change; no code path or runtime behavior changed.
+- Risks: The docs now reflect the target, but actual category yield still depends on upstream source availability and the current crawl implementation.
+
+## 2026-05-05 (developer crawl floor reduction)
+- Scope: Shift the daily crawl quota from a 10-item batch target to a hard 5-new-movies-per-category floor, and keep reporting when categories hit or miss that floor.
+- Actions: Updated `src/lib/crawl.server.js` to set the per-category crawl target to 5, added explicit `floor`, `floorHit`, and `remainingDeficit` fields to category summaries, and surfaced the 5-item floor in the crawl-start/category-start logs without changing the existing fallback wave structure.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run crawl:dry` passed and the final crawl summary reported `target:5`, `floor:5`, `floorHit:true` for `Hà Nhân`, and `floorHit:false` with `remainingDeficit:5` for the exhausted categories; `npm.cmd run build` passed.
+- Risks: The crawler still depends on upstream source availability, so most categories can remain under the floor even though the control flow now keeps falling back until sources are exhausted.
+
+## 2026-05-05 (developer category-first crawl direction)
+- Scope: Remove the generic Movieclips source and let the daily crawl rely on category-aligned sources plus search backfill, because the user only wants daily movies in the existing categories.
+- Actions: Removed `Movieclips` from `src/lib/channel-seeds.json`, enabled `CRAWL_ENABLE_SEARCH_BACKFILL=1` in `.github/workflows/daily-crawl.yml`, and kept the registry sync path aligned so stale shared channels cannot come back.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run crawl:dry` with search backfill enabled showed the crawl now starts from the category-aligned seed set and emits search-backfill targets for underfilled categories.
+- Risks: Search backfill can still fail upstream on YouTube fetches, so daily coverage depends on source availability; the change fixes strategy, not upstream feed reliability.
+
+## 2026-05-05 (developer channel registry sync fix)
+- Scope: Keep the crawl channel registry aligned with `src/lib/channel-seeds.json` so stale DB-only channels cannot leak back into crawl targets.
+- Actions: Changed `src/lib/movieStore.server.js` so `loadChannelRegistry()` always re-upserts the current repo seed list, disables DB rows whose slugs are no longer present in the seed file, and only returns rows whose slugs still exist in the seed source of truth while preserving `lastCrawledAt` for matching seed channels.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run crawl:dry` passed and the `crawl_run_started` log reported `registrySources: 3` with `initialSources` matching the three current seed channels (`HaNhanCartoon`, `Hanhansubchannel`, `Movieclips`) and no stale registry channels in the target list.
+- Risks: The sync path only runs when the seed file has entries; an intentionally empty seed file would still return no crawl channels, but it would not proactively rewrite old DB rows until the seed list is repopulated.
+
 # 2026-05-05 (developer phase 4 workflow automation)
 - Scope: Make the GitHub Actions crawl/snapshot jobs match the real contract: crawl ingests DB only, hourly sync owns snapshot refresh, and unchanged snapshots should not churn commits.
 - Actions: Added a `--no-snapshot` crawl flag for the scheduled GitHub Actions crawl path, taught the crawl persistence path to skip snapshot writes when that flag is set, made snapshot writes no-op when the content/source metadata is unchanged, and updated both workflows plus README guidance to reflect the separate ownership and artifact/log behavior.

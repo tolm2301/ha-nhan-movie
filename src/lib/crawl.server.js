@@ -83,6 +83,11 @@ function summarizeCategoryResults(categorySummaries = []) {
     totals.rejected += category.rejected || 0;
     totals.duplicates += category.duplicates || 0;
     totals.errors += category.errors || 0;
+    if (category.floorHit) {
+      totals.floorMet += 1;
+    } else {
+      totals.floorMissed += 1;
+    }
 
     return totals;
   }, {
@@ -91,6 +96,8 @@ function summarizeCategoryResults(categorySummaries = []) {
     rejected: 0,
     duplicates: 0,
     errors: 0,
+    floorMet: 0,
+    floorMissed: 0,
   });
 }
 
@@ -167,7 +174,8 @@ function isTransientCrawlError(error) {
   return message.includes('socket hang up') || message.includes('timeout') || message.includes('network error');
 }
 
-const CATEGORY_BATCH_LIMIT = 10;
+const CATEGORY_MIN_NEW_MOVIES_PER_DAY = 5;
+const CATEGORY_BATCH_LIMIT = CATEGORY_MIN_NEW_MOVIES_PER_DAY;
 const CATEGORY_TRUSTED_AUTHOR_WORDS = ['ha nhan', 'h\u00e0 nh\u00e2n', 'review phim', 'hoat hinh', 'ho\u1ea1t h\u00ecnh', 'vietsub', 'anime', 'phim', 'cartoon'];
 
 function getChannelKey(channel = {}) {
@@ -875,7 +883,8 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
     runDay,
     dryRun,
     batchLimitPerCategory: CATEGORY_BATCH_LIMIT,
-    categories: categoryPlans.map(plan => ({ slug: plan.slug, tag: plan.tag, initialSources: plan.initialTargets.length, fallbackSources: plan.refillTargets.length, searchSources: plan.searchTargets.length, searchBackfillEnabled: SEARCH_BACKFILL_ENABLED })),
+    minimumNewMoviesPerCategory: CATEGORY_MIN_NEW_MOVIES_PER_DAY,
+    categories: categoryPlans.map(plan => ({ slug: plan.slug, tag: plan.tag, minimumNewMoviesPerCategory: CATEGORY_MIN_NEW_MOVIES_PER_DAY, initialSources: plan.initialTargets.length, fallbackSources: plan.refillTargets.length, searchSources: plan.searchTargets.length, searchBackfillEnabled: SEARCH_BACKFILL_ENABLED })),
     registrySources: enabledChannels.length,
     searchBackfillEnabled: SEARCH_BACKFILL_ENABLED,
   });
@@ -913,6 +922,7 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
       category: tag,
       slug,
       batchLimit: targetQuota,
+      floor: CATEGORY_MIN_NEW_MOVIES_PER_DAY,
       reason,
       targets: initialTargets.map(target => target.query),
       refillTargets: refillTargets.map(target => target.query),
@@ -950,6 +960,7 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
         wave: wave.name,
         reason: wave.reason,
         target: targetQuota,
+        floor: CATEGORY_MIN_NEW_MOVIES_PER_DAY,
         kept: keptVideos.length,
         deficit: deficitBeforeWave,
         targets: wave.targets.map(target => target.query),
@@ -1234,6 +1245,7 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
         category: tag,
         slug,
         target: targetQuota,
+        floor: CATEGORY_MIN_NEW_MOVIES_PER_DAY,
         kept: keptVideos.length,
         deficit: targetQuota - keptVideos.length,
         triedQueries: triedQueries.size,
@@ -1246,8 +1258,11 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
       slug,
       target: targetQuota,
       batchLimit: targetQuota,
+      floor: CATEGORY_MIN_NEW_MOVIES_PER_DAY,
+      floorHit: keptVideos.length >= CATEGORY_MIN_NEW_MOVIES_PER_DAY,
       kept: keptVideos.length,
       deficit: Math.max(0, targetQuota - keptVideos.length),
+      remainingDeficit: Math.max(0, targetQuota - keptVideos.length),
       added: keptVideos.length,
       duplicates: duplicateCount,
       rejected: rejectedCount,

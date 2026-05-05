@@ -58,6 +58,8 @@ GitHub Actions workflow: `.github/workflows/daily-crawl.yml`
 
 - Runs every day at `02:00 UTC`
 - Runs the crawler directly in GitHub Actions and upserts refreshed data into Postgres so repeated runs grow the catalog without duplicating movie ids
+- Operational goal: deliver at least `5` new movies per category per day.
+- Crawl strategy is category-first and quota-driven: daily crawl/backfill is aimed at filling each category floor, not at collecting generic sources.
 - Does not update the runtime snapshot; snapshot freshness is owned by build/deploy and the hourly sync workflow
 - Crawls are split by category (`Hà Nhân`, `Tu Tiên`, `Xuyên Không`, `Trọng Sinh`, `Liễu Như Yên`, `Hệ Thống`, `Khác`) and use the DB-backed channel registry as the discovery source. Channel metadata is bootstrapped from `src/lib/channel-seeds.json` when the registry is empty, and crawl reads channel feeds/uploads instead of relying on yt-search for discovery.
 - Logs include the category batch name, run day, and how many items were added/skipped

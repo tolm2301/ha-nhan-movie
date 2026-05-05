@@ -4,6 +4,7 @@ Use this queue for new requests, escalation, and final review tasks.
 
 ## Entries
 - (template) YYYY-MM-DD | From: user | Task: ... | Context: ...
+- 2026-05-05 | From: creator | Task: Crawler docs goal update | Context: README now states the daily floor as 5 new movies per category per day and clarifies that crawl/backfill is category-first and quota-driven; no implementation changes were made.
 - 2026-04-26 | From: developer | Task: YouTube warm-up follow-up | Context: Added conservative preconnect/dns-prefetch hints for `www.youtube.com`, `www.youtube-nocookie.com`, and `s.ytimg.com`; the targeted browser pass shows watch readiness moving earlier (`watch-player-ready=2324ms`) and home/search staying light, but watch loads are still over 1000ms and mobile category sits just over the line.
 - 2026-04-26 | From: tester | Task: Latest combined browser verification results | Context: Desktop loads are now home `143ms`, category `809ms`, search `138ms`, watch `1409ms`; mobile loads are home `136ms`, category `2202ms`, search `112ms`, watch `1473ms`; home→category/search/watch transitions and mobile category are still above the 1000ms warning line, while watch playability is best represented by `watch-player-ready=3287.9ms` and `watch-playable=15782.3ms`.
 - 2026-04-26 | From: developer | Task: Category paint/layout deferral follow-up | Context: The category route itself now measures under 1000ms in the focused browser pass after adding content-visibility/intrinsic sizing to cards and the grid; search and watch behavior were left untouched.

@@ -23,7 +23,6 @@
 - [ ] Split snapshot refresh from crawl so build/deploy generates it and hourly sync refreshes it independently | Owner: developer | Priority: high
 - [ ] Fix missing cheerio dependency so /api/cron/crawl can run on Vercel | Owner: developer | Priority: high
 - [ ] Fix Vercel cron auth so scheduled crawl runs can execute and refresh the snapshot automatically | Owner: developer | Priority: high
-- [ ] Make every crawl category refill until it keeps 10 movies per run, treating duplicates as backfill triggers instead of stopping early | Owner: developer | Priority: high
 - [ ] Wire static snapshot regeneration into crawl/cron update flow | Owner: developer | Priority: high
 - [ ] Reduce watch page payload and push slower category/watch loads below warning threshold | Owner: developer | Priority: high
 - [ ] Test current UI performance and route transitions, prioritizing load speed first | Owner: techlead | Priority: high
@@ -53,6 +52,8 @@
 
 ## Done
 - [ ] (template) Task title | Owner: techlead | Finished: YYYY-MM-DD
+- [x] Make every crawl category refill until it keeps at least 5 new movies per day, treating duplicates as backfill triggers instead of stopping early | Owner: developer | Finished: 2026-05-05
+- [x] Keep crawl registry in sync with repo channel seeds | Owner: developer | Finished: 2026-05-05
 - [x] Harden DB->snapshot->runtime contract with versioned snapshot metadata and fallback handling | Owner: developer | Finished: 2026-05-05
 - [x] Split crawl ingestion from snapshot refresh so GitHub Actions crawl skips snapshot writes and hourly sync only updates when data changes | Owner: developer | Finished: 2026-05-05
 - [x] Improve crawl observability with standardized run/category/wave/target summaries | Owner: developer | Finished: 2026-05-05
