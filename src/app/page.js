@@ -3,6 +3,7 @@ import MovieCarousel from '@/components/MovieCarousel/MovieCarousel';
 import RecentWatchedSection from '@/components/RecentWatchedSection/RecentWatchedSectionLazy';
 import AdSlot from '@/components/Adsense/AdSlot';
 import { getMovieCatalog } from '@/lib/data';
+import { getRenderableThumbnail } from '@/lib/thumbnailFilters';
 import { buildMetadata, buildWebsiteJsonLd, toJsonLd } from '@/lib/seo';
 
 export const revalidate = 300;
@@ -15,7 +16,7 @@ export async function generateMetadata() {
     title: 'Hanhan Movie / Hà Nhân | Xem phim mới cập nhật',
     description: `Hanhan Movie / Hà Nhân cập nhật ${featuredTitle} và các phim theo đúng danh mục hiện có.`,
     pathname: '/',
-    image: catalog.featuredMovie?.thumbnail,
+    image: catalog.featuredMovie ? getRenderableThumbnail(catalog.featuredMovie) : undefined,
   });
 }
 

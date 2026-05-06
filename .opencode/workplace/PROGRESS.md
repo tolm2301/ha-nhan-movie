@@ -1,5 +1,11 @@
 # Progress Timeline
 
+## 2026-05-06 (developer thumbnail fallback wiring)
+- Scope: Stop hero and poster cards from blanking when a loaded thumbnail fails by swapping to the deterministic local SVG fallback image, and keep metadata using the same resolved thumbnail path.
+- Actions: Updated `src/components/MovieCard/MovieCard.jsx` and `src/components/Hero/Hero.jsx` to switch to the local fallback image on load error instead of showing a blank placeholder, loosened `src/components/MovieCarousel/MovieCarousel.jsx` so fallback-capable movies are not prefiltered out, and wired `src/app/page.js`, `src/app/category/[type]/page.js`, `src/app/watch/[id]/page.js`, `src/app/watch-popout/[id]/page.js`, and `src/lib/seo.js` to resolve thumbnails through the shared helper.
+- Verification: pending `npm.cmd run lint`, `npm.cmd run build`, and a smoke check.
+- Risks: If the local fallback route itself fails, the image will still fail over instead of silently blanking, but that would now point to the fallback route rather than the card markup.
+
 ## 2026-05-06 (developer fallback thumbnail fix)
 - Scope: Make movie thumbnails production-safe by normalizing missing/broken artwork to a deterministic local SVG fallback and keeping SEO/share metadata pointed at a renderable image.
 - Actions: Added a shared fallback thumbnail URL helper in `src/lib/thumbnailFilters.js`, normalized catalog movies in `src/lib/data.js` so every visible movie gets either its original thumbnail or a local `/api/movie-thumbnail` SVG, added the SVG thumbnail route in `src/app/api/movie-thumbnail/route.js`, and taught `src/lib/seo.js` to resolve relative image URLs to absolute URLs for metadata.

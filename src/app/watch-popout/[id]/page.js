@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getMovieCatalog } from '@/lib/data';
+import { getRenderableThumbnail } from '@/lib/thumbnailFilters';
 import { buildMetadata } from '@/lib/seo';
 import WatchClient from '@/app/watch/[id]/WatchClient';
 
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }) {
     title: `Hanhan Mini Popup | ${movie.displayTitle || movie.title}`,
     description: `${movie.displayTitle || movie.title} trong cửa sổ tách rời của Hanhan Movie / Hà Nhân, với title khớp helper ghim Windows.`,
     pathname: `/watch-popout/${movie.id}`,
-    image: movie.thumbnail,
+    image: getRenderableThumbnail(movie),
   });
 }
 

@@ -1,3 +1,5 @@
+import { getRenderableThumbnail } from './thumbnailFilters.js';
+
 const DEFAULT_SITE_URL = 'http://localhost:3000';
 
 function normalizeSiteUrl(value = '') {
@@ -118,7 +120,7 @@ export function buildWebsiteJsonLd() {
 export function buildVideoJsonLd(movie, pathname) {
   if (!movie) return null;
 
-  const thumbnailUrl = resolveImageUrl(movie.thumbnail);
+  const thumbnailUrl = resolveImageUrl(getRenderableThumbnail(movie));
 
   return {
     '@context': 'https://schema.org',

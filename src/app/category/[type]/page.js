@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getCategoryBySlug, getCategoryMenu } from '@/lib/data';
+import { getRenderableThumbnail } from '@/lib/thumbnailFilters';
 import Link from 'next/link';
 import MovieCard from '@/components/MovieCard/MovieCard';
 import AdSlot from '@/components/Adsense/AdSlot';
@@ -40,7 +41,7 @@ export async function generateMetadata({ params, searchParams }) {
     title: `Hanhan Movie / Hà Nhân | ${category.tag} - Xem phim`,
     description: `Khám phá ${movieCountText} ${category.tag.toLowerCase()} đang có trên Hanhan Movie / Hà Nhân${currentPage > 1 ? `, trang ${currentPage}/${totalPages}` : ''}.`,
     pathname: pagePath,
-    image: pageMovies[0]?.thumbnail,
+    image: pageMovies[0] ? getRenderableThumbnail(pageMovies[0]) : undefined,
   });
 }
 

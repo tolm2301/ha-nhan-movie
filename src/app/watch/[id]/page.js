@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getMovieCatalog } from '@/lib/data';
+import { getRenderableThumbnail } from '@/lib/thumbnailFilters';
 import { buildAbsoluteUrl, buildBreadcrumbJsonLd, buildMetadata, buildVideoJsonLd, toJsonLd } from '@/lib/seo';
 import WatchClient from './WatchClient';
 
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }) {
     title: `Hanhan Movie / Hà Nhân | Xem ${movie.displayTitle || movie.title}`,
     description: `${movie.displayTitle || movie.title} trên Hanhan Movie / Hà Nhân.`,
     pathname: `/watch/${movie.id}`,
-    image: movie.thumbnail,
+    image: getRenderableThumbnail(movie),
     openGraphType: 'video.other',
   });
 }

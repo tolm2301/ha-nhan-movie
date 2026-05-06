@@ -4,7 +4,6 @@
 - [ ] (template) Task title | Owner: techlead | Priority: medium
 
 ## In Progress
-- [ ] Add deterministic fallback thumbnails for missing/broken movie images | Owner: developer | Priority: high
 - [ ] Fix watch video title mask so fullscreen top edge stays crisp | Owner: developer | Priority: medium
 - [ ] Restore local lint/build environment for watch verification | Owner: techlead | Priority: high
 - [ ] Implement watch-player double-click seek interaction | Owner: creator | Priority: medium
@@ -14,6 +13,7 @@
 - [ ] Enforce agreed 4-slot AdSense setup: home after rail 3, category after first block, watch after related, search after 8–12 results | Owner: developer | Priority: medium
 
 ## Review
+- [ ] Add deterministic fallback thumbnails for missing/broken movie images | Owner: developer | Priority: high
 - [ ] Strictly clean crawl registry to 2D movie/animation sources only | Owner: techlead | Priority: high
 - [ ] Make production crawl feed-only and source-first; remove ytsearch/search backfill from the daily crawl path | Owner: techlead | Priority: high
 - [ ] Tighten crawler theme filtering and rejection reasons | Owner: developer | Priority: high
