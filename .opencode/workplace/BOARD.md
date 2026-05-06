@@ -14,6 +14,7 @@
 - [ ] Enforce agreed 4-slot AdSense setup: home after rail 3, category after first block, watch after related, search after 8–12 results | Owner: developer | Priority: medium
 
 ## Review
+- [ ] Fix site branding icon/metadata so browsers and search results show Hanhan/Hà Nhân branding | Owner: developer | Priority: medium
 - [ ] Add deterministic fallback thumbnails for missing/broken movie images | Owner: developer | Priority: high
 - [ ] Strictly clean crawl registry to 2D movie/animation sources only | Owner: techlead | Priority: high
 - [ ] Make production crawl feed-only and source-first; remove ytsearch/search backfill from the daily crawl path | Owner: techlead | Priority: high

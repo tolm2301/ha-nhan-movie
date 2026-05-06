@@ -9,12 +9,16 @@ import { getCategoryMenu } from '@/lib/data'
 const inter = Inter({ subsets: ['latin', 'vietnamese'], weight: ['300', '400', '600', '700'] })
 
 export const metadata = {
+  applicationName: SITE_NAME,
   verification: {
     google: "zieNpzEc3xrUuTTUxE3IjuupFlQ48hj-xM9HhJi8-GA",
   },
   metadataBase: new URL(getSiteUrl()),
   title: SITE_NAME,
   description: SITE_DESCRIPTION,
+  icons: {
+    icon: '/icon.svg',
+  },
   other: {
     'google-adsense-account': 'ca-pub-5517015894265969',
   },

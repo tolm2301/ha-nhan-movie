@@ -886,6 +886,14 @@
 - Verification: `npm.cmd run build` could not complete because `next` is not installed in the current environment; prior `npm.cmd run lint` also failed for the same reason.
 - Risks: The tighter cover may expose a small edge of branding if YouTube changes the overlay layout.
 
+## 2026-05-06 (implementation)
+- Scope: Replace the default framework branding with a custom Hà Nhân / Hanhan Movie icon and make root metadata declare the brand more explicitly.
+- Acceptance criteria: browser/site icon no longer uses the default Next.js/Vercel look, root metadata includes `applicationName` and explicit icon references, and existing verification/AdSense settings stay intact.
+- Actions: Added `src/app/icon.svg` as a custom Hà Nhân/Hanhan branded SVG and updated `src/app/layout.js` metadata with `applicationName` plus `icons: { icon: '/icon.svg' }`.
+- Evidence: Root metadata now points at `/icon.svg` and the app name is `Hanhan Movie / Hà Nhân`.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed and the build output exposes `/icon.svg` as a static route.
+- Risks: Some platforms may keep cached favicon results briefly until the browser/Google refreshes the new icon.
+
 ## 2026-04-23 (environment)
 - Scope: Restore local verification capability for the watch-mask task.
 - Acceptance criteria: dev environment can run `npm.cmd run lint` and `npm.cmd run build` without missing-command errors.
