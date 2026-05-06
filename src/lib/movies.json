@@ -1,9 +1,37 @@
 {
   "snapshotVersion": 1,
-  "source": "snapshot-fallback",
-  "generatedAt": "2026-05-05T10:16:10.735Z",
-  "fallbackReason": "database-unavailable",
+  "source": "db",
+  "generatedAt": "2026-05-06T05:52:47.829Z",
+  "fallbackReason": null,
   "movies": [
+    {
+      "id": "32qwKjIBtRM",
+      "title": "Hà Nhân Tòng Quân Bộc Phát Thần Lực, Nhận Lại Thân Phận Hoàng Tử Nhà Minh | Hà Nhân Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i4.ytimg.com/vi/32qwKjIBtRM/hqdefault.jpg",
+      "tags": "Hà Nhân",
+      "rating": "N/A",
+      "sortOrder": 0
+    },
+    {
+      "id": "7irLgTg6qaI",
+      "title": "Ta Xuyên Không Quậy Nát Thủy Hử (Tập 124)",
+      "episodes": "Tập 124",
+      "episodeLabel": "Tập 124",
+      "episodeNumber": 124,
+      "type": "series",
+      "seriesKey": "ta xuy n kh ng qu y n t th y h",
+      "views": "?? views",
+      "thumbnail": "https://i4.ytimg.com/vi/7irLgTg6qaI/hqdefault.jpg",
+      "tags": "Xuyên Không",
+      "rating": "N/A",
+      "sortOrder": 0
+    },
     {
       "id": "QNhMqw3bVME",
       "title": "Hà Nhân Xuyên Không Đại Minh, Đoạt Lại Hoàng Quyền | Hà Nhân Sub",
@@ -87,6 +115,34 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 0
+    },
+    {
+      "id": "mWRmcXbCn6Q",
+      "title": "Hà Nhân Xuyên Không Đại Minh Thành Lập Đế Chế Riêng | Hà Nhân Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i2.ytimg.com/vi/mWRmcXbCn6Q/hqdefault.jpg",
+      "tags": "Hà Nhân",
+      "rating": "N/A",
+      "sortOrder": 1
+    },
+    {
+      "id": "nmwsTsMfTxs",
+      "title": "Ta Xuyên Không Quậy Nát Thủy Hử (Tập 123)",
+      "episodes": "Tập 123",
+      "episodeLabel": "Tập 123",
+      "episodeNumber": 123,
+      "type": "series",
+      "seriesKey": "ta xuy n kh ng qu y n t th y h",
+      "views": "?? views",
+      "thumbnail": "https://i3.ytimg.com/vi/nmwsTsMfTxs/hqdefault.jpg",
+      "tags": "Xuyên Không",
+      "rating": "N/A",
+      "sortOrder": 1
     },
     {
       "id": "FJ4wGZL10tU",
@@ -173,6 +229,34 @@
       "sortOrder": 1
     },
     {
+      "id": "12p1aXQXuSI",
+      "title": "Hà Nhân Xuyên Không Thành Con Trai Tần Thủy Hoàng Đòi Cướp Ngôi Hoàng Đế | Hà Nhân Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i2.ytimg.com/vi/12p1aXQXuSI/hqdefault.jpg",
+      "tags": "Hà Nhân",
+      "rating": "N/A",
+      "sortOrder": 2
+    },
+    {
+      "id": "LgppFvS3PZk",
+      "title": "Ta Xuyên Không Quậy Nát Thủy Hử (Tập 1-122)",
+      "episodes": "Tập 1",
+      "episodeLabel": "Tập 1",
+      "episodeNumber": 1,
+      "type": "series",
+      "seriesKey": "ta xuy n kh ng qu y n t th y h 122",
+      "views": "?? views",
+      "thumbnail": "https://i1.ytimg.com/vi/LgppFvS3PZk/hqdefault.jpg",
+      "tags": "Xuyên Không",
+      "rating": "N/A",
+      "sortOrder": 2
+    },
+    {
       "id": "z54lZgd042k",
       "title": "Xuyên Không Làm Hoàng Đế, Hà Nhân Đả Bại Trăm Vạn Quân Ngụy | Hà Nhân Sub",
       "episodes": "Full",
@@ -255,6 +339,34 @@
       "tags": "Khác",
       "rating": "N/A",
       "sortOrder": 2
+    },
+    {
+      "id": "LRkYUiC1O3k",
+      "title": "Ta Xuyên Không Quậy Nát Thủy Hử (Tập 121)",
+      "episodes": "Tập 121",
+      "episodeLabel": "Tập 121",
+      "episodeNumber": 121,
+      "type": "series",
+      "seriesKey": "ta xuy n kh ng qu y n t th y h",
+      "views": "?? views",
+      "thumbnail": "https://i1.ytimg.com/vi/LRkYUiC1O3k/hqdefault.jpg",
+      "tags": "Xuyên Không",
+      "rating": "N/A",
+      "sortOrder": 3
+    },
+    {
+      "id": "syZRMCrSXe8",
+      "title": "Kẻ Xuyên Không Tàn Nhẫn Nhất Đại Đường, Ép Vua Nhường Ngôi Độc Bá Thiên Hạ | Hà Nhân Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i4.ytimg.com/vi/syZRMCrSXe8/hqdefault.jpg",
+      "tags": "Hà Nhân",
+      "rating": "N/A",
+      "sortOrder": 3
     },
     {
       "id": "vUEuT4_cqwI",
@@ -341,6 +453,34 @@
       "sortOrder": 3
     },
     {
+      "id": "GURfHDwwWnM",
+      "title": "Hà Nhân Xuyên Không, Thần Đồng Bần Nông 3 Tuổi Mở Đường Quan Lộ | Hà Nhân Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i4.ytimg.com/vi/GURfHDwwWnM/hqdefault.jpg",
+      "tags": "Hà Nhân",
+      "rating": "N/A",
+      "sortOrder": 4
+    },
+    {
+      "id": "OKJIT5yoaQ4",
+      "title": "Ta Xuyên Không Quậy Nát Thủy Hử (Tập 120)",
+      "episodes": "Tập 120",
+      "episodeLabel": "Tập 120",
+      "episodeNumber": 120,
+      "type": "series",
+      "seriesKey": "ta xuy n kh ng qu y n t th y h",
+      "views": "?? views",
+      "thumbnail": "https://i4.ytimg.com/vi/OKJIT5yoaQ4/hqdefault.jpg",
+      "tags": "Xuyên Không",
+      "rating": "N/A",
+      "sortOrder": 4
+    },
+    {
       "id": "Op97B-1owBc",
       "title": "Hà Nhân Xuyên Không Mang Hệ Thống Y Thuật, Trở Thành Quyền Thần Triều Minh | Hà Nhân Sub",
       "episodes": "Full",
@@ -423,6 +563,34 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 4
+    },
+    {
+      "id": "7k0QGmLifsg",
+      "title": "người lính dũng cảm và bài học đang nhớ0",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i4.ytimg.com/vi/7k0QGmLifsg/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 5
+    },
+    {
+      "id": "bmNwsR6zYjk",
+      "title": "[Phần 3] Thiên tài phá án bằng tai",
+      "episodes": "Tập 3",
+      "episodeLabel": "Tập 3",
+      "episodeNumber": 3,
+      "type": "series",
+      "seriesKey": "thi n t i ph n b ng tai",
+      "views": "?? views",
+      "thumbnail": "https://i3.ytimg.com/vi/bmNwsR6zYjk/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 5
     },
     {
       "id": "Hf6IOU0lkvw",
@@ -509,6 +677,34 @@
       "sortOrder": 5
     },
     {
+      "id": "66i98IY34Do",
+      "title": "#end| Tổng Tài Gặp Thiếu Gia Xã Hội Đen Và Cái Kết...",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i3.ytimg.com/vi/66i98IY34Do/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 6
+    },
+    {
+      "id": "phOXANWmZZg",
+      "title": "(Full) [phần 8] sinh tồn ngày tận thế, bắt đầu từ triệu hoán bạch cốt khô lâu",
+      "episodes": "Tập 8",
+      "episodeLabel": "Tập 8",
+      "episodeNumber": 8,
+      "type": "series",
+      "seriesKey": "sinh t n ng y t n th b t u t tri u ho n b ch c t kh l u",
+      "views": "?? views",
+      "thumbnail": "https://i1.ytimg.com/vi/phOXANWmZZg/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 6
+    },
+    {
       "id": "cbLtS9oXnBI",
       "title": "Tu Tiên Thành Thần Nhờ Thuật Sửa Chữa -  Tôi Mua Rẻ Tàn Kiếm Của Tiên Đế Bị Cả Tông Môn Cười Nhạo",
       "episodes": "Full",
@@ -591,6 +787,34 @@
       "tags": "Khác",
       "rating": "N/A",
       "sortOrder": 6
+    },
+    {
+      "id": "_Mooulh-rYE",
+      "title": "#30 | Tổng Tài Gặp Thiếu Gia Xã Hội Đen Và Cái Kết...",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i4.ytimg.com/vi/_Mooulh-rYE/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 7
+    },
+    {
+      "id": "fKZYX12EJqU",
+      "title": "[Phần 2] Thiên tài phá án bằng tai",
+      "episodes": "Tập 2",
+      "episodeLabel": "Tập 2",
+      "episodeNumber": 2,
+      "type": "series",
+      "seriesKey": "thi n t i ph n b ng tai",
+      "views": "?? views",
+      "thumbnail": "https://i3.ytimg.com/vi/fKZYX12EJqU/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 7
     },
     {
       "id": "n_yYoEHpI50",
@@ -677,6 +901,34 @@
       "sortOrder": 7
     },
     {
+      "id": "IIKLFqM5S9I",
+      "title": "#29|c720| Tổng Tài Gặp Thiếu Gia Xã Hội Đen Và Cái Kết...",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i2.ytimg.com/vi/IIKLFqM5S9I/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 8
+    },
+    {
+      "id": "MHDEf59AnsM",
+      "title": "(Full) [phần 7] sinh tồn ngày tận thế, bắt đầu từ triệu hoán bạch cốt khô lâu",
+      "episodes": "Tập 7",
+      "episodeLabel": "Tập 7",
+      "episodeNumber": 7,
+      "type": "series",
+      "seriesKey": "sinh t n ng y t n th b t u t tri u ho n b ch c t kh l u",
+      "views": "?? views",
+      "thumbnail": "https://i2.ytimg.com/vi/MHDEf59AnsM/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 8
+    },
+    {
       "id": "jco6yUkofDw",
       "title": "Ta Xuyên Không Quậy Nát Thủy Hử (Tập 128) | Tống Giang Lên Ngôi Thủ Lĩnh",
       "episodes": "Tập 128",
@@ -759,6 +1011,34 @@
       "tags": "Hệ Thống",
       "rating": "N/A",
       "sortOrder": 8
+    },
+    {
+      "id": "R2Epp5si5Sc",
+      "title": "#28|c680| Tổng Tài Gặp Thiếu Gia Xã Hội Đen Và Cái Kết...",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i3.ytimg.com/vi/R2Epp5si5Sc/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 9
+    },
+    {
+      "id": "ZN9cDnlz0_Y",
+      "title": "[Phần 1] Thiên tài phá án bằng tai",
+      "episodes": "Tập 1",
+      "episodeLabel": "Tập 1",
+      "episodeNumber": 1,
+      "type": "series",
+      "seriesKey": "thi n t i ph n b ng tai",
+      "views": "?? views",
+      "thumbnail": "https://i3.ytimg.com/vi/ZN9cDnlz0_Y/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 9
     },
     {
       "id": "_gzZQtETYK0",
@@ -845,6 +1125,20 @@
       "sortOrder": 9
     },
     {
+      "id": "EDfD5p10E80",
+      "title": "Bà Thím Hổ Báo Ra Tay Trừng Trị Đám Hàng Xóm Xấu Tính Khiến Chúng Phải Khóc Thét |Vietsub Trọng Sinh",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i2.ytimg.com/vi/EDfD5p10E80/hqdefault.jpg",
+      "tags": "Trọng Sinh",
+      "rating": "N/A",
+      "sortOrder": 10
+    },
+    {
       "id": "Wrw8DKvlLAE",
       "title": "Ta Xuyên Không Quậy Nát Thủy Hử (Tập 126) | Tống Giang Chiêu An",
       "episodes": "Tập 126",
@@ -927,6 +1221,20 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 10
+    },
+    {
+      "id": "9kUu3Eixgos",
+      "title": "Trọng Sinh Kích Hoạt Hệ Thống Săn Bắn, Tôi Làm Giàu Nuôi Cả Gia Tộc Báo Thù Trà Xanh Full Bộ",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i2.ytimg.com/vi/9kUu3Eixgos/hqdefault.jpg",
+      "tags": "Trọng Sinh",
+      "rating": "N/A",
+      "sortOrder": 11
     },
     {
       "id": "W3bLRfD9XPs",
@@ -1013,6 +1321,20 @@
       "sortOrder": 11
     },
     {
+      "id": "kwIHWp9UT7w",
+      "title": "Tái Sinh Thời Bao Cấp Nạn Đói Dùng Dị Năng Săn Bắn Tôi Làm Giàu Cứu Đói Cả Gia Tộc Full 30-39",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i4.ytimg.com/vi/kwIHWp9UT7w/hqdefault.jpg",
+      "tags": "Trọng Sinh",
+      "rating": "N/A",
+      "sortOrder": 12
+    },
+    {
       "id": "IwWhJ5U-0JE",
       "title": "Mạt Thế Nạn Đói Cả Làng Phải Ăn Đất Sét - Tôi Trốn Trong Hầm Ăn Thịt Kho Tàu | Vietsub Trọng Sinh",
       "episodes": "Full",
@@ -1095,6 +1417,20 @@
       "tags": "Xuyên Không",
       "rating": "N/A",
       "sortOrder": 12
+    },
+    {
+      "id": "JSQLFeOx5GE",
+      "title": "Trọng Sinh Thời Tem Phiếu Dùng Dị Năng Săn Bắn, Tôi Báo Thù Cả Gia Tộc Nuôi Sống Vợ Con Full Bộ",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i3.ytimg.com/vi/JSQLFeOx5GE/hqdefault.jpg",
+      "tags": "Trọng Sinh",
+      "rating": "N/A",
+      "sortOrder": 13
     },
     {
       "id": "cXJLLbNWV1c",
@@ -1181,6 +1517,20 @@
       "sortOrder": 13
     },
     {
+      "id": "xmun6Yt4gN8",
+      "title": "Trọng Sinh Thức Tỉnh Hệ Thống Cướp Đoạt, Tôi Làm Giàu Nuôi Cả Huyện Full",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i1.ytimg.com/vi/xmun6Yt4gN8/hqdefault.jpg",
+      "tags": "Trọng Sinh",
+      "rating": "N/A",
+      "sortOrder": 14
+    },
+    {
       "id": "4mJhXuuqs0Q",
       "title": "Trọng Sinh Thành Nông Phụ Béo Bị Cả Làng Khinh Rẻ, Ta Dùng Nghề Độc Môn Kiếm Tiền Tỷ",
       "episodes": "Full",
@@ -1263,6 +1613,20 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 14
+    },
+    {
+      "id": "GX7D8WSRQRk",
+      "title": "Song Thương Thiên Vũ │ Tập 1 - 2 │ Hoạt hình hài hước │ Hệ thống tu tiên │ Đấu la đại lục",
+      "episodes": "Tập 1",
+      "episodeLabel": "Tập 1",
+      "episodeNumber": 1,
+      "type": "series",
+      "seriesKey": "song th ng thi n v 2 ho t h nh h i h c h th ng tu ti n u la i l c",
+      "views": "?? views",
+      "thumbnail": "https://i4.ytimg.com/vi/GX7D8WSRQRk/hqdefault.jpg",
+      "tags": "Hệ Thống",
+      "rating": "N/A",
+      "sortOrder": 15
     },
     {
       "id": "tglsXZcxlrk",
@@ -1349,6 +1713,20 @@
       "sortOrder": 15
     },
     {
+      "id": "EAD3tJd7Bio",
+      "title": "Bắt Đầu Với Hệ Thống Tông Môn | P8: Khi Môn Chủ Ra Tay, Cả Vạn Giới Chỉ Biết Ngước Nhìn",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i2.ytimg.com/vi/EAD3tJd7Bio/hqdefault.jpg",
+      "tags": "Hệ Thống",
+      "rating": "N/A",
+      "sortOrder": 16
+    },
+    {
       "id": "079Q9NyI7xg",
       "title": "Trọng Sinh 1980: Bị Sét Đánh Thức Tỉnh Nhãn Thần, Từ Kẻ Phá Gia Chi Tử Trở Thành Đại Gia Săn Bắn",
       "episodes": "Full",
@@ -1433,6 +1811,20 @@
       "sortOrder": 16
     },
     {
+      "id": "cj3NVjYfk94",
+      "title": "P6 | Giao Long Hóa Ly: Sức Mạnh Kinh Thiên Của Hệ Thống Nâng Cấp Kiến Trúc",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i4.ytimg.com/vi/cj3NVjYfk94/hqdefault.jpg",
+      "tags": "Hệ Thống",
+      "rating": "N/A",
+      "sortOrder": 17
+    },
+    {
       "id": "LrcqqrlqF_Q",
       "title": "Hệ Thống Hậu Duệ Mạnh Nhất │ Tập 92 - 97  ( Kết thúc )│ Tỉnh Giấc Ta Trở Thành Cha Của Tất Cả Đại Đế",
       "episodes": "Tập 92",
@@ -1489,6 +1881,20 @@
       "sortOrder": 17
     },
     {
+      "id": "GSC-LJh4jgk",
+      "title": "Đối Đầu Kim Đan Cảnh, Hệ Thống Liệu Có Cân Nổi? | Xây Thánh Địa Trường Sinh P5",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i4.ytimg.com/vi/GSC-LJh4jgk/hqdefault.jpg",
+      "tags": "Hệ Thống",
+      "rating": "N/A",
+      "sortOrder": 18
+    },
+    {
       "id": "In1kmxASV-A",
       "title": "Du Hành Thời Gian Trở Thành Cha Của Tiêu Chiến │ Tập 18 - 19 │ Hoạt hình hài hước │ Hệ thống tu tiên",
       "episodes": "Tập 18",
@@ -1543,6 +1949,20 @@
       "tags": "Trọng Sinh",
       "rating": "N/A",
       "sortOrder": 18
+    },
+    {
+      "id": "3XqLYOgCVoM",
+      "title": "Triệu Hồi Thần Thú Hộ Đạo, Trấn Áp Thiên Kiêu Các Giới | Hệ Thống Tông Môn P6",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i4.ytimg.com/vi/3XqLYOgCVoM/hqdefault.jpg",
+      "tags": "Hệ Thống",
+      "rating": "N/A",
+      "sortOrder": 19
     },
     {
       "id": "n5kSJTR4qSM",
