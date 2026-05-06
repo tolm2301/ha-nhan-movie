@@ -4,6 +4,7 @@
 - [ ] (template) Task title | Owner: techlead | Priority: medium
 
 ## In Progress
+- [ ] Add deterministic fallback thumbnails for missing/broken movie images | Owner: developer | Priority: high
 - [ ] Fix watch video title mask so fullscreen top edge stays crisp | Owner: developer | Priority: medium
 - [ ] Restore local lint/build environment for watch verification | Owner: techlead | Priority: high
 - [ ] Implement watch-player double-click seek interaction | Owner: creator | Priority: medium
@@ -22,7 +23,7 @@
 - [ ] Fix overly strict crawl filtering so new valid movies can survive to persistence | Owner: developer | Priority: high
 - [ ] Change crawl persistence to append/merge so existing movies are retained across runs | Owner: developer | Priority: high
 - [ ] Add DB-backed channel registry with repo seed bootstrap so crawl discovery stops depending on yt-search and ad hoc channel hunting | Owner: techlead | Priority: high
-- [ ] Split snapshot refresh from crawl so build/deploy generates it and hourly sync refreshes it independently | Owner: developer | Priority: high
+- [ ] Implement lazy snapshot sync with a 1-hour TTL, keeping JSON as the runtime source and refreshing from DB only when stale | Owner: developer | Priority: high
 - [ ] Fix missing cheerio dependency so /api/cron/crawl can run on Vercel | Owner: developer | Priority: high
 - [ ] Fix Vercel cron auth so scheduled crawl runs can execute and refresh the snapshot automatically | Owner: developer | Priority: high
 - [ ] Wire static snapshot regeneration into crawl/cron update flow | Owner: developer | Priority: high
@@ -54,6 +55,7 @@
 
 ## Done
 - [ ] (template) Task title | Owner: techlead | Finished: YYYY-MM-DD
+- [x] Make runtime catalog read DB-first so crawl updates reach the web immediately | Owner: developer | Finished: 2026-05-05
 - [x] Make every crawl category refill until it keeps at least 5 new movies per day, treating duplicates as backfill triggers instead of stopping early | Owner: developer | Finished: 2026-05-05
 - [x] Keep crawl registry in sync with repo channel seeds | Owner: developer | Finished: 2026-05-05
 - [x] Harden DB->snapshot->runtime contract with versioned snapshot metadata and fallback handling | Owner: developer | Finished: 2026-05-05

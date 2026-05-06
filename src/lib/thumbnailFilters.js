@@ -45,6 +45,7 @@ const ALLOWED_THUMBNAIL_FILENAMES = new Set([
 const YOUTUBE_THUMBNAIL_PATH_PREFIXES = new Set(['vi', 'vi_webp']);
 const RENDERABLE_THUMBNAIL_FILENAME_PATTERN = /^[a-z0-9][a-z0-9._-]*\.(?:jpe?g|png|webp)$/i;
 const BLOCKED_THUMBNAIL_FILENAME_PATTERN = /^(?:frame\d+|placeholder|poster)\.(?:jpe?g|png|webp)$/i;
+const FALLBACK_THUMBNAIL_ROUTE = '/api/movie-thumbnail';
 
 function extractThumbnailFilename(thumbnailUrl = '') {
   try {
@@ -90,4 +91,33 @@ export function hasRenderableThumbnail(movie = {}) {
   if (!isRenderableThumbnailFilename(filename)) return false;
 
   return true;
+}
+
+function buildThumbnailFallbackSeed(movie = {}) {
+  const id = String(movie.id || movie.videoId || '').trim();
+  const title = String(movie.displayTitle || movie.title || '').trim();
+  const tag = String(movie.tags || movie.categoryTag || movie.categorySlug || 'Khác').trim();
+
+  return [id, title, tag].filter(Boolean).join('|') || 'hanhan-movie';
+}
+
+export function buildFallbackThumbnailUrl(movie = {}) {
+  const title = String(movie.displayTitle || movie.title || 'Không rõ tên phim').trim() || 'Không rõ tên phim';
+  const tag = String(movie.tags || movie.categoryTag || movie.categorySlug || 'Khác').trim() || 'Khác';
+  const params = new URLSearchParams({
+    seed: buildThumbnailFallbackSeed(movie),
+    title,
+    tag,
+  });
+
+  return `${FALLBACK_THUMBNAIL_ROUTE}?${params.toString()}`;
+}
+
+export function getRenderableThumbnail(movie = {}) {
+  const thumbnail = String(movie.thumbnail || '').trim();
+  if (hasRenderableThumbnail(movie)) {
+    return thumbnail;
+  }
+
+  return buildFallbackThumbnailUrl(movie);
 }

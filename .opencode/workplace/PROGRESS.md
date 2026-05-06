@@ -1,5 +1,23 @@
 # Progress Timeline
 
+## 2026-05-06 (developer fallback thumbnail fix)
+- Scope: Make movie thumbnails production-safe by normalizing missing/broken artwork to a deterministic local SVG fallback and keeping SEO/share metadata pointed at a renderable image.
+- Actions: Added a shared fallback thumbnail URL helper in `src/lib/thumbnailFilters.js`, normalized catalog movies in `src/lib/data.js` so every visible movie gets either its original thumbnail or a local `/api/movie-thumbnail` SVG, added the SVG thumbnail route in `src/app/api/movie-thumbnail/route.js`, and taught `src/lib/seo.js` to resolve relative image URLs to absolute URLs for metadata.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; smoke check confirmed a missing-thumbnail movie resolves to `/api/movie-thumbnail?...` and `buildMetadata()` turns that into an absolute Open Graph URL.
+- Risks: The fallback SVG is deterministic and local, but social crawlers still depend on the generated route being reachable; if a movie’s base data is malformed beyond title/id/category, the fallback will still render but the watch link may remain bad.
+
+## 2026-05-05 (developer lazy snapshot TTL sync)
+- Scope: Pivot the runtime back to JSON-first reads with a 1-hour freshness check, refreshing `src/lib/movies.json` from Postgres only when the snapshot is stale and leaving the current snapshot in place if DB access fails.
+- Actions: Added snapshot metadata/freshness helpers in `src/lib/movieSnapshot.server.js`, added an in-flight guarded `ensureFreshMovieSnapshot()` path in `src/lib/movieStore.server.js` with a short retry backoff on refresh failure, and switched `src/lib/data.js` to build catalogs from the snapshot gate instead of reading Postgres on the normal path.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; build prebuild regenerated `src/lib/movies.json` via the fallback snapshot path because DB credentials were unavailable, producing a valid snapshot with 301 movies.
+- Risks: If Postgres is unavailable, the runtime keeps serving the existing snapshot and will retry after the backoff window; freshness then depends on the next successful DB refresh.
+
+# ## 2026-05-05 (developer runtime sync fix)
+- Scope: Fix the web sync gap so the app reads fresh persisted movies from Postgres first instead of waiting on the snapshot file to be refreshed out of band.
+- Actions: Updated `src/lib/data.js` to load persisted movies through `loadPersistedMovies({ allowJsonFallback: true })`, which makes the runtime catalog DB-first and keeps the generated snapshot as a local/build fallback only.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed. The build still fell back to the snapshot locally because no DB credentials were available, but the runtime code path now prefers DB when present.
+- Risks: If the runtime environment has no DB credentials, the app still falls back to the generated snapshot; in that case, web freshness depends on the snapshot sync job or a deployment with DB access.
+
 ## 2026-05-05 (developer feed-only crawler pivot)
 - Scope: Remove the remaining per-video watch-page fetches from the production crawl so the registry-driven crawl reads only channel feed/Atom XML and reports any floor deficit honestly.
 - Actions: Updated `src/lib/crawl.server.js` to stop resolving video durations from `watch?v=` pages, keep only feed-parsed candidates, and allow direct channel-ID resolution without page fetches; added a tiny registry sync helper in `src/lib/movieStore.server.js` so direct `/channel/UC...` seed URLs still hydrate `channelId` for feed-only crawling.

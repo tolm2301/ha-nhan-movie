@@ -11,6 +11,16 @@ function normalizeSiteUrl(value = '') {
   return `https://${trimmed.replace(/\/+$/, '')}`;
 }
 
+function resolveImageUrl(image = '') {
+  const trimmed = String(image || '').trim();
+  if (!trimmed) return '';
+  if (/^(?:https?:)?\/\//i.test(trimmed) || /^data:/i.test(trimmed)) {
+    return trimmed;
+  }
+
+  return buildAbsoluteUrl(trimmed);
+}
+
 export const SITE_NAME = 'Hanhan Movie / Hà Nhân';
 export const SITE_DESCRIPTION = 'Hanhan Movie / Hà Nhân cập nhật phim theo các bucket hiện có: Xuyên Không, Trọng Sinh, Liễu Như Yên, Hệ Thống và Khác.';
 
@@ -35,7 +45,8 @@ export function buildMetadata({
   card = 'summary_large_image',
 } = {}) {
   const url = buildAbsoluteUrl(pathname);
-  const images = image ? [{ url: image, alt: title || SITE_NAME }] : undefined;
+  const resolvedImage = resolveImageUrl(image);
+  const images = resolvedImage ? [{ url: resolvedImage, alt: title || SITE_NAME }] : undefined;
 
   return {
     title: title || SITE_NAME,
@@ -107,12 +118,14 @@ export function buildWebsiteJsonLd() {
 export function buildVideoJsonLd(movie, pathname) {
   if (!movie) return null;
 
+  const thumbnailUrl = resolveImageUrl(movie.thumbnail);
+
   return {
     '@context': 'https://schema.org',
     '@type': 'VideoObject',
     name: movie.displayTitle || movie.title,
     description: `${movie.displayTitle || movie.title} trên ${SITE_NAME}`,
-    thumbnailUrl: movie.thumbnail ? [movie.thumbnail] : undefined,
+    thumbnailUrl: thumbnailUrl ? [thumbnailUrl] : undefined,
     url: buildAbsoluteUrl(pathname),
     embedUrl: `https://www.youtube.com/embed/${movie.id}`,
     isFamilyFriendly: true,

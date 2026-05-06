@@ -2,12 +2,15 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { getRenderableThumbnail } from '@/lib/thumbnailFilters';
 import styles from './Hero.module.css';
 
 export default function Hero({ featuredMovie }) {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const router = useRouter();
   const featuredTitle = featuredMovie?.displayTitle || featuredMovie?.title;
+  const featuredThumbnail = getRenderableThumbnail(featuredMovie);
+  const useUnoptimizedImage = featuredThumbnail.startsWith('/api/movie-thumbnail');
 
   const handleWatch = () => {
     if (featuredMovie) {
@@ -24,12 +27,13 @@ export default function Hero({ featuredMovie }) {
       {featuredMovie && (
         <div className={styles.background}>
           <Image
-            src={featuredMovie.thumbnail}
+            src={featuredThumbnail}
             alt={featuredTitle}
             fill
             className={styles.bgImage}
             priority
             sizes="100vw"
+            unoptimized={useUnoptimizedImage}
           />
           <div className={styles.overlay}></div>
         </div>

@@ -1,7 +1,6 @@
-import { cache } from 'react';
-import { readMoviesFromJsonFile } from './movieStore.server.js';
+import { ensureFreshMovieSnapshot } from './movieStore.server.js';
 import { buildCategoryBuckets, normalizeMovieCategory } from './movieCategories.js';
-import { hasRenderableThumbnail } from './thumbnailFilters.js';
+import { getRenderableThumbnail } from './thumbnailFilters.js';
 
 function normalizeText(value = '') {
   return value
@@ -119,10 +118,17 @@ function getHomeFeaturedMovie(categoryBuckets, allMovies) {
 }
 
 export function buildMovieCatalog(movies = []) {
-  const allMovies = movies.filter(hasRenderableThumbnail).map(movie => normalizeMovieCategory({
-    ...movie,
-    displayTitle: cleanMovieTitle(movie.title || ''),
-  }));
+  const allMovies = movies.map(movie => {
+    const normalizedMovie = normalizeMovieCategory({
+      ...movie,
+      displayTitle: cleanMovieTitle(movie.title || ''),
+    });
+
+    return {
+      ...normalizedMovie,
+      thumbnail: getRenderableThumbnail(normalizedMovie),
+    };
+  });
 
   const trendingMovies = allMovies.slice(0, 15);
 
@@ -160,13 +166,21 @@ export function buildMovieCatalog(movies = []) {
   };
 }
 
-const getLoadedCatalog = cache(async () => {
-  // Runtime reads the generated snapshot file only; DB refreshes happen out of band.
-  return buildMovieCatalog(await readMoviesFromJsonFile());
-});
+let catalogLoadPromise = null;
+
+async function loadMovieCatalog() {
+  const snapshot = await ensureFreshMovieSnapshot();
+  return buildMovieCatalog(snapshot.movies);
+}
 
 export async function getMovieCatalog() {
-  return getLoadedCatalog();
+  if (!catalogLoadPromise) {
+    catalogLoadPromise = loadMovieCatalog().finally(() => {
+      catalogLoadPromise = null;
+    });
+  }
+
+  return catalogLoadPromise;
 }
 
 export async function getAllMovies() {

@@ -3,16 +3,14 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { hasRenderableThumbnail } from '@/lib/thumbnailFilters';
+import { getRenderableThumbnail } from '@/lib/thumbnailFilters';
 import styles from './MovieCard.module.css';
 
 export default function MovieCard({ movie }) {
   const [imageFailed, setImageFailed] = useState(false);
   const displayTitle = movie?.displayTitle || movie?.title || 'Không rõ tên phim';
-
-  if (!hasRenderableThumbnail(movie)) {
-    return null;
-  }
+  const thumbnail = getRenderableThumbnail(movie);
+  const useUnoptimizedImage = thumbnail.startsWith('/api/movie-thumbnail');
 
   return (
     <Link href={`/watch/${movie.id}`} className={styles.card} title={displayTitle}>
@@ -24,11 +22,12 @@ export default function MovieCard({ movie }) {
           </div>
         ) : (
           <Image
-            src={movie.thumbnail}
+            src={thumbnail}
             alt={displayTitle}
             fill
             className={styles.image}
             sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 20vw"
+            unoptimized={useUnoptimizedImage}
             onError={() => setImageFailed(true)}
           />
         )}

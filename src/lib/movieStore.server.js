@@ -1,9 +1,8 @@
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { Pool } from 'pg';
-import { writeMovieSnapshot } from './movieSnapshot.server.js';
+import { isMovieSnapshotStale, readMovieSnapshot, MOVIE_SNAPSHOT_TTL_MS, writeMovieSnapshot } from './movieSnapshot.server.js';
 
-const MOVIES_JSON_PATH = path.resolve('src/lib/movies.json');
 const CHANNEL_SEEDS_PATH = path.resolve('src/lib/channel-seeds.json');
 const BATCH_SIZE = 100;
 const DATABASE_URL_ENV_KEYS = [
@@ -15,6 +14,9 @@ const DATABASE_URL_ENV_KEYS = [
 ];
 
 let pool;
+let refreshMovieSnapshotPromise = null;
+let lastSnapshotRefreshFailureAt = 0;
+const SNAPSHOT_REFRESH_RETRY_BACKOFF_MS = 5 * 60 * 1000;
 
 function getDatabaseConfig() {
   for (const envKey of DATABASE_URL_ENV_KEYS) {
@@ -298,9 +300,7 @@ async function withClient(work) {
 }
 
 export async function readMoviesFromJsonFile() {
-  const raw = await readFile(MOVIES_JSON_PATH, 'utf8');
-  const parsed = JSON.parse(raw);
-  const movies = readSnapshotMovies(parsed);
+  const movies = (await readMovieSnapshot()).movies;
 
   return movies.map((movie, index) => normalizeMovieRecord(movie, index));
 }
@@ -478,6 +478,79 @@ export async function loadPersistedMovies({ allowJsonFallback = true } = {}) {
 
     return result.rows.map((movie, index) => normalizeMovieRecord(movie, index));
   });
+}
+
+export async function ensureFreshMovieSnapshot({ maxAgeMs = MOVIE_SNAPSHOT_TTL_MS } = {}) {
+  const currentSnapshot = await readMovieSnapshot();
+  const stale = isMovieSnapshotStale(currentSnapshot, { maxAgeMs });
+
+  if (!stale) {
+    return {
+      ...currentSnapshot,
+      stale: false,
+      refreshed: false,
+      refreshAttempted: false,
+      refreshFailed: false,
+      refreshSkipped: false,
+    };
+  }
+
+  const now = Date.now();
+
+  if (refreshMovieSnapshotPromise) {
+    return refreshMovieSnapshotPromise;
+  }
+
+  if (lastSnapshotRefreshFailureAt && now - lastSnapshotRefreshFailureAt < SNAPSHOT_REFRESH_RETRY_BACKOFF_MS) {
+    return {
+      ...currentSnapshot,
+      stale: true,
+      refreshed: false,
+      refreshAttempted: false,
+      refreshFailed: false,
+      refreshSkipped: true,
+      refreshSkippedReason: 'recent-refresh-failure',
+    };
+  }
+
+  refreshMovieSnapshotPromise = (async () => {
+    try {
+      const persistedMovies = await loadPersistedMovies({ allowJsonFallback: false });
+      await writeMovieSnapshot(persistedMovies, {
+        source: 'db',
+        generatedAt: new Date().toISOString(),
+        forceRewrite: true,
+      });
+
+      const refreshedSnapshot = await readMovieSnapshot();
+      lastSnapshotRefreshFailureAt = 0;
+
+      return {
+        ...refreshedSnapshot,
+        stale: false,
+        refreshed: true,
+        refreshAttempted: true,
+        refreshFailed: false,
+        refreshSkipped: false,
+      };
+    } catch (error) {
+      lastSnapshotRefreshFailureAt = Date.now();
+
+      return {
+        ...currentSnapshot,
+        stale: true,
+        refreshed: false,
+        refreshAttempted: true,
+        refreshFailed: true,
+        refreshSkipped: false,
+        refreshError: error instanceof Error ? { name: error.name, message: error.message } : { message: String(error) },
+      };
+    } finally {
+      refreshMovieSnapshotPromise = null;
+    }
+  })();
+
+  return refreshMovieSnapshotPromise;
 }
 
 export async function replacePersistedMovies(movies = [], runMeta = {}) {
