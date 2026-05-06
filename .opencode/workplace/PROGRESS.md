@@ -1,5 +1,11 @@
 # Progress Timeline
 
+## 2026-05-06 (developer sitemap indexing fix)
+- Scope: Make the sitemap expose the full visible catalog instead of a tiny filtered subset, while keeping thumbnails renderable on each movie object and preserving existing category/home behavior.
+- Actions: Kept catalog normalization focused on per-movie thumbnail resolution in `src/lib/data.js`, carried snapshot metadata through the catalog so sitemap timestamps can reflect the snapshot generation time when available, and updated `src/app/sitemap.js` to emit all movie watch URLs plus category URLs with a stable `lastModified` value.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; smoke check reported `catalogMovies: 328`, `movieEntries: 328`, `categoryEntries: 7`, and `sitemapEntries: 336`.
+- Risks: Sitemap `lastModified` is snapshot-level rather than per-movie because the snapshot does not expose reliable per-item timestamps.
+
 ## 2026-05-06 (developer thumbnail fallback wiring)
 - Scope: Stop hero and poster cards from blanking when a loaded thumbnail fails by swapping to the deterministic local SVG fallback image, and keep metadata using the same resolved thumbnail path.
 - Actions: Updated `src/components/MovieCard/MovieCard.jsx` and `src/components/Hero/Hero.jsx` to switch to the local fallback image on load error instead of showing a blank placeholder, loosened `src/components/MovieCarousel/MovieCarousel.jsx` so fallback-capable movies are not prefiltered out, and wired `src/app/page.js`, `src/app/category/[type]/page.js`, `src/app/watch/[id]/page.js`, `src/app/watch-popout/[id]/page.js`, and `src/lib/seo.js` to resolve thumbnails through the shared helper.

@@ -4,6 +4,7 @@
 - [ ] (template) Task title | Owner: techlead | Priority: medium
 
 ## In Progress
+- [ ] Fix sitemap catalog exposure so all visible movies are indexed | Owner: developer | Priority: medium
 - [ ] Fix watch video title mask so fullscreen top edge stays crisp | Owner: developer | Priority: medium
 - [ ] Restore local lint/build environment for watch verification | Owner: techlead | Priority: high
 - [ ] Implement watch-player double-click seek interaction | Owner: creator | Priority: medium

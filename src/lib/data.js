@@ -110,6 +110,18 @@ function moveMovieToFront(movies = [], featuredMovie = null) {
   return reordered;
 }
 
+function resolveCatalogMovie(movie = {}) {
+  const normalizedMovie = normalizeMovieCategory({
+    ...movie,
+    displayTitle: cleanMovieTitle(movie.title || ''),
+  });
+
+  return {
+    ...normalizedMovie,
+    thumbnail: getRenderableThumbnail(normalizedMovie),
+  };
+}
+
 function getHomeFeaturedMovie(categoryBuckets, allMovies) {
   const haNhanBucket = categoryBuckets.find(category => category.slug === 'ha-nhan');
   const directHaNhanMovie = haNhanBucket?.movies?.[0] || null;
@@ -117,18 +129,8 @@ function getHomeFeaturedMovie(categoryBuckets, allMovies) {
   return directHaNhanMovie || allMovies[0] || null;
 }
 
-export function buildMovieCatalog(movies = []) {
-  const allMovies = movies.map(movie => {
-    const normalizedMovie = normalizeMovieCategory({
-      ...movie,
-      displayTitle: cleanMovieTitle(movie.title || ''),
-    });
-
-    return {
-      ...normalizedMovie,
-      thumbnail: getRenderableThumbnail(normalizedMovie),
-    };
-  });
+export function buildMovieCatalog(movies = [], snapshotMeta = {}) {
+  const allMovies = movies.map(resolveCatalogMovie);
 
   const trendingMovies = allMovies.slice(0, 15);
 
@@ -163,6 +165,8 @@ export function buildMovieCatalog(movies = []) {
     getMovieById,
     featuredMovie: homeFeaturedMovie,
     homeFeaturedMovie,
+    generatedAt: snapshotMeta.generatedAt || null,
+    snapshotSource: snapshotMeta.source || null,
   };
 }
 
@@ -170,7 +174,7 @@ let catalogLoadPromise = null;
 
 async function loadMovieCatalog() {
   const snapshot = await ensureFreshMovieSnapshot();
-  return buildMovieCatalog(snapshot.movies);
+  return buildMovieCatalog(snapshot.movies, snapshot);
 }
 
 export async function getMovieCatalog() {
