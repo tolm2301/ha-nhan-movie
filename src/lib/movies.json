@@ -1,9 +1,23 @@
 {
   "snapshotVersion": 1,
   "source": "db",
-  "generatedAt": "2026-05-06T05:52:47.829Z",
+  "generatedAt": "2026-05-06T08:15:20.340Z",
   "fallbackReason": null,
   "movies": [
+    {
+      "id": "BhD8C96rdFg",
+      "title": "Full 01-26: Xuyên Không Về Trước Tận Thế Quỷ Dị - Lập Đội Quân Diệt Zombei / Su Su Review",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i3.ytimg.com/vi/BhD8C96rdFg/hqdefault.jpg",
+      "tags": "Xuyên Không",
+      "rating": "N/A",
+      "sortOrder": 0
+    },
     {
       "id": "32qwKjIBtRM",
       "title": "Hà Nhân Tòng Quân Bộc Phát Thần Lực, Nhận Lại Thân Phận Hoàng Tử Nhà Minh | Hà Nhân Sub",
@@ -115,6 +129,20 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 0
+    },
+    {
+      "id": "x48JEnb8BaE",
+      "title": "Tập dài  01-16 : Xuyên Không Về Năm 1973- Với Không Gian Thần Kỳ   / Su Su Review",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i1.ytimg.com/vi/x48JEnb8BaE/hqdefault.jpg",
+      "tags": "Xuyên Không",
+      "rating": "N/A",
+      "sortOrder": 1
     },
     {
       "id": "mWRmcXbCn6Q",
@@ -229,6 +257,20 @@
       "sortOrder": 1
     },
     {
+      "id": "QXQ9dNoEKLs",
+      "title": "Full 01-27: Hệ Thống Dị Năng Siêu Đẳng  /Như Yên sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i2.ytimg.com/vi/QXQ9dNoEKLs/hqdefault.jpg",
+      "tags": "Hệ Thống",
+      "rating": "N/A",
+      "sortOrder": 2
+    },
+    {
       "id": "12p1aXQXuSI",
       "title": "Hà Nhân Xuyên Không Thành Con Trai Tần Thủy Hoàng Đòi Cướp Ngôi Hoàng Đế | Hà Nhân Sub",
       "episodes": "Full",
@@ -339,6 +381,20 @@
       "tags": "Khác",
       "rating": "N/A",
       "sortOrder": 2
+    },
+    {
+      "id": "CAYRJrrmWWE",
+      "title": "Full 01-30: Sinh Tồn Trên Đường Cao Tốc - Hệ Thống Thu Hồi || Như Yên Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i4.ytimg.com/vi/CAYRJrrmWWE/hqdefault.jpg",
+      "tags": "Hệ Thống",
+      "rating": "N/A",
+      "sortOrder": 3
     },
     {
       "id": "LRkYUiC1O3k",
@@ -453,6 +509,20 @@
       "sortOrder": 3
     },
     {
+      "id": "EYgCrVOxHtI",
+      "title": "Full 01-25:  Hệ Thống Buff -Càng Ác Ta Càng Mạnh || Như yên Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i2.ytimg.com/vi/EYgCrVOxHtI/hqdefault.jpg",
+      "tags": "Hệ Thống",
+      "rating": "N/A",
+      "sortOrder": 4
+    },
+    {
       "id": "GURfHDwwWnM",
       "title": "Hà Nhân Xuyên Không, Thần Đồng Bần Nông 3 Tuổi Mở Đường Quan Lộ | Hà Nhân Sub",
       "episodes": "Full",
@@ -563,6 +633,20 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 4
+    },
+    {
+      "id": "YFEtNVd31c0",
+      "title": "(05H)Full 01-46: Hệ Thống Cường Hóa Tối Thượng  /Như Yên sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i2.ytimg.com/vi/YFEtNVd31c0/hqdefault.jpg",
+      "tags": "Hệ Thống",
+      "rating": "N/A",
+      "sortOrder": 5
     },
     {
       "id": "7k0QGmLifsg",
@@ -677,6 +761,20 @@
       "sortOrder": 5
     },
     {
+      "id": "-aIZMlm_kAM",
+      "title": "Full 01-26 : Hệ Thống Vô Hạn Tài Nguyên Thời Mạt Thế Biến DỊ || Như yên Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i2.ytimg.com/vi/-aIZMlm_kAM/hqdefault.jpg",
+      "tags": "Hệ Thống",
+      "rating": "N/A",
+      "sortOrder": 6
+    },
+    {
       "id": "66i98IY34Do",
       "title": "#end| Tổng Tài Gặp Thiếu Gia Xã Hội Đen Và Cái Kết...",
       "episodes": "Full",
@@ -787,6 +885,20 @@
       "tags": "Khác",
       "rating": "N/A",
       "sortOrder": 6
+    },
+    {
+      "id": "3awJnfEcwL4",
+      "title": "(05H) Full 01-50 : Lời Nguyền Mê Cung / Như Yên Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i4.ytimg.com/vi/3awJnfEcwL4/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 7
     },
     {
       "id": "_Mooulh-rYE",
@@ -901,6 +1013,20 @@
       "sortOrder": 7
     },
     {
+      "id": "h9BfIHEQur8",
+      "title": "(06H) Full 01-51: Thành Hoàng Lệnh || Như yên Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i1.ytimg.com/vi/h9BfIHEQur8/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 8
+    },
+    {
       "id": "IIKLFqM5S9I",
       "title": "#29|c720| Tổng Tài Gặp Thiếu Gia Xã Hội Đen Và Cái Kết...",
       "episodes": "Full",
@@ -1011,6 +1137,20 @@
       "tags": "Hệ Thống",
       "rating": "N/A",
       "sortOrder": 8
+    },
+    {
+      "id": "jN7afOqcYn8",
+      "title": "(07H) Full 01-80: Cổng Dịch Chuyển Dị Giới- Viễn Chinh Mạt Thế / Su Su Review",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i3.ytimg.com/vi/jN7afOqcYn8/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 9
     },
     {
       "id": "R2Epp5si5Sc",
@@ -1125,6 +1265,20 @@
       "sortOrder": 9
     },
     {
+      "id": "4FX9QrGDTII",
+      "title": "Full 01-32:  Ta Dùng Zombie Để Nuôi Ngự Thú Siêu Cấp || Như yên Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i1.ytimg.com/vi/4FX9QrGDTII/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 10
+    },
+    {
       "id": "EDfD5p10E80",
       "title": "Bà Thím Hổ Báo Ra Tay Trừng Trị Đám Hàng Xóm Xấu Tính Khiến Chúng Phải Khóc Thét |Vietsub Trọng Sinh",
       "episodes": "Full",
@@ -1221,6 +1375,20 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 10
+    },
+    {
+      "id": "qUJPl3Xt0ys",
+      "title": "Full 01-20:  Kẻ Hủy Diệt Học Đường || Như yên Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i2.ytimg.com/vi/qUJPl3Xt0ys/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 11
     },
     {
       "id": "9kUu3Eixgos",
