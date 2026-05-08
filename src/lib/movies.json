@@ -1,9 +1,23 @@
 {
   "snapshotVersion": 1,
   "source": "db",
-  "generatedAt": "2026-05-06T08:15:20.340Z",
+  "generatedAt": "2026-05-08T05:26:14.071Z",
   "fallbackReason": null,
   "movies": [
+    {
+      "id": "UM0kImpQ15k",
+      "title": "Thức Đêm Sửa Máy Đi Muộn 2 Phút Bị Sếp Cắt 50 Triệu Tiền Thưởng, Tôi Nghỉ Việc Và Cái Kết",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i2.ytimg.com/vi/UM0kImpQ15k/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 0
+    },
     {
       "id": "BhD8C96rdFg",
       "title": "Full 01-26: Xuyên Không Về Trước Tận Thế Quỷ Dị - Lập Đội Quân Diệt Zombei / Su Su Review",
@@ -129,6 +143,20 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 0
+    },
+    {
+      "id": "we2EyeXmbdA",
+      "title": "Siêu Xe 1 Tỷ Bị Hàng Xóm Bán Đồng Nát Giá 10 Triệu, Đã Thế Còn Mặt Dày Đòi Thêm 5 Triệu Tiền Công",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i4.ytimg.com/vi/we2EyeXmbdA/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 1
     },
     {
       "id": "x48JEnb8BaE",
