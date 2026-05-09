@@ -1,9 +1,23 @@
 {
   "snapshotVersion": 1,
   "source": "db",
-  "generatedAt": "2026-05-08T05:26:14.071Z",
+  "generatedAt": "2026-05-09T05:44:23.048Z",
   "fallbackReason": null,
   "movies": [
+    {
+      "id": "NP57l-JnsIc",
+      "title": "Xuyên Không Có Không Gian Lưu Trữ, Tôi Làm Giàu Cứu Đói Cả Làng Full 44-52",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i3.ytimg.com/vi/NP57l-JnsIc/hqdefault.jpg",
+      "tags": "Xuyên Không",
+      "rating": "N/A",
+      "sortOrder": 0
+    },
     {
       "id": "UM0kImpQ15k",
       "title": "Thức Đêm Sửa Máy Đi Muộn 2 Phút Bị Sếp Cắt 50 Triệu Tiền Thưởng, Tôi Nghỉ Việc Và Cái Kết",
@@ -143,6 +157,20 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 0
+    },
+    {
+      "id": "sbvjYe6g348",
+      "title": "Xuyên Không Gian Hai Thời Đại, Từ Kẻ Lười Tôi Thành Đặc Nhiệm Quân Khu Full",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i4.ytimg.com/vi/sbvjYe6g348/hqdefault.jpg",
+      "tags": "Xuyên Không",
+      "rating": "N/A",
+      "sortOrder": 1
     },
     {
       "id": "we2EyeXmbdA",
@@ -285,6 +313,20 @@
       "sortOrder": 1
     },
     {
+      "id": "NQiJL3FYUtA",
+      "title": "Xuyên Không Về Nạn Đói Lớn Ba Năm Dùng La Bàn Thần Kì, Tôi Làm Giàu Nuôi Sống Cả Đại Gia Tộc Full Bộ",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i3.ytimg.com/vi/NQiJL3FYUtA/hqdefault.jpg",
+      "tags": "Xuyên Không",
+      "rating": "N/A",
+      "sortOrder": 2
+    },
+    {
       "id": "QXQ9dNoEKLs",
       "title": "Full 01-27: Hệ Thống Dị Năng Siêu Đẳng  /Như Yên sub",
       "episodes": "Full",
@@ -409,6 +451,20 @@
       "tags": "Khác",
       "rating": "N/A",
       "sortOrder": 2
+    },
+    {
+      "id": "RfYqs5CM0KI",
+      "title": "Xuyên Không Kích Hoạt Bùa Không Gian Siêu Cấp, Tôi Mang Lương Thực Nuôi Sống Vợ Và Con Gái Full Bộ",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i3.ytimg.com/vi/RfYqs5CM0KI/hqdefault.jpg",
+      "tags": "Xuyên Không",
+      "rating": "N/A",
+      "sortOrder": 3
     },
     {
       "id": "CAYRJrrmWWE",
@@ -537,6 +593,20 @@
       "sortOrder": 3
     },
     {
+      "id": "znrgrUkRJI4",
+      "title": "Tái Sinh Về Thời Tem Phiếu Nhờ Nhẫn Ngọc Không Gian, Tôi Làm Gian Tôi Làm Giàu Báo Thù Cả Full",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i3.ytimg.com/vi/znrgrUkRJI4/hqdefault.jpg",
+      "tags": "Trọng Sinh",
+      "rating": "N/A",
+      "sortOrder": 4
+    },
+    {
       "id": "EYgCrVOxHtI",
       "title": "Full 01-25:  Hệ Thống Buff -Càng Ác Ta Càng Mạnh || Như yên Sub",
       "episodes": "Full",
@@ -661,6 +731,20 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 4
+    },
+    {
+      "id": "nm0ZR2Xj8g8",
+      "title": "Trọng Sinh Làm Giàu, Dùng Dị Năng Đánh Bắt Hải Sản Tôi Thành Ông Trùm Buôn Thủy Sản Full",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i3.ytimg.com/vi/nm0ZR2Xj8g8/hqdefault.jpg",
+      "tags": "Trọng Sinh",
+      "rating": "N/A",
+      "sortOrder": 5
     },
     {
       "id": "YFEtNVd31c0",
@@ -789,6 +873,20 @@
       "sortOrder": 5
     },
     {
+      "id": "ouhZpPnF2Oc",
+      "title": "Trọng Sinh Có Không Gian Bảo Tháp Thần Kì, Tôi Làm Giàu Nuôi Sống Cả Làng Full",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i4.ytimg.com/vi/ouhZpPnF2Oc/hqdefault.jpg",
+      "tags": "Trọng Sinh",
+      "rating": "N/A",
+      "sortOrder": 6
+    },
+    {
       "id": "-aIZMlm_kAM",
       "title": "Full 01-26 : Hệ Thống Vô Hạn Tài Nguyên Thời Mạt Thế Biến DỊ || Như yên Sub",
       "episodes": "Full",
@@ -913,6 +1011,20 @@
       "tags": "Khác",
       "rating": "N/A",
       "sortOrder": 6
+    },
+    {
+      "id": "fBer40IvKpo",
+      "title": "Trọng Sinh Chuộc Lỗi Ra Sức Bù Đắp Cho Cô Thôn Nữ Xinh Đẹp Full",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i3.ytimg.com/vi/fBer40IvKpo/hqdefault.jpg",
+      "tags": "Trọng Sinh",
+      "rating": "N/A",
+      "sortOrder": 7
     },
     {
       "id": "3awJnfEcwL4",
@@ -1041,6 +1153,20 @@
       "sortOrder": 7
     },
     {
+      "id": "214u7jDfbM8",
+      "title": "Trùng Sinh Em Trai Quyết Đổi Vợ Với Tôi Full Bộ | Vietsub Xuyên Không",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i3.ytimg.com/vi/214u7jDfbM8/hqdefault.jpg",
+      "tags": "Trọng Sinh",
+      "rating": "N/A",
+      "sortOrder": 8
+    },
+    {
       "id": "h9BfIHEQur8",
       "title": "(06H) Full 01-51: Thành Hoàng Lệnh || Như yên Sub",
       "episodes": "Full",
@@ -1165,6 +1291,20 @@
       "tags": "Hệ Thống",
       "rating": "N/A",
       "sortOrder": 8
+    },
+    {
+      "id": "5ttrFUQyNos",
+      "title": "Tôi Thức Tỉnh Hệ Thống Công Pháp Tu Luyện Cùng Chị Dâu Và Em Thôn Nữ Xinh Đẹp Full Bộ",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i2.ytimg.com/vi/5ttrFUQyNos/hqdefault.jpg",
+      "tags": "Hệ Thống",
+      "rating": "N/A",
+      "sortOrder": 9
     },
     {
       "id": "jN7afOqcYn8",
@@ -1293,6 +1433,20 @@
       "sortOrder": 9
     },
     {
+      "id": "5hPEqSpBS6k",
+      "title": "(Full) [phần 6] sinh tồn ngày tận thế, bắt đầu từ triệu hoán bạch cốt khô lâu",
+      "episodes": "Tập 6",
+      "episodeLabel": "Tập 6",
+      "episodeNumber": 6,
+      "type": "series",
+      "seriesKey": "sinh t n ng y t n th b t u t tri u ho n b ch c t kh l u",
+      "views": "?? views",
+      "thumbnail": "https://i2.ytimg.com/vi/5hPEqSpBS6k/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 10
+    },
+    {
       "id": "4FX9QrGDTII",
       "title": "Full 01-32:  Ta Dùng Zombie Để Nuôi Ngự Thú Siêu Cấp || Như yên Sub",
       "episodes": "Full",
@@ -1403,6 +1557,20 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 10
+    },
+    {
+      "id": "R2coYbxj65Q",
+      "title": "(Full) [phần 5] sinh tồn ngày tận thế, bắt đầu từ triệu hoán bạch cốt khô lâu",
+      "episodes": "Tập 5",
+      "episodeLabel": "Tập 5",
+      "episodeNumber": 5,
+      "type": "series",
+      "seriesKey": "sinh t n ng y t n th b t u t tri u ho n b ch c t kh l u",
+      "views": "?? views",
+      "thumbnail": "https://i3.ytimg.com/vi/R2coYbxj65Q/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 11
     },
     {
       "id": "qUJPl3Xt0ys",
@@ -1517,6 +1685,20 @@
       "sortOrder": 11
     },
     {
+      "id": "hZAHOxc57Fg",
+      "title": "(Full) [phần 4] sinh tồn ngày tận thế, bắt đầu từ triệu hoán bạch cốt khô lâu",
+      "episodes": "Tập 4",
+      "episodeLabel": "Tập 4",
+      "episodeNumber": 4,
+      "type": "series",
+      "seriesKey": "sinh t n ng y t n th b t u t tri u ho n b ch c t kh l u",
+      "views": "?? views",
+      "thumbnail": "https://i1.ytimg.com/vi/hZAHOxc57Fg/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 12
+    },
+    {
       "id": "kwIHWp9UT7w",
       "title": "Tái Sinh Thời Bao Cấp Nạn Đói Dùng Dị Năng Săn Bắn Tôi Làm Giàu Cứu Đói Cả Gia Tộc Full 30-39",
       "episodes": "Full",
@@ -1615,6 +1797,20 @@
       "sortOrder": 12
     },
     {
+      "id": "EvCHtzFCNk0",
+      "title": "(Full) [phần 3] sinh tồn ngày tận thế, bắt đầu từ triệu hoán bạch cốt khô lâu",
+      "episodes": "Tập 3",
+      "episodeLabel": "Tập 3",
+      "episodeNumber": 3,
+      "type": "series",
+      "seriesKey": "sinh t n ng y t n th b t u t tri u ho n b ch c t kh l u",
+      "views": "?? views",
+      "thumbnail": "https://i2.ytimg.com/vi/EvCHtzFCNk0/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 13
+    },
+    {
       "id": "JSQLFeOx5GE",
       "title": "Trọng Sinh Thời Tem Phiếu Dùng Dị Năng Săn Bắn, Tôi Báo Thù Cả Gia Tộc Nuôi Sống Vợ Con Full Bộ",
       "episodes": "Full",
@@ -1711,6 +1907,20 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 13
+    },
+    {
+      "id": "cZTIaUoMGTk",
+      "title": "(Full) [phần 2] sinh tồn ngày tận thế, bắt đầu từ triệu hoán bạch cốt khô lâu",
+      "episodes": "Tập 2",
+      "episodeLabel": "Tập 2",
+      "episodeNumber": 2,
+      "type": "series",
+      "seriesKey": "sinh t n ng y t n th b t u t tri u ho n b ch c t kh l u",
+      "views": "?? views",
+      "thumbnail": "https://i4.ytimg.com/vi/cZTIaUoMGTk/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 14
     },
     {
       "id": "xmun6Yt4gN8",
