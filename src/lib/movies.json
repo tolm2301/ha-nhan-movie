@@ -1,9 +1,23 @@
 {
   "snapshotVersion": 1,
   "source": "db",
-  "generatedAt": "2026-05-10T05:59:49.644Z",
+  "generatedAt": "2026-05-11T06:34:08.330Z",
   "fallbackReason": null,
   "movies": [
+    {
+      "id": "akN6uJTXhM4",
+      "title": "Cha anh tử trận, thiếu niên xuyên không tiếp quản 30 vạn Trấn Bắc Quân báo thù",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i2.ytimg.com/vi/akN6uJTXhM4/hqdefault.jpg",
+      "tags": "Xuyên Không",
+      "rating": "N/A",
+      "sortOrder": 0
+    },
     {
       "id": "yV08VpTl_Ps",
       "title": "🔥 Hà Nhân Nhặt Được Tụ Bảo Bồn – Báu Vật Kỳ Bí Thay Đổi Cả Vận Mệnh!|Tập 38-39",
@@ -171,6 +185,20 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 0
+    },
+    {
+      "id": "GZrSLvGsNIM",
+      "title": "Đặc chủng binh xuyên không vào hoàng đế bù nhìn và hành trình nắm trọn thiên hạ",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i4.ytimg.com/vi/GZrSLvGsNIM/hqdefault.jpg",
+      "tags": "Xuyên Không",
+      "rating": "N/A",
+      "sortOrder": 1
     },
     {
       "id": "CJCQXD3_V2M",
@@ -341,6 +369,20 @@
       "sortOrder": 1
     },
     {
+      "id": "pBWepFCf_QU",
+      "title": "Vừa xuyên không đã bị hủy hôn, ai ngờ nàng nghe được tiếng lòng tôi",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i1.ytimg.com/vi/pBWepFCf_QU/hqdefault.jpg",
+      "tags": "Xuyên Không",
+      "rating": "N/A",
+      "sortOrder": 2
+    },
+    {
       "id": "XB9LrHohQ8o",
       "title": "🔥 Hà Nhân Nhặt Được Tụ Bảo Bồn – Báu Vật Kỳ Bí Thay Đổi Cả Vận Mệnh!|Tập 34-37",
       "episodes": "Tập 34",
@@ -493,6 +535,20 @@
       "tags": "Khác",
       "rating": "N/A",
       "sortOrder": 2
+    },
+    {
+      "id": "AmFAg_RCWd0",
+      "title": "Xuyên không thành thế tử phế vật… 1 nước cờ khiến quyền thần sụp đổ",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i2.ytimg.com/vi/AmFAg_RCWd0/hqdefault.jpg",
+      "tags": "Xuyên Không",
+      "rating": "N/A",
+      "sortOrder": 3
     },
     {
       "id": "K7adcpZJakE",
@@ -649,6 +705,20 @@
       "sortOrder": 3
     },
     {
+      "id": "fyyH0-iKpqE",
+      "title": "Xuyên không thành dân đen, dùng Nho học và trí tuệ hiện đại để thống trị thời loạn",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i3.ytimg.com/vi/fyyH0-iKpqE/hqdefault.jpg",
+      "tags": "Xuyên Không",
+      "rating": "N/A",
+      "sortOrder": 4
+    },
+    {
       "id": "UUNPMN327VU",
       "title": "🔥 Hà Nhân Nhặt Được Tụ Bảo Bồn – Báu Vật Kỳ Bí Thay Đổi Cả Vận Mệnh!|Tập 26-27",
       "episodes": "Tập 26",
@@ -801,6 +871,20 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 4
+    },
+    {
+      "id": "BlFCagRwFjI",
+      "title": "Chủ nhân kiếm đạo tái sinh ở rể bị khinh thường cho đến khi thức tỉnh tiền kiếp",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i3.ytimg.com/vi/BlFCagRwFjI/hqdefault.jpg",
+      "tags": "Trọng Sinh",
+      "rating": "N/A",
+      "sortOrder": 5
     },
     {
       "id": "0CLLTyrwExo",
@@ -957,6 +1041,20 @@
       "sortOrder": 5
     },
     {
+      "id": "w8PX6eYgHAE",
+      "title": "Thánh nữ Ma giáo ở bên báo ân, không ngờ lại yêu chàng thần y mù",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i4.ytimg.com/vi/w8PX6eYgHAE/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 6
+    },
+    {
       "id": "WYJSlrgtWF8",
       "title": "đố vui có thưởng",
       "episodes": "Full",
@@ -1109,6 +1207,20 @@
       "tags": "Khác",
       "rating": "N/A",
       "sortOrder": 6
+    },
+    {
+      "id": "iOUdz7PRajE",
+      "title": "Phế đồ bị đuổi khỏi sư môn, 10 năm sau thống trị cả hai giới",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i2.ytimg.com/vi/iOUdz7PRajE/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 7
     },
     {
       "id": "tOESGB5LHNE",
@@ -1265,6 +1377,20 @@
       "sortOrder": 7
     },
     {
+      "id": "NfvsrBerjjc",
+      "title": "Thiếu gia ăn chơi bị hãm hại, 1 năm sau trở thành trùm thương nghiệp",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i3.ytimg.com/vi/NfvsrBerjjc/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 8
+    },
+    {
       "id": "yyDZ5FNVPJY",
       "title": "Tôi Là Nữ Cường Bá Đạo Nhất Dùng Không Giang Vòng Ngọc Chinh Phục Chồng Soái Ca Full Bộ",
       "episodes": "Full",
@@ -1417,6 +1543,20 @@
       "tags": "Hệ Thống",
       "rating": "N/A",
       "sortOrder": 8
+    },
+    {
+      "id": "gyRmjANxqaM",
+      "title": "Tạp dịch bị hãm hại, thức tỉnh Hoang Thần Lệnh, lật ngược số phận chỉ trong 1 đêm",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i4.ytimg.com/vi/gyRmjANxqaM/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 9
     },
     {
       "id": "2YOIGpe5ni0",
