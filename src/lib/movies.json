@@ -1,9 +1,23 @@
 {
   "snapshotVersion": 1,
   "source": "db",
-  "generatedAt": "2026-05-16T05:50:07.532Z",
+  "generatedAt": "2026-05-17T06:18:14.139Z",
   "fallbackReason": null,
   "movies": [
+    {
+      "id": "BfnTECe22Cs",
+      "title": "Xuyên Không Thành Phế Linh Căn, Ta Khế Ước Với Rùa Đen Bắt Đầu Cẩu Đạo Trường Sinh",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i3.ytimg.com/vi/BfnTECe22Cs/hqdefault.jpg",
+      "tags": "Xuyên Không",
+      "rating": "N/A",
+      "sortOrder": 0
+    },
     {
       "id": "SyDmi91WnQU",
       "title": "Xuyên Không Đại Đường, Thái Tử Lập Cẩm Y Vệ Đấu Lý Thế Dân | Hà Nhân Sub",
@@ -213,6 +227,20 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 0
+    },
+    {
+      "id": "9q0oiU3BZwg",
+      "title": "Xuyên Không Thành Dã Thần Yếu Ớt, Ta Kích Hoạt Hệ Thống Hương Hỏa Chứng Đạo Chân Thần!",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i2.ytimg.com/vi/9q0oiU3BZwg/hqdefault.jpg",
+      "tags": "Xuyên Không",
+      "rating": "N/A",
+      "sortOrder": 1
     },
     {
       "id": "d6mSSQE20SU",
@@ -425,6 +453,20 @@
       "sortOrder": 1
     },
     {
+      "id": "CmmzeSYa52c",
+      "title": "P13 | Kế Duyên Nhập Ma Lần Hai, Vừa Vào Hang Ổ Đã Bị Nhìn Thấu Thân Phận!",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i4.ytimg.com/vi/CmmzeSYa52c/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 2
+    },
+    {
       "id": "nawj7B1yvJM",
       "title": "Hà Nhân Xuyên Không Xưng Đế Cùng Hệ Thống Phát Tiền Bá Đạo | Hà Nhân Sub",
       "episodes": "Full",
@@ -619,6 +661,20 @@
       "tags": "Khác",
       "rating": "N/A",
       "sortOrder": 2
+    },
+    {
+      "id": "oGY4m6uYok8",
+      "title": "P9 | Sức Mạnh Linh Năng Pháo: Kế Duyên Một Bước Nghịch Thiên, Kim Đan Chỉ Là Cỏ Rác!",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i4.ytimg.com/vi/oGY4m6uYok8/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 3
     },
     {
       "id": "ol5csrk4gEQ",
@@ -817,6 +873,20 @@
       "sortOrder": 3
     },
     {
+      "id": "BUSqCad7zbY",
+      "title": "P10 | Thanh Tiêu Môn Bước Vào Kỷ Nguyên Mới: Thần Thông Đệ Tử Và Cuộc Xuất Thế Của Chân Quân",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i3.ytimg.com/vi/BUSqCad7zbY/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 4
+    },
+    {
       "id": "w6JsF9Thdfg",
       "title": "Xuyên Không Đại Minh, Hà Nhân Mang Hệ Thống Tạo Phản | Hà Nhân Sub",
       "episodes": "Full",
@@ -1013,6 +1083,20 @@
       "sortOrder": 4
     },
     {
+      "id": "B5QV-kF-HN8",
+      "title": "P8 | Trận Pháp Thất Thăng Cấp 2: Kế Duyên Chính Thức Làm Chủ Tinh Trần Huyễn Sát Trận Cực Hạn!",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i3.ytimg.com/vi/B5QV-kF-HN8/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 5
+    },
+    {
       "id": "S7PJTsrVJy4",
       "title": "Ta Xuyên Không Quậy Nát Thủy Hử (Tập 130) | Võ Tòng Thu Phục Tám Đại Lôi Tướng",
       "episodes": "Tập 130",
@@ -1207,6 +1291,20 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 5
+    },
+    {
+      "id": "4IUNuX2sWcQ",
+      "title": "P9 | Mở Khóa Trấn Tà Tháp, Ta Chính Thức Trấn Áp Toàn Bộ Tà Ma Ngoại Đạo!",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i1.ytimg.com/vi/4IUNuX2sWcQ/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 6
     },
     {
       "id": "d1Ej55IYbr8",
