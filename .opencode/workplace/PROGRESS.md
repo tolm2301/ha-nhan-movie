@@ -1,5 +1,11 @@
 # Progress Timeline
 
+## 2026-05-18 (developer snapshot cleanup live-probe removal)
+- Scope: Stop snapshot generation from live-checking every YouTube watch page so valid catalogs do not get wiped out during cleanup/write.
+- Actions: Removed the per-movie `checkWatchPageAvailability()` probe from `src/lib/movieSnapshot.server.js`, kept only the already-known cleanup signals (known-bad ids, explicit unavailable flags/strings, recorded playability state, renderable thumbnail, and non-empty title), and left crawl-time watch-page rejection untouched.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run snapshot:movies` reported `movies:437`; `npm.cmd run build` passed; smoke check of `getMovieCatalog()` reported `allMovies:291`, `featuredMovie:true`, and a real featured title, so the home hero has catalog data instead of falling back to "Đang tải dữ liệu...".
+- Risks: This keeps the cleanup narrow, so any future bad item that lacks a thumbnail/title/availability signal may still need an explicit cleanup pass.
+
 ## 2026-05-18 (developer null-safe thumbnail helper crash fix)
 - Scope: Make `thumbnailFilters` safe when prerendered render paths pass null/undefined movie values, preventing the `/` prerender crash from missing thumbnail data.
 - Actions: Added a shared movie normalizer in `src/lib/thumbnailFilters.js`, made `hasRenderableThumbnail(movie)` return `false` for null/non-object inputs, and hardened `getRenderableThumbnail(movie)` plus the fallback thumbnail URL builder so null inputs no longer throw.

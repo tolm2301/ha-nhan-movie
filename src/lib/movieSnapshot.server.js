@@ -1,7 +1,7 @@
 import { readFile, writeFile } from 'fs/promises';
 import path from 'path';
 import { hasRenderableThumbnail } from './thumbnailFilters.js';
-import { checkWatchPageAvailability, explainWatchPageAvailability } from './watchPageAvailability.server.js';
+import { explainWatchPageAvailability } from './watchPageAvailability.server.js';
 
 const SNAPSHOT_PATH = path.resolve('src/lib/movies.json');
 export const MOVIE_SNAPSHOT_VERSION = 1;
@@ -16,7 +16,14 @@ const SNAPSHOT_KNOWN_BAD_MOVIE_IDS = new Set([
   'GZrSLvGsNIM',
   'EVpGPAJ2SiI',
 ]);
-const snapshotWatchPageAvailabilityCache = new Map();
+const SNAPSHOT_EXPLICIT_UNAVAILABLE_MARKERS = [
+  'unavailable',
+  'unplayable',
+  'private',
+  'removed',
+  'deleted',
+  'blocked',
+];
 
 function readSnapshotMovies(value) {
   if (Array.isArray(value)) {
@@ -54,28 +61,6 @@ function normalizeSnapshot(value) {
   };
 }
 
-async function resolveSnapshotWatchPageAvailability(movie = {}) {
-  const movieId = String(movie.id || '').trim();
-  if (!movieId) {
-    return { keep: false, reason: 'missing movie id' };
-  }
-
-  if (snapshotWatchPageAvailabilityCache.has(movieId)) {
-    return snapshotWatchPageAvailabilityCache.get(movieId);
-  }
-
-  const availability = await checkWatchPageAvailability(movieId, { retries: 0, timeoutMs: 5000 });
-  const cached = availability.ok && availability.available !== null
-    ? availability
-    : { ok: false, available: null, reason: availability.reason || 'watch page check failed' };
-
-  if (cached.available !== null) {
-    snapshotWatchPageAvailabilityCache.set(movieId, cached);
-  }
-
-  return cached;
-}
-
 function explainRecordedWatchPageAvailability(movie = {}) {
   const playabilityStatus = movie?.playabilityStatus;
   if (!playabilityStatus || typeof playabilityStatus !== 'object') {
@@ -85,7 +70,21 @@ function explainRecordedWatchPageAvailability(movie = {}) {
   return explainWatchPageAvailability({ playabilityStatus });
 }
 
-async function shouldKeepSnapshotMovie(movie = {}) {
+function hasRenderableSnapshotTitle(movie = {}) {
+  return Boolean(String(movie.displayTitle || movie.title || '').trim());
+}
+
+function getRecordedAvailabilitySignal(movie = {}) {
+  const watchPageAvailability = String(movie.watchPageAvailability || movie.availability || '').trim().toLowerCase();
+
+  if (watchPageAvailability && SNAPSHOT_EXPLICIT_UNAVAILABLE_MARKERS.some(marker => watchPageAvailability.includes(marker))) {
+    return { keep: false, reason: `watch page unavailable (${watchPageAvailability})` };
+  }
+
+  return explainRecordedWatchPageAvailability(movie);
+}
+
+function shouldKeepSnapshotMovie(movie = {}) {
   if (!movie?.id) {
     return false;
   }
@@ -94,49 +93,29 @@ async function shouldKeepSnapshotMovie(movie = {}) {
     return false;
   }
 
-  if (!hasRenderableThumbnail(movie)) {
-    return false;
-  }
-
-  const recordedWatchPageAvailability = explainRecordedWatchPageAvailability(movie);
-  if (recordedWatchPageAvailability) {
-    return recordedWatchPageAvailability.keep;
-  }
-
   if (movie.watchPageAvailable === false || movie.available === false) {
     return false;
   }
 
-  const cachedAvailability = String(movie.watchPageAvailability || movie.availability || '').trim().toLowerCase();
-  if (['unavailable', 'unplayable', 'blocked', 'private', 'removed', 'deleted'].includes(cachedAvailability)) {
+  const recordedAvailability = getRecordedAvailabilitySignal(movie);
+  if (recordedAvailability && recordedAvailability.keep === false) {
     return false;
   }
 
-  const availability = await resolveSnapshotWatchPageAvailability(movie);
-  return availability.ok ? availability.available === true : true;
+  if (!hasRenderableThumbnail(movie)) {
+    return false;
+  }
+
+  if (!hasRenderableSnapshotTitle(movie)) {
+    return false;
+  }
+
+  return true;
 }
 
 export async function cleanSnapshotMovies(movies = []) {
   const sourceMovies = Array.isArray(movies) ? movies : [];
-  const cleanedMovies = [];
-  let index = 0;
-  const workerCount = Math.min(8, sourceMovies.length || 0);
-
-  async function worker() {
-    while (index < sourceMovies.length) {
-      const currentIndex = index;
-      index += 1;
-      const movie = sourceMovies[currentIndex];
-
-      if (await shouldKeepSnapshotMovie(movie)) {
-        cleanedMovies[currentIndex] = movie;
-      }
-    }
-  }
-
-  await Promise.all(Array.from({ length: workerCount }, () => worker()));
-
-  return cleanedMovies.filter(Boolean);
+  return sourceMovies.filter(shouldKeepSnapshotMovie);
 }
 
 export async function readMovieSnapshot() {

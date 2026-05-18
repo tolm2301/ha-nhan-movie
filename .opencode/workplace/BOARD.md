@@ -4,6 +4,7 @@
 - [ ] (template) Task title | Owner: techlead | Priority: medium
 
 ## In Progress
+- [ ] Stop snapshot cleanup from live-probing every movie | Owner: developer | Priority: high
 - [ ] Fix sitemap catalog exposure so all visible movies are indexed | Owner: developer | Priority: medium
 - [ ] Fix watch video title mask so fullscreen top edge stays crisp | Owner: developer | Priority: medium
 - [ ] Restore local lint/build environment for watch verification | Owner: techlead | Priority: high
