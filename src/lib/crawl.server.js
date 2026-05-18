@@ -1,7 +1,9 @@
 import { load as loadCheerio } from 'cheerio';
 import { loadChannelRegistry, readMoviesFromJsonFile, replacePersistedMovies, updateChannelRegistryEntry } from './movieStore.server.js';
 import { CATEGORY_TAXONOMY, getCategoryDefinitionBySlug, normalizeMovieCategory, normalizeText, resolveMovieCategory } from './movieCategories.js';
+import { cleanSnapshotMovies } from './movieSnapshot.server.js';
 import { hasRenderableThumbnail } from './thumbnailFilters.js';
+import { explainWatchPageAvailability, extractWatchPagePlayerResponse } from './watchPageAvailability.server.js';
 
 const EPISODE_REGEX = /(t\u1eadp|tap|episode|ep\.?|ph\u1ea7n)\s*(\d{1,4})/i;
 const EPISODE_RANGE_REGEX = /(?:\b(?:ep|episode|tap|t\u1eadp|phan|ph\u1ea7n)\s*[\[(]?\s*\d{1,4}\s*(?:[-–—]|to|\u0111\u1ebfn|den|\/)\s*\d{1,4}\b|\[\s*ep\s*\d{1,4}\s*[-–—]\s*\d{1,4}\s*\])/i;
@@ -389,58 +391,6 @@ async function fetchChannelCandidates(channel, context = {}) {
   };
 }
 
-function extractBalancedJson(text = '', startIndex = 0) {
-  let depth = 0;
-  let inString = false;
-  let escaped = false;
-  let started = false;
-  let start = -1;
-
-  for (let index = startIndex; index < text.length; index += 1) {
-    const char = text[index];
-
-    if (!started) {
-      if (char === '{') {
-        started = true;
-        start = index;
-        depth = 1;
-      }
-      continue;
-    }
-
-    if (inString) {
-      if (escaped) {
-        escaped = false;
-      } else if (char === '\\') {
-        escaped = true;
-      } else if (char === '"') {
-        inString = false;
-      }
-
-      continue;
-    }
-
-    if (char === '"') {
-      inString = true;
-      continue;
-    }
-
-    if (char === '{') {
-      depth += 1;
-      continue;
-    }
-
-    if (char === '}') {
-      depth -= 1;
-      if (depth === 0) {
-        return text.slice(start, index + 1);
-      }
-    }
-  }
-
-  return null;
-}
-
 function getRendererText(value = '') {
   if (typeof value === 'string') {
     return value.trim();
@@ -494,55 +444,6 @@ function parseDurationSeconds(value = '', { milliseconds = false } = {}) {
   }
 
   return null;
-}
-
-function extractWatchPagePlayerResponse(html = '') {
-  const playerResponseIndex = html.indexOf('ytInitialPlayerResponse');
-  if (playerResponseIndex === -1) {
-    return null;
-  }
-
-  const jsonStart = html.indexOf('{', playerResponseIndex);
-  if (jsonStart === -1) {
-    return null;
-  }
-
-  const jsonText = extractBalancedJson(html, jsonStart);
-  if (!jsonText) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(jsonText);
-  } catch {
-    return null;
-  }
-}
-
-export function explainWatchPageAvailability(playerResponseOrHtml = '') {
-  const playerResponse = typeof playerResponseOrHtml === 'string'
-    ? extractWatchPagePlayerResponse(playerResponseOrHtml)
-    : playerResponseOrHtml;
-
-  if (!playerResponse) {
-    return { keep: false, reason: 'missing watch page metadata' };
-  }
-
-  const status = String(playerResponse?.playabilityStatus?.status || '').trim().toUpperCase();
-  if (!status || status !== 'OK') {
-    const reason = String(
-      playerResponse?.playabilityStatus?.reason
-      || playerResponse?.playabilityStatus?.errorScreen?.playerErrorMessageRenderer?.reason?.simpleText
-      || playerResponse?.playabilityStatus?.messages?.[0]?.simpleText
-      || playerResponse?.playabilityStatus?.messages?.[0]
-      || status
-      || 'unavailable',
-    ).trim();
-
-    return { keep: false, reason: `watch page unavailable (${reason})` };
-  }
-
-  return { keep: true, reason: 'accepted' };
 }
 
 function extractWatchPageDurationSeconds(playerResponseOrHtml = '') {
@@ -1274,6 +1175,9 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
     .slice(0, MAX_STORED_VIDEOS)
     .map(video => normalizeMovieCategory(video));
 
+  const cleanedFinalData = await cleanSnapshotMovies(finalData);
+  const snapshotCleanupRemoved = finalData.length - cleanedFinalData.length;
+
   const runSummary = {
     runStartedAt,
     runDay,
@@ -1283,7 +1187,8 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
     existingKept: keptOldVideos.length,
     newVideos: newVideos.length,
     totalFetched: newVideos.length,
-    totalVideos: finalData.length,
+    totalVideos: cleanedFinalData.length,
+    snapshotCleanupRemoved,
     categoryCount: categorySummaries.length,
     totals: summarizeCategoryResults(categorySummaries),
     categorySummaries,
@@ -1298,7 +1203,7 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
       runStartedAt,
       runDay,
       finishedAt,
-      totalVideos: finalData.length,
+      totalVideos: cleanedFinalData.length,
       newVideos: newVideos.length,
       fetchedCount: newVideos.length,
       categorySummaries,
@@ -1309,14 +1214,15 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
   }
 
   try {
-    const persisted = await replacePersistedMovies(finalData, {
+    const persisted = await replacePersistedMovies(cleanedFinalData, {
       startedAt: runStartedAt,
       finishedAt: timestamp(),
       status: 'completed',
-      keptCount: finalData.length,
+      keptCount: cleanedFinalData.length,
       fetchedCount: newVideos.length,
       source: 'scripts/crawl.mjs',
       syncSnapshot,
+      cleanSnapshotMovies: false,
       metadata: { mode: 'category-batches', dryRun: false, runDay, summary: runSummary },
     });
 
@@ -1327,7 +1233,7 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
       runStartedAt,
       runDay,
       finishedAt,
-      totalVideos: finalData.length,
+      totalVideos: cleanedFinalData.length,
       newVideos: newVideos.length,
       fetchedCount: newVideos.length,
       categorySummaries,
@@ -1339,7 +1245,7 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
   } catch (error) {
     console.error(`[${timestamp()}] crawl_persist_failed ${JSON.stringify({
       runStartedAt,
-      totalVideos: finalData.length,
+      totalVideos: cleanedFinalData.length,
       summary: runSummary,
       error: serializeError(error),
     })}`);
@@ -1351,7 +1257,7 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
       runStartedAt,
       runDay,
       finishedAt,
-      totalVideos: finalData.length,
+      totalVideos: cleanedFinalData.length,
       newVideos: newVideos.length,
       fetchedCount: newVideos.length,
       categorySummaries,

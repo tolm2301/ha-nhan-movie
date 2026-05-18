@@ -1,12 +1,13 @@
 "use client";
 import { useEffect, useState } from 'react';
-import { getWatchedHistory } from '@/lib/watchHistory';
+import { cleanupWatchedHistory } from '@/lib/watchHistory';
 
 export default function RecentWatchedSectionLazy() {
   const [Section, setSection] = useState(null);
 
   useEffect(() => {
-    if (getWatchedHistory(1).length === 0) {
+    const cleanedHistory = cleanupWatchedHistory();
+    if (cleanedHistory.length === 0) {
       return undefined;
     }
 

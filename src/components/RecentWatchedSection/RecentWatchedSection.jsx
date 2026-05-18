@@ -1,7 +1,7 @@
 "use client";
 import { useSyncExternalStore } from 'react';
 import MovieCarousel from '@/components/MovieCarousel/MovieCarousel';
-import { getWatchedHistory } from '@/lib/watchHistory';
+import { getCleanWatchedHistory } from '@/lib/watchHistory';
 
 const EMPTY_SNAPSHOT = [];
 let cachedSnapshot = EMPTY_SNAPSHOT;
@@ -40,7 +40,7 @@ function subscribeWatchedHistory(callback) {
 }
 
 function getWatchedSnapshot() {
-  const next = getWatchedHistory(20);
+  const next = getCleanWatchedHistory(20);
   if (!isSameHistory(next, cachedSnapshot)) {
     cachedSnapshot = next;
   }

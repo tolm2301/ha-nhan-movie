@@ -124,6 +124,18 @@ function findHiddenMovieTitleMarker(title = '') {
   return episodeRange ? 'episode-range' : '';
 }
 
+function findHiddenCompilationTitleMarker(title = '') {
+  const normalizedTitle = normalizeText(title);
+  if (!normalizedTitle) return '';
+
+  const compilationRangePatterns = [
+    /\bfull\b(?:\s+(?:dai|dài|tron bo|trọn bộ|series|collection|compilation|combo|part|tap|tập|episode|ep))?(?:\s+[^\d]{0,18})?\s*\d+\s*[-–~]\s*\d+\b/i,
+    /\b(?:tron bo|trọn bộ|collection|compilation|combo)\b.*\b\d+\s*[-–~]\s*\d+\b/i,
+  ];
+
+  return compilationRangePatterns.some(pattern => pattern.test(normalizedTitle)) ? 'full-range' : '';
+}
+
 function shouldIncludeCatalogMovie(movie = {}) {
   if (!movie?.id) return false;
 
@@ -131,7 +143,8 @@ function shouldIncludeCatalogMovie(movie = {}) {
     return false;
   }
 
-  return !findHiddenMovieTitleMarker(movie.title || '');
+  const title = movie.title || '';
+  return !findHiddenMovieTitleMarker(title) && !findHiddenCompilationTitleMarker(title);
 }
 
 function moveMovieToFront(movies = [], featuredMovie = null) {

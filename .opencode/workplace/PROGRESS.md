@@ -1,5 +1,23 @@
 # Progress Timeline
 
+## 2026-05-18 (developer strict watch-page source cleanup)
+- Scope: Exclude private / removed / unavailable watch pages at the snapshot source so stale Tu Tiên / Xuyên Không cards do not re-enter runtime data.
+- Actions: Hardened `src/lib/movieSnapshot.server.js` to reject any recorded non-OK playability state, keep a narrow supplemental denylist for the currently known stale ids, and force snapshot writes from `replacePersistedMovies()` through the cleaned result.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run snapshot:movies` regenerated `src/lib/movies.json` with 437 movies; confirmed the known stale ids are absent from the regenerated snapshot; `npm.cmd run build` passed; `npm.cmd run crawl:dry` passed with `totalVideos:341` and `snapshotCleanupRemoved:0`.
+- Risks: Live watch-page checks can still hit transient HTTP failures (for example 429), so unknown failures are tolerated instead of blanking the snapshot; future stale ids may still need a refresh pass or a small explicit denylist.
+
+## 2026-05-18 (developer snapshot cleanup for stale unavailable cards)
+- Scope: Remove the known stale Tu Tiên / Xuyên Không snapshot cards from the generated movie snapshot itself so local runtime refreshes stop resurfacing them.
+- Actions: Added a shared watch-page availability helper in `src/lib/watchPageAvailability.server.js`; taught `src/lib/movieSnapshot.server.js` to clean snapshot movies before write/read using the existing watch-page availability signal plus a small known-bad id set; updated `src/lib/data.js` to load a cleaned snapshot into the runtime catalog; and wired `src/lib/crawl.server.js` / `src/lib/movieStore.server.js` to persist the cleaned set through crawl/snapshot writes.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed and regenerated `src/lib/movies.json`; `npm.cmd run crawl:dry` passed with `totalVideos:341` in the cleaned run summary; the regenerated snapshot no longer contains the known stale ids (`BfnTECe22Cs`, `SyDmi91WnQU`, `akN6uJTXhM4`, `NP57l-JnsIc`, `BhD8C96rdFg`, `9q0oiU3BZwg`, `GZrSLvGsNIM`, `EVpGPAJ2SiI`).
+- Risks: The cleanup is intentionally narrow to the currently known stale ids so build/runtime stay fast; any new unavailable broad-category item will still need a follow-up cleanup signal or a refresh pass.
+
+## 2026-05-18 (developer public UI bad-thumbnail cleanup)
+- Scope: Remove bad-thumbnail items from public list cards and the recent-watched rail so broken cards do not appear anywhere in the public UI.
+- Actions: Updated `src/lib/data.js` to also reject full-range/compilation-style titles such as `[Full 01 - 15] ...`, `Full 1-4 | ...`, and `Full Dài 1-368 - ...`; changed `src/components/MovieCard/MovieCard.jsx` to stop using fallback art and hide any non-renderable/failed thumbnail card; filtered `src/components/MovieCarousel/MovieCarousel.jsx` by `hasRenderableThumbnail()`; and cleaned `src/lib/watchHistory.js`, `src/components/RecentWatchedSection/RecentWatchedSection.jsx`, and `RecentWatchedSectionLazy.jsx` so stale local entries are pruned before the rail mounts.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; smoke check confirmed a synthetic bad-thumbnail movie is excluded from `buildMovieCatalog()` and a synthetic bad watched-history item is removed from `cleanupWatchedHistory()` / `getCleanWatchedHistory()` while a good renderable item survives; browser QA on `home`, `category/tu-tien`, `search`, and recent watched confirmed the observed bad titles are gone.
+- Risks: The cleanup still depends on title/thumbnail heuristics, so a legacy bad item with no detectable marker may survive until the catalog data exposes a signal.
+
 ## 2026-05-18 (developer hide invalid-thumbnail catalog items)
 - Scope: Remove blank/broken-thumbnail entries from all public catalog listings while preserving the existing local fallback thumbnail for otherwise renderable movies.
 - Actions: Added `hasRenderableThumbnail()` to the catalog build filter in `src/lib/data.js` so only movies with renderable thumbnails are included before normalization, mapping, and lookup helpers run.

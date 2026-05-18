@@ -1,27 +1,28 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { buildFallbackThumbnailUrl, getRenderableThumbnail } from '@/lib/thumbnailFilters';
+import { hasRenderableThumbnail } from '@/lib/thumbnailFilters';
 import styles from './MovieCard.module.css';
 
 export default function MovieCard({ movie }) {
+  const [isHidden, setIsHidden] = useState(false);
   const displayTitle = movie?.displayTitle || movie?.title || 'Không rõ tên phim';
-  const thumbnail = getRenderableThumbnail(movie);
-  const fallbackThumbnail = buildFallbackThumbnailUrl(movie);
-  const [thumbnailSrc, setThumbnailSrc] = useState(thumbnail);
+
+  if (isHidden || !movie?.id || !hasRenderableThumbnail(movie)) {
+    return null;
+  }
 
   return (
     <Link href={`/watch/${movie.id}`} className={styles.card} title={displayTitle}>
       <div className={styles.imageContainer}>
         <img
-          src={thumbnailSrc}
+          src={movie.thumbnail}
           alt={displayTitle}
           className={styles.image}
           loading="lazy"
           decoding="async"
-          onError={() => setThumbnailSrc(current => (current === fallbackThumbnail ? current : fallbackThumbnail))}
+          onError={() => setIsHidden(true)}
         />
         <span className={styles.tagBadge}>{movie.tags || 'Khác'}</span>
         <span className={styles.durationBadge}>{movie.episodes || 'Full'}</span>

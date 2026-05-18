@@ -14,7 +14,8 @@
 - [ ] Enforce agreed 4-slot AdSense setup: home after rail 3, category after first block, watch after related, search after 8–12 results | Owner: developer | Priority: medium
 
 ## Review
-- [ ] Hide stale bad items from the runtime catalog display | Owner: developer | Priority: high | Verify: lint/build/smoke passed
+- [ ] Strictly clean snapshot generation so private / removed / unavailable Tu Tiên / Xuyên Không watch pages never persist into runtime cards | Owner: developer | Priority: high | Verify: lint/build/crawl:dry passed; `src/lib/movies.json` no longer contains the known stale ids
+- [ ] Hide stale bad items from public UI lists and the recent watched rail | Owner: developer | Priority: high | Verify: lint/build/smoke passed
 - [ ] Switch remote YouTube thumbnails to browser-loaded `<img>` and cull clip-like/unavailable crawl items on refresh | Owner: developer | Priority: high
 - [ ] Add subtitle/caption selector to watch player | Owner: techlead | Priority: medium
 - [ ] Fix site branding icon/metadata so browsers and search results show Hanhan/Hà Nhân branding | Owner: developer | Priority: medium

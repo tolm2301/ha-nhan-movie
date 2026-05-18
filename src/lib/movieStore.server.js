@@ -1,7 +1,7 @@
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { Pool } from 'pg';
-import { isMovieSnapshotStale, readMovieSnapshot, MOVIE_SNAPSHOT_TTL_MS, writeMovieSnapshot } from './movieSnapshot.server.js';
+import { cleanSnapshotMovies, isMovieSnapshotStale, readMovieSnapshot, MOVIE_SNAPSHOT_TTL_MS, writeMovieSnapshot } from './movieSnapshot.server.js';
 
 const CHANNEL_SEEDS_PATH = path.resolve('src/lib/channel-seeds.json');
 const BATCH_SIZE = 100;
@@ -301,8 +301,9 @@ async function withClient(work) {
 
 export async function readMoviesFromJsonFile() {
   const movies = (await readMovieSnapshot()).movies;
+  const cleanedMovies = await cleanSnapshotMovies(movies);
 
-  return movies.map((movie, index) => normalizeMovieRecord(movie, index));
+  return cleanedMovies.map((movie, index) => normalizeMovieRecord(movie, index));
 }
 
 async function syncChannelRegistryFromJsonFile(client, channels = []) {
@@ -663,7 +664,11 @@ export async function replacePersistedMovies(movies = [], runMeta = {}) {
 
       if (syncSnapshot) {
         try {
-          await writeMovieSnapshot(persistedMovies, { source: 'db', generatedAt: finishedAt });
+          await writeMovieSnapshot(persistedMovies, {
+            source: 'db',
+            generatedAt: finishedAt,
+            cleanMovies: true,
+          });
         } catch (error) {
           snapshotSynced = false;
           snapshotSkipped = false;

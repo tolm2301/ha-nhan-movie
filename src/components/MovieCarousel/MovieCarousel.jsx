@@ -1,12 +1,13 @@
 "use client";
 import React, { useRef } from 'react';
 import Link from 'next/link';
+import { hasRenderableThumbnail } from '@/lib/thumbnailFilters';
 import styles from './MovieCarousel.module.css';
 import MovieCard from '../MovieCard/MovieCard';
 
 export default function MovieCarousel({ title, movies, viewAllHref }) {
   const scrollRef = useRef(null);
-  const visibleMovies = (movies || []).filter(movie => Boolean(movie?.id));
+  const visibleMovies = (movies || []).filter(movie => Boolean(movie?.id) && hasRenderableThumbnail(movie));
 
   if (visibleMovies.length === 0) {
     return null;
