@@ -1,5 +1,11 @@
 # Progress Timeline
 
+## 2026-05-18 (developer hide invalid-thumbnail catalog items)
+- Scope: Remove blank/broken-thumbnail entries from all public catalog listings while preserving the existing local fallback thumbnail for otherwise renderable movies.
+- Actions: Added `hasRenderableThumbnail()` to the catalog build filter in `src/lib/data.js` so only movies with renderable thumbnails are included before normalization, mapping, and lookup helpers run.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; smoke check confirmed a synthetic placeholder-thumbnail movie is excluded from `buildMovieCatalog()` and `getMovieById('bad-1')` returns `null`, while a good thumbnail item remains visible.
+- Risks: This intentionally hides records whose stored thumbnail is known-bad, so any movie that was only missing a thumbnail will no longer appear until it is refreshed with a renderable thumbnail.
+
 ## 2026-05-18 (developer runtime catalog hide filter)
 - Scope: Hide stale bad items from the runtime catalog so broken/short/episode-like legacy entries stop showing up in home/category/search/watch/API listings.
 - Actions: Added a small catalog-level filter in `src/lib/data.js` that drops non-`full` items, anything with `episodeNumber` or `seriesKey`, and obvious bad title markers like trailer/teaser/clip/recap/highlight/summary/shorts plus episode-range titles such as `[EP1-10] ...` before catalog normalization runs.

@@ -1,6 +1,6 @@
 import { ensureFreshMovieSnapshot } from './movieStore.server.js';
 import { buildCategoryBuckets, normalizeMovieCategory } from './movieCategories.js';
-import { getRenderableThumbnail } from './thumbnailFilters.js';
+import { getRenderableThumbnail, hasRenderableThumbnail } from './thumbnailFilters.js';
 
 function normalizeText(value = '') {
   return value
@@ -174,7 +174,10 @@ function getHomeFeaturedMovie(categoryBuckets, allMovies) {
 }
 
 export function buildMovieCatalog(movies = [], snapshotMeta = {}) {
-  const allMovies = movies.filter(shouldIncludeCatalogMovie).map(resolveCatalogMovie);
+  const allMovies = movies
+    .filter(shouldIncludeCatalogMovie)
+    .filter(hasRenderableThumbnail)
+    .map(resolveCatalogMovie);
 
   const trendingMovies = allMovies.slice(0, 15);
 
