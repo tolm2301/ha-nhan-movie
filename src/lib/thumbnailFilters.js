@@ -67,11 +67,20 @@ function isAllowedThumbnailHost(hostname = '') {
   return YOUTUBE_IMAGE_HOSTS.has(hostname) || /^i\d+\.ytimg\.com$/i.test(String(hostname || ''));
 }
 
-export function hasRenderableThumbnail(movie = {}) {
-  const thumbnail = String(movie.thumbnail || '').trim();
+function normalizeMovie(movie) {
+  if (!movie || typeof movie !== 'object' || Array.isArray(movie)) {
+    return {};
+  }
+
+  return movie;
+}
+
+export function hasRenderableThumbnail(movie) {
+  const safeMovie = normalizeMovie(movie);
+  const thumbnail = String(safeMovie.thumbnail || '').trim();
   if (!thumbnail) return false;
 
-  const movieId = String(movie.id || '').trim();
+  const movieId = String(safeMovie.id || '').trim();
   if (BROKEN_THUMBNAIL_IDS.has(movieId)) return false;
   if (BROKEN_THUMBNAIL_URLS.has(thumbnail)) return false;
 
@@ -93,19 +102,21 @@ export function hasRenderableThumbnail(movie = {}) {
   return true;
 }
 
-function buildThumbnailFallbackSeed(movie = {}) {
-  const id = String(movie.id || movie.videoId || '').trim();
-  const title = String(movie.displayTitle || movie.title || '').trim();
-  const tag = String(movie.tags || movie.categoryTag || movie.categorySlug || 'Khác').trim();
+function buildThumbnailFallbackSeed(movie) {
+  const safeMovie = normalizeMovie(movie);
+  const id = String(safeMovie.id || safeMovie.videoId || '').trim();
+  const title = String(safeMovie.displayTitle || safeMovie.title || '').trim();
+  const tag = String(safeMovie.tags || safeMovie.categoryTag || safeMovie.categorySlug || 'Khác').trim();
 
   return [id, title, tag].filter(Boolean).join('|') || 'hanhan-movie';
 }
 
-export function buildFallbackThumbnailUrl(movie = {}) {
-  const title = String(movie.displayTitle || movie.title || 'Không rõ tên phim').trim() || 'Không rõ tên phim';
-  const tag = String(movie.tags || movie.categoryTag || movie.categorySlug || 'Khác').trim() || 'Khác';
+export function buildFallbackThumbnailUrl(movie) {
+  const safeMovie = normalizeMovie(movie);
+  const title = String(safeMovie.displayTitle || safeMovie.title || 'Không rõ tên phim').trim() || 'Không rõ tên phim';
+  const tag = String(safeMovie.tags || safeMovie.categoryTag || safeMovie.categorySlug || 'Khác').trim() || 'Khác';
   const params = new URLSearchParams({
-    seed: buildThumbnailFallbackSeed(movie),
+    seed: buildThumbnailFallbackSeed(safeMovie),
     title,
     tag,
   });
@@ -113,11 +124,12 @@ export function buildFallbackThumbnailUrl(movie = {}) {
   return `${FALLBACK_THUMBNAIL_ROUTE}?${params.toString()}`;
 }
 
-export function getRenderableThumbnail(movie = {}) {
-  const thumbnail = String(movie.thumbnail || '').trim();
-  if (hasRenderableThumbnail(movie)) {
+export function getRenderableThumbnail(movie) {
+  const safeMovie = normalizeMovie(movie);
+  const thumbnail = String(safeMovie.thumbnail || '').trim();
+  if (hasRenderableThumbnail(safeMovie)) {
     return thumbnail;
   }
 
-  return buildFallbackThumbnailUrl(movie);
+  return buildFallbackThumbnailUrl(safeMovie);
 }

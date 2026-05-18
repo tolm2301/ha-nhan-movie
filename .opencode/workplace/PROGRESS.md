@@ -1,5 +1,11 @@
 # Progress Timeline
 
+## 2026-05-18 (developer null-safe thumbnail helper crash fix)
+- Scope: Make `thumbnailFilters` safe when prerendered render paths pass null/undefined movie values, preventing the `/` prerender crash from missing thumbnail data.
+- Actions: Added a shared movie normalizer in `src/lib/thumbnailFilters.js`, made `hasRenderableThumbnail(movie)` return `false` for null/non-object inputs, and hardened `getRenderableThumbnail(movie)` plus the fallback thumbnail URL builder so null inputs no longer throw.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; build completed static page generation and `/` prerendered successfully without the `Cannot read properties of null (reading 'thumbnail')` crash.
+- Risks: Null records now intentionally fall back to the local thumbnail route instead of a remote image, but valid movie behavior is unchanged.
+
 ## 2026-05-18 (developer strict watch-page source cleanup)
 - Scope: Exclude private / removed / unavailable watch pages at the snapshot source so stale Tu Tiên / Xuyên Không cards do not re-enter runtime data.
 - Actions: Hardened `src/lib/movieSnapshot.server.js` to reject any recorded non-OK playability state, keep a narrow supplemental denylist for the currently known stale ids, and force snapshot writes from `replacePersistedMovies()` through the cleaned result.
