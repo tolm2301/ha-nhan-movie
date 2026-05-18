@@ -14,15 +14,15 @@
 - [ ] Enforce agreed 4-slot AdSense setup: home after rail 3, category after first block, watch after related, search after 8–12 results | Owner: developer | Priority: medium
 
 ## Review
+- [ ] Add subtitle/caption selector to watch player | Owner: techlead | Priority: medium
 - [ ] Fix site branding icon/metadata so browsers and search results show Hanhan/Hà Nhân branding | Owner: developer | Priority: medium
 - [ ] Add deterministic fallback thumbnails for missing/broken movie images | Owner: developer | Priority: high
 - [ ] Strictly clean crawl registry to 2D movie/animation sources only | Owner: techlead | Priority: high
 - [ ] Make production crawl feed-only and source-first; remove ytsearch/search backfill from the daily crawl path | Owner: techlead | Priority: high
-- [ ] Tighten crawler theme filtering and rejection reasons | Owner: developer | Priority: high
-- [ ] Fix Next image host config for ytimg subdomains used by hero thumbnails | Owner: developer | Priority: high
+- [ ] Fix Next image host config for ytimg subdomains used by hero thumbnails | Owner: developer | Priority: high | Verify: lint/build/smoke passed
 - [ ] Remove all drama-related seed channels and keep only non-drama clip-style sources for release | Owner: developer | Priority: high
 - [ ] Remove DramaBox channels and restore the high-signal clip-style release seed set | Owner: techlead | Priority: high
-- [ ] Fix overly strict crawl filtering so new valid movies can survive to persistence | Owner: developer | Priority: high
+- [ ] Fix overly strict crawl filtering so new valid movies can survive to persistence (strictly over 40 minutes; 2400s rejected) | Owner: developer | Priority: high
 - [ ] Change crawl persistence to append/merge so existing movies are retained across runs | Owner: developer | Priority: high
 - [ ] Add DB-backed channel registry with repo seed bootstrap so crawl discovery stops depending on yt-search and ad hoc channel hunting | Owner: techlead | Priority: high
 - [ ] Implement lazy snapshot sync with a 1-hour TTL, keeping JSON as the runtime source and refreshing from DB only when stale | Owner: developer | Priority: high
@@ -57,6 +57,7 @@
 
 ## Done
 - [ ] (template) Task title | Owner: techlead | Finished: YYYY-MM-DD
+- [x] Tighten crawler theme filtering and rejection reasons (episode/series rejected early; strictly over-40-minute floor enforced) | Owner: developer | Finished: 2026-05-13
 - [x] Make runtime catalog read DB-first so crawl updates reach the web immediately | Owner: developer | Finished: 2026-05-05
 - [x] Make every crawl category refill until it keeps at least 5 new movies per day, treating duplicates as backfill triggers instead of stopping early | Owner: developer | Finished: 2026-05-05
 - [x] Keep crawl registry in sync with repo channel seeds | Owner: developer | Finished: 2026-05-05

@@ -4,6 +4,7 @@ import { CATEGORY_TAXONOMY, getCategoryDefinitionBySlug, normalizeMovieCategory,
 import { hasRenderableThumbnail } from './thumbnailFilters.js';
 
 const EPISODE_REGEX = /(t\u1eadp|tap|episode|ep\.?|ph\u1ea7n)\s*(\d{1,4})/i;
+const MIN_VIDEO_DURATION_SECONDS = 2400;
 const MAX_STORED_VIDEOS = 1000;
 const CHANNEL_FEED_ENTRY_LIMIT = 20;
 const RETRY_TIMES = 3;
@@ -471,6 +472,93 @@ function parseDurationText(value = '') {
   return parts.reduce((total, part) => total * 60 + part, 0);
 }
 
+function parseDurationSeconds(value = '', { milliseconds = false } = {}) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return milliseconds ? Math.round(value / 1000) : Math.round(value);
+  }
+
+  const text = String(value || '').trim();
+  if (!text) {
+    return null;
+  }
+
+  if (/^\d+$/.test(text)) {
+    const seconds = Number(text);
+    return Number.isFinite(seconds) ? (milliseconds ? Math.round(seconds / 1000) : seconds) : null;
+  }
+
+  const parsed = parseDurationText(text);
+  if (parsed !== null) {
+    return parsed;
+  }
+
+  return null;
+}
+
+function extractWatchPageDurationSeconds(html = '') {
+  const playerResponseIndex = html.indexOf('ytInitialPlayerResponse');
+  if (playerResponseIndex === -1) {
+    return null;
+  }
+
+  const jsonStart = html.indexOf('{', playerResponseIndex);
+  if (jsonStart === -1) {
+    return null;
+  }
+
+  const jsonText = extractBalancedJson(html, jsonStart);
+  if (!jsonText) {
+    return null;
+  }
+
+  try {
+    const playerResponse = JSON.parse(jsonText);
+    const durationSources = [
+      { value: playerResponse?.videoDetails?.lengthSeconds, milliseconds: false },
+      { value: playerResponse?.microformat?.playerMicroformatRenderer?.lengthSeconds, milliseconds: false },
+      { value: playerResponse?.videoDetails?.approxDurationMs, milliseconds: true },
+      { value: playerResponse?.microformat?.playerMicroformatRenderer?.approxDurationMs, milliseconds: true },
+    ];
+
+    for (const durationSource of durationSources) {
+      const seconds = parseDurationSeconds(durationSource.value, { milliseconds: durationSource.milliseconds });
+      if (seconds !== null) {
+        return seconds;
+      }
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+async function fetchVideoDurationSeconds(videoId, context = {}) {
+  const watchUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}&hl=en&gl=US`;
+  const result = await fetchTextWithRetry(watchUrl, {
+    ...context,
+    phase: 'video-watch-page',
+    watchUrl,
+  });
+
+  if (!result.ok) {
+    return result;
+  }
+
+  const seconds = extractWatchPageDurationSeconds(result.result);
+  if (seconds === null) {
+    return {
+      ok: false,
+      error: new Error(`Unable to determine duration for ${videoId}`),
+    };
+  }
+
+  return {
+    ok: true,
+    result: seconds,
+  };
+}
+
 function parseViewsText(value = '') {
   const text = getRendererText(value).toLowerCase();
   if (!text) {
@@ -542,6 +630,19 @@ function findBadVideoTitleKeyword(title = '') {
   return badWords.find(word => matchesBadVideoTitleKeyword(title, word)) || '';
 }
 
+function findEpisodeTitleMarker(title = '') {
+  const episodeMatch = String(title || '').match(EPISODE_REGEX);
+  if (episodeMatch?.[0]) {
+    return episodeMatch[0];
+  }
+
+  if (/\bseries\b/i.test(String(title || ''))) {
+    return 'series';
+  }
+
+  return '';
+}
+
 function isBadVideoTitle(title = '') {
   return Boolean(findBadVideoTitleKeyword(title));
 }
@@ -552,6 +653,12 @@ function explainVideoDecision(video, targetType, trustedAuthorWords) {
   }
 
   const title = (video.title || '').toLowerCase();
+  const episodeMarker = findEpisodeTitleMarker(title);
+
+  if (episodeMarker || video.type === 'series' || Number.isFinite(video.episodeNumber) || Boolean(video.seriesKey)) {
+    return { keep: false, reason: `blocked by episode/series title marker (${episodeMarker || video.type || 'series'})` };
+  }
+
   const blockedTitleKeyword = findBadVideoTitleKeyword(title);
 
   if (blockedTitleKeyword) {
@@ -592,6 +699,22 @@ function normalizeVideoData(video, category) {
     categorySlug: category?.slug || 'khac',
     rating: 'N/A',
   };
+}
+
+function explainDurationDecision(durationSeconds) {
+  if (durationSeconds === null || durationSeconds === undefined) {
+    return { keep: false, reason: 'missing duration metadata' };
+  }
+
+  if (!Number.isFinite(durationSeconds)) {
+    return { keep: false, reason: 'missing duration metadata' };
+  }
+
+  if (durationSeconds <= MIN_VIDEO_DURATION_SECONDS) {
+    return { keep: false, reason: `must be strictly over ${MIN_VIDEO_DURATION_SECONDS}s (${Math.round(durationSeconds)}s)` };
+  }
+
+  return { keep: true, reason: 'accepted' };
 }
 
 function explainThumbnailDecision(movie = {}) {
@@ -902,6 +1025,60 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
               continue;
             }
 
+            const durationResult = await fetchVideoDurationSeconds(video.videoId, {
+              category: tag,
+              slug,
+              query: target.query,
+              type: target.type,
+              wave: wave.name,
+              runDay,
+            });
+
+            if (!durationResult.ok) {
+              rejectedCount += 1;
+              targetRejectedCount += 1;
+              waveSummary.rejected += 1;
+              targetSummary.rejected += 1;
+              const reason = 'missing duration metadata';
+              incrementCountMap(categoryRejectReasons, reason);
+              incrementCountMap(targetSummary.rejectReasons, reason);
+              logCrawl('  - reject', {
+                runDay,
+                category: tag,
+                slug,
+                query: target.query,
+                wave: wave.name,
+                title: videoLabel,
+                durationSeconds: null,
+                minimumDurationSeconds: MIN_VIDEO_DURATION_SECONDS,
+                durationError: serializeError(durationResult.error),
+                reason,
+              });
+              continue;
+            }
+
+            const durationDecision = explainDurationDecision(durationResult.result);
+            if (!durationDecision.keep) {
+              rejectedCount += 1;
+              targetRejectedCount += 1;
+              waveSummary.rejected += 1;
+              targetSummary.rejected += 1;
+              incrementCountMap(categoryRejectReasons, durationDecision.reason);
+              incrementCountMap(targetSummary.rejectReasons, durationDecision.reason);
+              logCrawl('  - reject', {
+                runDay,
+                category: tag,
+                slug,
+                query: target.query,
+                wave: wave.name,
+                title: videoLabel,
+                durationSeconds: durationResult.result,
+                minimumDurationSeconds: MIN_VIDEO_DURATION_SECONDS,
+                reason: durationDecision.reason,
+              });
+              continue;
+            }
+
             const normalized = normalizeVideoData(video, resolvedCategory);
             runNewIds.add(video.videoId);
             keptVideos.push(normalized);
@@ -918,6 +1095,7 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
               wave: wave.name,
               title: normalized.title,
               seconds: video?.seconds ?? null,
+              durationSeconds: durationResult.result,
               author: video?.author?.name ?? null,
               keptForCategory: keptVideos.length,
               batchLimit: targetQuota,

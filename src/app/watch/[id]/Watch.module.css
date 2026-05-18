@@ -414,6 +414,10 @@
   padding: 0 10px;
 }
 
+.captionSelect {
+  min-width: 154px;
+}
+
 
 .infoSection {
   margin-bottom: 40px;
@@ -511,6 +515,11 @@
   }
 
   .qualitySelect {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .captionSelect {
     min-width: 0;
     flex: 1;
   }

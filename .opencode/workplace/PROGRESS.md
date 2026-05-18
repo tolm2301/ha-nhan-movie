@@ -1,5 +1,29 @@
 # Progress Timeline
 
+## 2026-05-18 (developer Next image host alignment)
+- Scope: Fix the image-missing-on-other-machines issue by aligning `next/image` remote host allowlists with the thumbnail helper's accepted YouTube image hosts.
+- Actions: Updated `next.config.mjs` so Next now allows both `**.ytimg.com` and `img.youtube.com` for the `/vi/**` and `/vi_webp/**` thumbnail paths, matching the helper allowlist more safely than the previous hardcoded `i1`-`i4` list.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; config smoke confirmed `i.ytimg.com`, `i123.ytimg.com`, and `img.youtube.com` URLs on `/vi/**` and `/vi_webp/**` all match the new remotePatterns.
+- Risks: The allowlist is still limited to YouTube thumbnail path prefixes; any future nonstandard thumbnail path would still need a follow-up config update.
+
+## 2026-05-13 (developer crawler strict-over-40-min correction)
+- Scope: Correct the crawler duration floor so videos must be strictly over 40 minutes, not merely at least 40 minutes.
+- Actions: Updated `src/lib/crawl.server.js` so `explainDurationDecision()` rejects `<= 2400s` with a strict-over-40-min reason while keeping the existing episode/series early rejection and watch-page duration parsing unchanged.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; helper smoke confirmed `explainDurationDecision(2400)` returns `must be strictly over 2400s (2400s)` and `explainDurationDecision(2401)` returns `accepted`.
+- Risks: The rule remains dependent on watch-page duration parsing; if YouTube stops exposing reliable duration metadata, those candidates still fail closed.
+
+## 2026-05-13 (developer crawler episode/duration floor)
+- Scope: Stop the crawler from keeping episodic videos by rejecting episode/series titles early and enforcing a hard 40-minute minimum with fail-closed duration parsing; also drop episodic items from the retained old-catalog path.
+- Actions: Added episode-marker rejection and old-catalog series filtering in `src/lib/crawl.server.js`, fetched YouTube watch-page metadata per candidate only after cheap filters and parsed duration from `ytInitialPlayerResponse`, and logged explicit rejection reasons for episode/series, missing duration, and under-40-minute videos.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; `npm.cmd run crawl:dry` completed and showed the crawl still finishes cleanly with `existingKept:282`; helper-level smoke checks confirmed `explainVideoDecision()` returns `blocked by episode/series title marker (...)`, `explainDurationDecision(2399)` returns `under 2400s (2399s)`, and `explainDurationDecision(null)` returns `missing duration metadata`; a series-shaped old-catalog sample also rejected.
+- Risks: This environment had no live feed candidates, so the new reject logs were validated through helper smoke rather than an observed live candidate rejection; the watch-page duration parser still depends on YouTube exposing `ytInitialPlayerResponse` on the watch page.
+
+## 2026-05-06 (developer watch captions selector)
+- Scope: Add a visible subtitle/caption selector to the watch player using the existing YouTube IFrame API captions module, with Vietnamese tracks preferred when available and graceful fallback when captions are absent.
+- Actions: Extended `src/app/watch/[id]/WatchClient.jsx` to detect captions through `onApiChange`/`onReady`, normalize track options, prefer Vietnamese/Vietsub-like labels in the selector, and apply the selected track through `setOption('captions', 'track', ...)` with an off state. Added a matching `Watch.module.css` size tweak for the new control.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; static code-path smoke check confirms captions are synchronized from the player API when available and the selector no-ops when the captions module/tracklist is missing.
+- Risks: YouTube's captions option shape can vary by embed/video, so unknown track payloads are handled defensively and may still hide the selector if the module is not exposed.
+
 ## 2026-05-06 (developer sitemap indexing fix)
 - Scope: Make the sitemap expose the full visible catalog instead of a tiny filtered subset, while keeping thumbnails renderable on each movie object and preserving existing category/home behavior.
 - Actions: Kept catalog normalization focused on per-movie thumbnail resolution in `src/lib/data.js`, carried snapshot metadata through the catalog so sitemap timestamps can reflect the snapshot generation time when available, and updated `src/app/sitemap.js` to emit all movie watch URLs plus category URLs with a stable `lastModified` value.
