@@ -1,5 +1,11 @@
 # Progress Timeline
 
+## 2026-05-18 (developer runtime catalog hide filter)
+- Scope: Hide stale bad items from the runtime catalog so broken/short/episode-like legacy entries stop showing up in home/category/search/watch/API listings.
+- Actions: Added a small catalog-level filter in `src/lib/data.js` that drops non-`full` items, anything with `episodeNumber` or `seriesKey`, and obvious bad title markers like trailer/teaser/clip/recap/highlight/summary/shorts plus episode-range titles such as `[EP1-10] ...` before catalog normalization runs.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; smoke check confirmed `buildMovieCatalog()` excludes a sample `[EP1-10] Example Movie` item and `getMovieById('sample-ep')` returns `null` while a normal item remains visible.
+- Risks: This still relies on metadata already present in the snapshot, so truly unknown legacy bad items without a matching type/title marker remain visible until a crawl/snapshot refresh exposes a detectable signal.
+
 ## 2026-05-18 (developer thumbnail + crawl filter hardening)
 - Scope: Make remote YouTube thumbnails render without Next image optimizer fragility and cull clip-like / episode-range / watch-page-unavailable videos more aggressively.
 - Actions: Switched `src/components/Hero/Hero.jsx` and `src/components/MovieCard/MovieCard.jsx` from `next/image` to plain browser-loaded `<img>` tags while preserving the existing local SVG fallback-on-error flow; tightened `src/lib/crawl.server.js` so episode-range titles like `[EP1-10] ...`, clip/recap-style titles, and unavailable watch pages fail closed; exported small helpers for smoke verification.

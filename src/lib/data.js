@@ -90,6 +90,50 @@ function cleanMovieTitle(title = '') {
   return cleaned || original;
 }
 
+function findHiddenMovieTitleMarker(title = '') {
+  const normalizedTitle = normalizeText(title);
+  if (!normalizedTitle) return '';
+
+  const titleKeywords = [
+    'trailer',
+    'teaser',
+    'clip',
+    'recap',
+    'highlight',
+    'summary',
+    'shorts',
+    'reaction',
+    'tóm tắt',
+    'tom tat',
+    'review',
+    'phim ngắn',
+    'phim ngan',
+  ];
+
+  const keyword = titleKeywords.find(candidate => normalizedTitle.includes(normalizeText(candidate)));
+  if (keyword) {
+    return keyword;
+  }
+
+  const episodeRangePatterns = [
+    /\b(?:ep|episode|tap)\s*\d+\s*[-–~]\s*\d+\b/i,
+    /\b(?:ep|episode|tap)\s*\d+\s*(?:to|den|->)\s*\d+\b/i,
+  ];
+
+  const episodeRange = episodeRangePatterns.find(pattern => pattern.test(normalizedTitle));
+  return episodeRange ? 'episode-range' : '';
+}
+
+function shouldIncludeCatalogMovie(movie = {}) {
+  if (!movie?.id) return false;
+
+  if ((movie.type && movie.type !== 'full') || Number.isFinite(movie.episodeNumber) || Boolean(movie.seriesKey)) {
+    return false;
+  }
+
+  return !findHiddenMovieTitleMarker(movie.title || '');
+}
+
 function moveMovieToFront(movies = [], featuredMovie = null) {
   if (!featuredMovie?.id || !Array.isArray(movies) || movies.length === 0) {
     return featuredMovie?.id ? [featuredMovie] : movies;
@@ -130,7 +174,7 @@ function getHomeFeaturedMovie(categoryBuckets, allMovies) {
 }
 
 export function buildMovieCatalog(movies = [], snapshotMeta = {}) {
-  const allMovies = movies.map(resolveCatalogMovie);
+  const allMovies = movies.filter(shouldIncludeCatalogMovie).map(resolveCatalogMovie);
 
   const trendingMovies = allMovies.slice(0, 15);
 

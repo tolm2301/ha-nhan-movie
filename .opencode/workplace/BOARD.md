@@ -14,6 +14,7 @@
 - [ ] Enforce agreed 4-slot AdSense setup: home after rail 3, category after first block, watch after related, search after 8–12 results | Owner: developer | Priority: medium
 
 ## Review
+- [ ] Hide stale bad items from the runtime catalog display | Owner: developer | Priority: high | Verify: lint/build/smoke passed
 - [ ] Switch remote YouTube thumbnails to browser-loaded `<img>` and cull clip-like/unavailable crawl items on refresh | Owner: developer | Priority: high
 - [ ] Add subtitle/caption selector to watch player | Owner: techlead | Priority: medium
 - [ ] Fix site branding icon/metadata so browsers and search results show Hanhan/Hà Nhân branding | Owner: developer | Priority: medium
