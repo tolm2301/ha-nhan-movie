@@ -1,7 +1,7 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { buildFallbackThumbnailUrl, getRenderableThumbnail } from '@/lib/thumbnailFilters';
 import styles from './Hero.module.css';
 
@@ -11,7 +11,6 @@ export default function Hero({ featuredMovie }) {
   const router = useRouter();
   const featuredTitle = featuredMovie?.displayTitle || featuredMovie?.title;
   const fallbackThumbnail = buildFallbackThumbnailUrl(featuredMovie);
-  const useUnoptimizedImage = featuredThumbnail.startsWith('/api/movie-thumbnail');
 
   const handleWatch = () => {
     if (featuredMovie) {
@@ -27,14 +26,13 @@ export default function Hero({ featuredMovie }) {
     <section className={styles.hero}>
       {featuredMovie && (
         <div className={styles.background}>
-          <Image
+          <img
             src={featuredThumbnail}
             alt={featuredTitle}
-            fill
             className={styles.bgImage}
-            priority
-            sizes="100vw"
-            unoptimized={useUnoptimizedImage}
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
             onError={() => setFeaturedThumbnail(current => (current === fallbackThumbnail ? current : fallbackThumbnail))}
           />
           <div className={styles.overlay}></div>

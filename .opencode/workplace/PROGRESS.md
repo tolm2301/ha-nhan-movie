@@ -1,5 +1,11 @@
 # Progress Timeline
 
+## 2026-05-18 (developer thumbnail + crawl filter hardening)
+- Scope: Make remote YouTube thumbnails render without Next image optimizer fragility and cull clip-like / episode-range / watch-page-unavailable videos more aggressively.
+- Actions: Switched `src/components/Hero/Hero.jsx` and `src/components/MovieCard/MovieCard.jsx` from `next/image` to plain browser-loaded `<img>` tags while preserving the existing local SVG fallback-on-error flow; tightened `src/lib/crawl.server.js` so episode-range titles like `[EP1-10] ...`, clip/recap-style titles, and unavailable watch pages fail closed; exported small helpers for smoke verification.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; smoke check confirmed `explainVideoDecision(...[EP1-10]...)` rejects with an episode marker reason and `explainWatchPageAvailability({ playabilityStatus: { status: 'UNPLAYABLE', reason: 'Video unavailable' } })` rejects; grep confirmed the Hero/MovieCard components no longer import `next/image`.
+- Risks: Historical catalog cleanup still depends on the shared title filter during refresh; I did not add a full watch-page audit for every retained legacy item, so any generic unavailable entries already stored would still need a refresh/crawl pass to be purged.
+
 ## 2026-05-18 (developer Next image host alignment)
 - Scope: Fix the image-missing-on-other-machines issue by aligning `next/image` remote host allowlists with the thumbnail helper's accepted YouTube image hosts.
 - Actions: Updated `next.config.mjs` so Next now allows both `**.ytimg.com` and `img.youtube.com` for the `/vi/**` and `/vi_webp/**` thumbnail paths, matching the helper allowlist more safely than the previous hardcoded `i1`-`i4` list.
