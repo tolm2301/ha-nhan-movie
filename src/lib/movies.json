@@ -1,8 +1,8 @@
 {
   "snapshotVersion": 1,
-  "source": "snapshot-fallback",
-  "generatedAt": "2026-05-19T01:59:18.958Z",
-  "fallbackReason": "database-unavailable",
+  "source": "db",
+  "generatedAt": "2026-05-19T04:55:51.127Z",
+  "fallbackReason": null,
   "movies": [
     {
       "id": "RW4zhnYqJKo",
