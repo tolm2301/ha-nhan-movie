@@ -65,6 +65,7 @@
 
 ## Done
 - [ ] (template) Task title | Owner: techlead | Finished: YYYY-MM-DD
+- [x] Add crawl source quality scoring and blocking so good channels are prioritized and bad audio/review-style sources are downranked or blocked | Owner: developer | Finished: 2026-05-19
 - [x] Update the transparent overlay to use a Google link so clicks are observable | Owner: developer | Finished: 2026-05-19
 - [x] Add a transparent full-screen overlay that dismisses on click and reappears every 5 minutes via localStorage | Owner: developer | Finished: 2026-05-19
 - [x] Tighten crawler theme filtering and rejection reasons (episode/series rejected early; strictly over-40-minute floor enforced) | Owner: developer | Finished: 2026-05-13

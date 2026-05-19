@@ -1,5 +1,5 @@
 import { load as loadCheerio } from 'cheerio';
-import { loadChannelRegistry, readMoviesFromJsonFile, replacePersistedMovies, updateChannelRegistryEntry } from './movieStore.server.js';
+import { buildChannelQualityUpdate, loadChannelRegistry, readMoviesFromJsonFile, replacePersistedMovies, updateChannelRegistryEntry } from './movieStore.server.js';
 import { CATEGORY_TAXONOMY, getCategoryDefinitionBySlug, normalizeMovieCategory, normalizeText, resolveMovieCategory } from './movieCategories.js';
 import { cleanSnapshotMovies } from './movieSnapshot.server.js';
 import { hasRenderableThumbnail } from './thumbnailFilters.js';
@@ -73,6 +73,42 @@ function createTargetRunStats({ runDay, category, slug, query, type, wave, chann
     duplicateReasons: {},
     error: null,
   };
+}
+
+function sortChannelsForCrawl(left, right) {
+  const leftBlocked = left?.blocked === true;
+  const rightBlocked = right?.blocked === true;
+
+  if (leftBlocked !== rightBlocked) {
+    return leftBlocked ? 1 : -1;
+  }
+
+  const leftAllowed = left?.allowed !== false;
+  const rightAllowed = right?.allowed !== false;
+
+  if (leftAllowed !== rightAllowed) {
+    return leftAllowed ? -1 : 1;
+  }
+
+  const leftScore = Number.isFinite(left?.qualityScore) ? left.qualityScore : 0;
+  const rightScore = Number.isFinite(right?.qualityScore) ? right.qualityScore : 0;
+
+  if (leftScore !== rightScore) {
+    return rightScore - leftScore;
+  }
+
+  const leftLastGood = left?.lastGoodHit ? Date.parse(left.lastGoodHit) : 0;
+  const rightLastGood = right?.lastGoodHit ? Date.parse(right.lastGoodHit) : 0;
+
+  if (leftLastGood !== rightLastGood) {
+    return rightLastGood - leftLastGood;
+  }
+
+  return (left?.priority || 0) - (right?.priority || 0) || String(left?.slug || '').localeCompare(String(right?.slug || ''));
+}
+
+function isCrawlableChannel(channel = {}) {
+  return channel?.enabled !== false && channel?.allowed !== false && channel?.blocked !== true;
 }
 
 function summarizeCategoryResults(categorySummaries = []) {
@@ -204,7 +240,7 @@ function uniqueTargets(targets = []) {
 }
 
 function buildCategoryChannelTargets(categorySlug, channels = []) {
-  const enabledChannels = channels.filter(channel => channel?.enabled !== false);
+  const enabledChannels = channels.filter(isCrawlableChannel).sort(sortChannelsForCrawl);
   const primary = enabledChannels.filter(channel => channel.category === categorySlug || channel.category === 'shared');
   const fallback = enabledChannels.filter(channel => channel.category !== categorySlug && channel.category !== 'shared');
 
@@ -683,8 +719,8 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
   const runDay = runStartedAt.slice(0, 10);
   const registry = await loadChannelRegistry();
   const enabledChannels = registry
-    .filter(channel => channel?.enabled !== false)
-    .sort((left, right) => (left.priority - right.priority) || String(left.slug).localeCompare(String(right.slug)));
+    .filter(isCrawlableChannel)
+    .sort(sortChannelsForCrawl);
 
   const categoryPlans = CATEGORY_TAXONOMY.map(category => {
     const channelTargetsByCategory = buildCategoryChannelTargets(category.slug, enabledChannels);
@@ -717,8 +753,6 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
   const runNewIds = new Set();
   const newVideos = [];
   const categorySummaries = [];
-  const touchedChannelSlugs = new Set();
-
   const crawlCategoryTargets = async (plan) => {
     const { tag, slug, initialTargets, refillTargets = [], reason } = plan;
     const keptVideos = [];
@@ -860,27 +894,44 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
           const candidates = discovery.videos;
           targetSummary.candidates = candidates.length;
 
-          if (!dryRun && target.channel?.slug && !touchedChannelSlugs.has(target.channel.slug)) {
-            try {
-              await updateChannelRegistryEntry(target.channel.slug, {
-                channelId: discovery.channel?.channelId || target.channel.channelId || null,
-                channelUrl: discovery.channel?.channelUrl || target.channel.channelUrl || null,
-                lastCrawledAt: timestamp(),
-              });
-              touchedChannelSlugs.add(target.channel.slug);
-            } catch (error) {
-              logCrawl('crawl_channel_registry_update_failed', {
-                runDay,
-                category: tag,
-                slug,
-                channelSlug: target.channel.slug,
-                error: serializeError(error),
-              });
-            }
-          }
-
           if (candidates.length === 0) {
             targetSummary.status = 'empty';
+            if (!dryRun && target.channel?.slug) {
+              try {
+                const updatedChannel = buildChannelQualityUpdate(target.channel, {
+                  at: timestamp(),
+                  candidateCount: candidates.length,
+                  rejectedCount: 0,
+                  errorCount: 0,
+                });
+
+                const persistedChannel = await updateChannelRegistryEntry(target.channel.slug, {
+                  channelId: discovery.channel?.channelId || target.channel.channelId || null,
+                  channelUrl: discovery.channel?.channelUrl || target.channel.channelUrl || null,
+                  lastCrawledAt: timestamp(),
+                  allowed: updatedChannel.allowed,
+                  blocked: updatedChannel.blocked,
+                  qualityScore: updatedChannel.qualityScore,
+                  lastGoodHit: updatedChannel.lastGoodHit,
+                  lastBadHit: updatedChannel.lastBadHit,
+                  status: updatedChannel.status,
+                  enabled: updatedChannel.enabled,
+                });
+
+                if (persistedChannel) {
+                  Object.assign(target.channel, persistedChannel);
+                }
+              } catch (error) {
+                logCrawl('crawl_channel_registry_update_failed', {
+                  runDay,
+                  category: tag,
+                  slug,
+                  channelSlug: target.channel.slug,
+                  error: serializeError(error),
+                });
+              }
+            }
+
             targetSummaries.push(targetSummary);
             logCrawl('crawl_category_target_empty', { runDay, category: tag, slug, query: target.query, wave: wave.name, channelSlug: target.channel?.slug || null });
             continue;
@@ -1056,6 +1107,43 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
           }
 
           targetSummary.status = 'completed';
+          if (!dryRun && target.channel?.slug) {
+            try {
+              const updatedChannel = buildChannelQualityUpdate(target.channel, {
+                at: timestamp(),
+                keptCount: keptCount,
+                candidateCount: candidates.length,
+                rejectedCount: targetRejectedCount,
+                errorCount: 0,
+              });
+
+              const persistedChannel = await updateChannelRegistryEntry(target.channel.slug, {
+                channelId: discovery.channel?.channelId || target.channel.channelId || null,
+                channelUrl: discovery.channel?.channelUrl || target.channel.channelUrl || null,
+                lastCrawledAt: timestamp(),
+                allowed: updatedChannel.allowed,
+                blocked: updatedChannel.blocked,
+                qualityScore: updatedChannel.qualityScore,
+                lastGoodHit: updatedChannel.lastGoodHit,
+                lastBadHit: updatedChannel.lastBadHit,
+                status: updatedChannel.status,
+                enabled: updatedChannel.enabled,
+              });
+
+              if (persistedChannel) {
+                Object.assign(target.channel, persistedChannel);
+              }
+            } catch (error) {
+              logCrawl('crawl_channel_registry_update_failed', {
+                runDay,
+                category: tag,
+                slug,
+                channelSlug: target.channel.slug,
+                error: serializeError(error),
+              });
+            }
+          }
+
           logCrawl('crawl_category_target_summary', {
             runDay,
             category: tag,
@@ -1080,6 +1168,43 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
           targetSummary.error = serializeError(error);
           incrementCountMap(categoryErrorReasons, error?.name || error?.code || 'target error');
           targetSummaries.push(targetSummary);
+          if (!dryRun && target.channel?.slug) {
+            try {
+              const updatedChannel = buildChannelQualityUpdate(target.channel, {
+                at: timestamp(),
+                keptCount: 0,
+                candidateCount: 0,
+                rejectedCount: 0,
+                errorCount: 1,
+                failed: true,
+              });
+
+              const persistedChannel = await updateChannelRegistryEntry(target.channel.slug, {
+                channelId: target.channel.channelId || null,
+                channelUrl: target.channel.channelUrl || null,
+                lastCrawledAt: timestamp(),
+                allowed: updatedChannel.allowed,
+                blocked: updatedChannel.blocked,
+                qualityScore: updatedChannel.qualityScore,
+                lastGoodHit: updatedChannel.lastGoodHit,
+                lastBadHit: updatedChannel.lastBadHit,
+                status: updatedChannel.status,
+                enabled: updatedChannel.enabled,
+              });
+
+              if (persistedChannel) {
+                Object.assign(target.channel, persistedChannel);
+              }
+            } catch (updateError) {
+              logCrawl('crawl_channel_registry_update_failed', {
+                runDay,
+                category: tag,
+                slug,
+                channelSlug: target.channel.slug,
+                error: serializeError(updateError),
+              });
+            }
+          }
           logCrawl('crawl_category_target_error', {
             runDay,
             category: tag,

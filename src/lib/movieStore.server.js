@@ -5,6 +5,13 @@ import { cleanSnapshotMovies, isMovieSnapshotStale, readMovieSnapshot, MOVIE_SNA
 
 const CHANNEL_SEEDS_PATH = path.resolve('src/lib/channel-seeds.json');
 const BATCH_SIZE = 100;
+const CHANNEL_QUALITY_BLOCK_THRESHOLD = -6;
+const CHANNEL_QUALITY_MAX_SCORE = 20;
+const CHANNEL_QUALITY_MIN_SCORE = -20;
+const CHANNEL_QUALITY_GOOD_BONUS = 2;
+const CHANNEL_QUALITY_EMPTY_PENALTY = 1;
+const CHANNEL_QUALITY_BAD_PENALTY = 2;
+const CHANNEL_QUALITY_ERROR_PENALTY = 3;
 const DATABASE_URL_ENV_KEYS = [
   'POSTGRES_URL_NON_POOLING',
   'DATABASE_URL',
@@ -143,6 +150,40 @@ function toSafeInteger(value, fallback = null) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function toSafeBoolean(value, fallback = null) {
+  if (value === undefined || value === null || value === '') {
+    return fallback;
+  }
+
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value === 'number') {
+    return value !== 0;
+  }
+
+  const normalized = String(value).trim().toLowerCase();
+  if (['true', '1', 'yes', 'y', 'on'].includes(normalized)) {
+    return true;
+  }
+
+  if (['false', '0', 'no', 'n', 'off'].includes(normalized)) {
+    return false;
+  }
+
+  return fallback;
+}
+
+function clampQualityScore(score) {
+  return Math.max(CHANNEL_QUALITY_MIN_SCORE, Math.min(CHANNEL_QUALITY_MAX_SCORE, score));
+}
+
+function toTimestampOrNull(value) {
+  const text = String(value || '').trim();
+  return text ? text : null;
+}
+
 function extractChannelIdFromChannelUrl(channelUrl = '') {
   const normalizedUrl = String(channelUrl || '').trim();
   if (!normalizedUrl) {
@@ -197,6 +238,12 @@ function normalizeChannelRecord(channel = {}, sortOrder = 0) {
   const slug = String(channel.slug || channel.id || '').trim();
   const displayName = String(channel.displayName || channel.display_name || channel.name || slug || '').trim();
   const status = String(channel.status || (channel.enabled === false ? 'disabled' : 'active')).trim() || 'active';
+  const allowed = toSafeBoolean(channel.allowed, channel.enabled === false ? false : true);
+  const blocked = toSafeBoolean(channel.blocked, false);
+  const qualityScore = toSafeInteger(channel.qualityScore ?? channel.quality_score, 0) ?? 0;
+  const lastGoodHit = toTimestampOrNull(channel.lastGoodHit || channel.last_good_hit);
+  const lastBadHit = toTimestampOrNull(channel.lastBadHit || channel.last_bad_hit);
+  const enabled = channel.enabled === undefined ? allowed !== false && blocked !== true && status !== 'disabled' : Boolean(channel.enabled);
 
   return {
     id: String(channel.id || slug).trim(),
@@ -205,10 +252,62 @@ function normalizeChannelRecord(channel = {}, sortOrder = 0) {
     channelUrl: String(channel.channelUrl || channel.channel_url || channel.url || '').trim(),
     displayName,
     category: String(channel.category || channel.categorySlug || 'shared').trim() || 'shared',
-    status,
-    enabled: channel.enabled === undefined ? status !== 'disabled' : Boolean(channel.enabled),
+    status: blocked ? 'blocked' : status,
+    allowed,
+    blocked,
+    qualityScore,
+    lastGoodHit,
+    lastBadHit,
+    enabled,
     priority: toSafeInteger(channel.priority ?? channel.sortOrder ?? channel.order, sortOrder) ?? sortOrder,
     lastCrawledAt: channel.lastCrawledAt || channel.last_crawled_at || null,
+  };
+}
+
+export function buildChannelQualityUpdate(channel = {}, signal = {}) {
+  const current = normalizeChannelRecord(channel);
+  const at = signal.at ? String(signal.at) : new Date().toISOString();
+  const keptCount = Math.max(0, toSafeInteger(signal.keptCount, 0) ?? 0);
+  const candidateCount = Math.max(0, toSafeInteger(signal.candidateCount, 0) ?? 0);
+  const rejectedCount = Math.max(0, toSafeInteger(signal.rejectedCount, 0) ?? 0);
+  const errorCount = Math.max(0, toSafeInteger(signal.errorCount, 0) ?? 0);
+  let qualityScore = current.qualityScore || 0;
+  let lastGoodHit = current.lastGoodHit;
+  let lastBadHit = current.lastBadHit;
+
+  if (keptCount > 0) {
+    qualityScore += CHANNEL_QUALITY_GOOD_BONUS + Math.min(keptCount, 3);
+    lastGoodHit = at;
+  } else if (errorCount > 0 || signal.failed === true) {
+    qualityScore -= CHANNEL_QUALITY_ERROR_PENALTY;
+    lastBadHit = at;
+  } else if (candidateCount === 0) {
+    qualityScore -= CHANNEL_QUALITY_EMPTY_PENALTY;
+    lastBadHit = at;
+  } else if (rejectedCount === 0) {
+    qualityScore -= CHANNEL_QUALITY_EMPTY_PENALTY;
+    lastBadHit = at;
+  } else if (rejectedCount > 0 || signal.bad === true) {
+    qualityScore -= CHANNEL_QUALITY_BAD_PENALTY;
+    lastBadHit = at;
+  }
+
+  qualityScore = clampQualityScore(qualityScore);
+
+  const blocked = Boolean(current.blocked) || Boolean(signal.blocked) || qualityScore <= CHANNEL_QUALITY_BLOCK_THRESHOLD;
+  const allowed = signal.allowed === undefined ? current.allowed !== false : Boolean(signal.allowed);
+  const status = blocked ? 'blocked' : allowed ? 'active' : 'disabled';
+  const enabled = allowed && !blocked && status !== 'disabled';
+
+  return {
+    ...current,
+    allowed,
+    blocked,
+    qualityScore,
+    lastGoodHit,
+    lastBadHit,
+    status,
+    enabled,
   };
 }
 
@@ -272,12 +371,23 @@ async function ensureSchema(client) {
       category TEXT NOT NULL DEFAULT 'shared',
       status TEXT NOT NULL DEFAULT 'active',
       enabled BOOLEAN NOT NULL DEFAULT TRUE,
+      allowed BOOLEAN NOT NULL DEFAULT TRUE,
+      blocked BOOLEAN NOT NULL DEFAULT FALSE,
+      quality_score INTEGER NOT NULL DEFAULT 0,
+      last_good_hit TIMESTAMPTZ,
+      last_bad_hit TIMESTAMPTZ,
       priority INTEGER NOT NULL DEFAULT 0,
       last_crawled_at TIMESTAMPTZ,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `);
+
+  await client.query(`ALTER TABLE channels ADD COLUMN IF NOT EXISTS allowed BOOLEAN NOT NULL DEFAULT TRUE;`);
+  await client.query(`ALTER TABLE channels ADD COLUMN IF NOT EXISTS blocked BOOLEAN NOT NULL DEFAULT FALSE;`);
+  await client.query(`ALTER TABLE channels ADD COLUMN IF NOT EXISTS quality_score INTEGER NOT NULL DEFAULT 0;`);
+  await client.query(`ALTER TABLE channels ADD COLUMN IF NOT EXISTS last_good_hit TIMESTAMPTZ;`);
+  await client.query(`ALTER TABLE channels ADD COLUMN IF NOT EXISTS last_bad_hit TIMESTAMPTZ;`);
 
   await client.query(`CREATE UNIQUE INDEX IF NOT EXISTS channels_channel_id_idx ON channels (channel_id) WHERE channel_id IS NOT NULL;`);
   await client.query(`CREATE INDEX IF NOT EXISTS channels_enabled_priority_idx ON channels (enabled ASC, priority ASC, created_at DESC);`);
@@ -314,7 +424,7 @@ async function syncChannelRegistryFromJsonFile(client, channels = []) {
 
   const params = [];
   const placeholders = channels.map((channel, index) => {
-    const base = index * 10;
+    const base = index * 15;
     params.push(
       channel.id,
       channel.slug,
@@ -324,16 +434,21 @@ async function syncChannelRegistryFromJsonFile(client, channels = []) {
       channel.category || 'shared',
       channel.status || 'active',
       channel.enabled,
+      channel.allowed,
+      channel.blocked,
+      channel.qualityScore ?? 0,
+      channel.lastGoodHit || null,
+      channel.lastBadHit || null,
       channel.priority,
       channel.lastCrawledAt || null,
     );
 
-    return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7}, $${base + 8}, $${base + 9}, $${base + 10})`;
+    return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7}, $${base + 8}, $${base + 9}, $${base + 10}, $${base + 11}, $${base + 12}, $${base + 13}, $${base + 14}, $${base + 15})`;
   });
 
   await client.query(
     `INSERT INTO channels (
-      id, slug, channel_id, channel_url, display_name, category, status, enabled, priority, last_crawled_at
+      id, slug, channel_id, channel_url, display_name, category, status, enabled, allowed, blocked, quality_score, last_good_hit, last_bad_hit, priority, last_crawled_at
     ) VALUES ${placeholders.join(', ')}
     ON CONFLICT (slug) DO UPDATE SET
       channel_id = COALESCE(EXCLUDED.channel_id, channels.channel_id),
@@ -342,6 +457,11 @@ async function syncChannelRegistryFromJsonFile(client, channels = []) {
       category = EXCLUDED.category,
       status = EXCLUDED.status,
       enabled = EXCLUDED.enabled,
+      allowed = EXCLUDED.allowed,
+      blocked = EXCLUDED.blocked,
+      quality_score = EXCLUDED.quality_score,
+      last_good_hit = COALESCE(EXCLUDED.last_good_hit, channels.last_good_hit),
+      last_bad_hit = COALESCE(EXCLUDED.last_bad_hit, channels.last_bad_hit),
       priority = EXCLUDED.priority,
       last_crawled_at = COALESCE(EXCLUDED.last_crawled_at, channels.last_crawled_at),
       updated_at = NOW();`,
@@ -391,12 +511,17 @@ export async function loadChannelRegistry({ allowJsonFallback = true, includeDis
         category,
         status,
         enabled,
+        allowed,
+        blocked,
+        quality_score AS "qualityScore",
+        last_good_hit AS "lastGoodHit",
+        last_bad_hit AS "lastBadHit",
         priority,
         last_crawled_at AS "lastCrawledAt"
       FROM channels
       WHERE slug = ANY($1::text[])
-      ${includeDisabled ? '' : 'AND enabled = TRUE'}
-      ORDER BY priority ASC, created_at ASC, slug ASC;`,
+      ${includeDisabled ? '' : 'AND enabled = TRUE AND blocked = FALSE'}
+      ORDER BY blocked ASC, quality_score DESC, priority ASC, last_good_hit DESC NULLS LAST, created_at ASC, slug ASC;`,
       [seedChannels.map(channel => channel.slug)],
     );
 
@@ -416,13 +541,27 @@ export async function updateChannelRegistryEntry(slug, updates = {}) {
        SET channel_id = COALESCE($2, channel_id),
            channel_url = COALESCE($3, channel_url),
            last_crawled_at = COALESCE($4, last_crawled_at),
+           allowed = COALESCE($5, allowed),
+           blocked = COALESCE($6, blocked),
+           quality_score = COALESCE($7, quality_score),
+           last_good_hit = COALESCE($8, last_good_hit),
+           last_bad_hit = COALESCE($9, last_bad_hit),
+           status = COALESCE($10, status),
+           enabled = COALESCE($11, enabled),
            updated_at = NOW()
-       WHERE slug = $1;`,
+        WHERE slug = $1;`,
       [
         normalizedSlug,
         updates.channelId || null,
         updates.channelUrl || null,
         updates.lastCrawledAt || new Date().toISOString(),
+        updates.allowed === undefined ? null : Boolean(updates.allowed),
+        updates.blocked === undefined ? null : Boolean(updates.blocked),
+        Number.isFinite(updates.qualityScore) ? Math.trunc(updates.qualityScore) : null,
+        updates.lastGoodHit || null,
+        updates.lastBadHit || null,
+        updates.status || null,
+        updates.enabled === undefined ? null : Boolean(updates.enabled),
       ],
     );
 
@@ -436,6 +575,11 @@ export async function updateChannelRegistryEntry(slug, updates = {}) {
         category,
         status,
         enabled,
+        allowed,
+        blocked,
+        quality_score AS "qualityScore",
+        last_good_hit AS "lastGoodHit",
+        last_bad_hit AS "lastBadHit",
         priority,
         last_crawled_at AS "lastCrawledAt"
       FROM channels

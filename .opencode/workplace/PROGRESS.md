@@ -1,5 +1,11 @@
 # Progress Timeline
 
+## 2026-05-19 (developer crawl source quality system)
+- Scope: Add source quality fields and scoring so good crawl channels are prioritized and bad audio/review-style sources can be downranked or blocked.
+- Actions: Extended channel records/schema with `allowed`, `blocked`, `qualityScore`, `lastGoodHit`, and `lastBadHit`; added a small scoring helper in `src/lib/movieStore.server.js`; and updated the crawler to sort by quality and persist positive/negative signals per target.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; smoke check confirmed a good signal raises quality, repeated bad signals block the source, and JSON seed normalization exposes the new fields.
+- Risks: The quality thresholds are intentionally simple, so they may need tuning if the registry has many borderline channels.
+
 ## 2026-05-19 (developer transparent global overlay)
 - Scope: Add a transparent full-screen overlay that survives route changes/reloads, dismisses on click, and reappears after five minutes using localStorage timing.
 - Actions: Added a small client-only `GlobalDismissOverlay` component with localStorage-backed next-show timing, mounted it once in `src/app/layout.js` so it persists across App Router navigation, and kept the overlay visually transparent while still capturing clicks.
