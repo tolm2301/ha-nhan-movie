@@ -1,9 +1,23 @@
 {
   "snapshotVersion": 1,
   "source": "db",
-  "generatedAt": "2026-05-19T04:55:51.127Z",
+  "generatedAt": "2026-05-19T08:24:10.302Z",
   "fallbackReason": null,
   "movies": [
+    {
+      "id": "YRhE_9P0Xs8",
+      "title": "Xuyên Không Đại Minh, Cháu Đích Tôn Dạy Chu Nguyên Chương Cách Trị Quốc | Hà Nhân Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i2.ytimg.com/vi/YRhE_9P0Xs8/hqdefault.jpg",
+      "tags": "Hà Nhân",
+      "rating": "N/A",
+      "sortOrder": 0
+    },
     {
       "id": "RW4zhnYqJKo",
       "title": "🔥 Hà Nhân Nhặt Được Tụ Bảo Bồn – Báu Vật Kỳ Bí Thay Đổi Cả Vận Mệnh!|Tập 23-25",
@@ -143,6 +157,20 @@
       "tags": "Hà Nhân",
       "rating": "N/A",
       "sortOrder": 0
+    },
+    {
+      "id": "THYj6tDi3Ws",
+      "title": "Xuyên Không Thức Tỉnh Hệ Thống Lữ Bố, Quét Sạch Tùy Đường | Hà Nhân Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i1.ytimg.com/vi/THYj6tDi3Ws/hqdefault.jpg",
+      "tags": "Hà Nhân",
+      "rating": "N/A",
+      "sortOrder": 1
     },
     {
       "id": "d6mSSQE20SU",
@@ -339,6 +367,20 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 1
+    },
+    {
+      "id": "-XcLdYkLjlQ",
+      "title": "Hà Nhân Xuyên Không Làm Quan Đại Minh | Hà Nhân Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i2.ytimg.com/vi/-XcLdYkLjlQ/hqdefault.jpg",
+      "tags": "Hà Nhân",
+      "rating": "N/A",
+      "sortOrder": 2
     },
     {
       "id": "CmmzeSYa52c",
@@ -551,6 +593,20 @@
       "sortOrder": 2
     },
     {
+      "id": "ZrzrnyQ_fgY",
+      "title": "Hà Nhân Thống Lĩnh Trăm Vạn Quân Giết Kẻ Thù Xưng Đế | Hà Nhân Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i3.ytimg.com/vi/ZrzrnyQ_fgY/hqdefault.jpg",
+      "tags": "Hà Nhân",
+      "rating": "N/A",
+      "sortOrder": 3
+    },
+    {
       "id": "oGY4m6uYok8",
       "title": "P9 | Sức Mạnh Linh Năng Pháo: Kế Duyên Một Bước Nghịch Thiên, Kim Đan Chỉ Là Cỏ Rác!",
       "episodes": "Full",
@@ -759,6 +815,20 @@
       "tags": "Trọng Sinh",
       "rating": "N/A",
       "sortOrder": 3
+    },
+    {
+      "id": "tbK1jzxh6Fs",
+      "title": "Xuyên Không Đại Tần, Hà Nhân Mang Hệ Thống Chém Gió Thành Thần | Hà Nhân Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i1.ytimg.com/vi/tbK1jzxh6Fs/hqdefault.jpg",
+      "tags": "Hà Nhân",
+      "rating": "N/A",
+      "sortOrder": 4
     },
     {
       "id": "BUSqCad7zbY",
@@ -971,6 +1041,20 @@
       "sortOrder": 4
     },
     {
+      "id": "WmACN0ZlRMo",
+      "title": "Thái tử tối cao | Xuyên không từ công tử ăn chơi thành người nắm quyền thiên hạ",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i4.ytimg.com/vi/WmACN0ZlRMo/hqdefault.jpg",
+      "tags": "Xuyên Không",
+      "rating": "N/A",
+      "sortOrder": 5
+    },
+    {
       "id": "0CLLTyrwExo",
       "title": "khui túi mù(p1)",
       "episodes": "Full",
@@ -1179,6 +1263,20 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 5
+    },
+    {
+      "id": "VyV7JEWQJeI",
+      "title": "Xuyên không ứng tuyển rể 6 đại gia tộc, thiếu gia phế vật bị khinh thường trở thành bá chủ",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i3.ytimg.com/vi/VyV7JEWQJeI/hqdefault.jpg",
+      "tags": "Xuyên Không",
+      "rating": "N/A",
+      "sortOrder": 6
     },
     {
       "id": "WYJSlrgtWF8",
@@ -1391,6 +1489,20 @@
       "sortOrder": 6
     },
     {
+      "id": "LDnzS6O89vw",
+      "title": "( FULL VERSION ) Báo Thủ Đại Đường |  Xuyên Không Chế Tàu Bay, Súng Máy Quậy Tung Hoàng Cung !",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i1.ytimg.com/vi/LDnzS6O89vw/hqdefault.jpg",
+      "tags": "Xuyên Không",
+      "rating": "N/A",
+      "sortOrder": 7
+    },
+    {
       "id": "tOESGB5LHNE",
       "title": "ai là siêu nhân thật? #short",
       "episodes": "Full",
@@ -1585,6 +1697,20 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 7
+    },
+    {
+      "id": "3fRpauUEU6c",
+      "title": "Full bộ 01-42: Hệ Thống Hộp Mù Đỉnh Cấp || Như yên Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i4.ytimg.com/vi/3fRpauUEU6c/hqdefault.jpg",
+      "tags": "Hệ Thống",
+      "rating": "N/A",
+      "sortOrder": 8
     },
     {
       "id": "fk4J1Xs2IW0",
@@ -1783,6 +1909,20 @@
       "sortOrder": 8
     },
     {
+      "id": "OPusyoS9Gy4",
+      "title": "P14 | Kế Duyên Lên Chức Chưởng Môn Thủy Long Tông",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i4.ytimg.com/vi/OPusyoS9Gy4/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 9
+    },
+    {
       "id": "2YOIGpe5ni0",
       "title": "Đúng rồi đó má #funny #tuyetbichcollection",
       "episodes": "Full",
@@ -1979,6 +2119,20 @@
       "sortOrder": 9
     },
     {
+      "id": "gubvgbR67CM",
+      "title": "P7 | Kế Duyên Mở Khóa Phòng Ong LV1, Con Đường Trùng Ma Chính Thức Bắt Đầu!",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i4.ytimg.com/vi/gubvgbR67CM/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 10
+    },
+    {
       "id": "YdjgRIm8j6I",
       "title": "Gia Môn Bất Hạnh #tuyetbichcollection #funny",
       "episodes": "Full",
@@ -2131,6 +2285,20 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 10
+    },
+    {
+      "id": "v6eBS_zKFa4",
+      "title": "Thiên kiêu đệ nhất trở lại sau 3 năm, thề sẽ đoạt lại vinh quanh gia tộc năm xưa",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i3.ytimg.com/vi/v6eBS_zKFa4/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 11
     },
     {
       "id": "596xoJzSl8w",
@@ -2287,6 +2455,20 @@
       "sortOrder": 11
     },
     {
+      "id": "VqlrF9q8K-g",
+      "title": "Chàng rể mù | Ba tỷ muội tuyệt sắc thuê tôi làm chàng rể hờ và cái kết",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i3.ytimg.com/vi/VqlrF9q8K-g/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 12
+    },
+    {
       "id": "qGh6wp6J44c",
       "title": "P11 | Phá Vọng Thần Đồng: Cơ Duyên Từ Hàn Đàm",
       "episodes": "Full",
@@ -2425,6 +2607,20 @@
       "tags": "Xuyên Không",
       "rating": "N/A",
       "sortOrder": 12
+    },
+    {
+      "id": "3YC8BggQKb0",
+      "title": "Full 01-39 : Siêu Cấp Thiên Phú Cấp SSSSS- Sát Lục Chi Vương/ Như Yên Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i4.ytimg.com/vi/3YC8BggQKb0/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 13
     },
     {
       "id": "YRfU-nxMyAg",
