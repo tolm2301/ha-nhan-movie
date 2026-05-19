@@ -1,6 +1,7 @@
 import { Inter } from 'next/font/google'
 import './globals.css'
 import Header from '@/components/Header/Header'
+import GlobalDismissOverlay from '@/components/GlobalDismissOverlay/GlobalDismissOverlay'
 import { SITE_DESCRIPTION, SITE_NAME, getSiteUrl } from '@/lib/seo'
 import Script from 'next/script'
 import { getAdsenseScriptUrl, hasAnyAdsensePlacementEnabled } from '@/lib/adsense'
@@ -44,6 +45,7 @@ export default async function RootLayout({ children }) {
           <Script src={adsenseScriptUrl} strategy="afterInteractive" crossOrigin="anonymous" />
         ) : null}
         <Header initialCategoryMenu={categoryMenu} />
+        <GlobalDismissOverlay />
         <div>{children}</div>
       </body>
     </html>

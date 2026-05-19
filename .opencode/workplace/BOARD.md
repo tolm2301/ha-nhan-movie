@@ -15,6 +15,7 @@
 - [ ] Enforce agreed 4-slot AdSense setup: home after rail 3, category after first block, watch after related, search after 8–12 results | Owner: developer | Priority: medium
 
 ## Review
+- [ ] Update the transparent overlay to open Google in a new tab | Owner: developer | Priority: medium | Verify: lint/build passed
 - [ ] Update daily crawl schedule to 2:00 AM Vietnam time | Owner: developer | Priority: medium | Verify: workflow cron updated to `0 19 * * *` and YAML parses cleanly
 - [ ] Add a per-item delete button to the recent-watched rail | Owner: developer | Priority: medium | Verify: lint/build/smoke passed
 - [ ] Fix null-safe thumbnail helper crash on prerender | Owner: developer | Priority: high | Verify: `npm.cmd run lint` passed; `npm.cmd run build` passed; `/` prerender completed without the null-thumbnail crash
@@ -64,6 +65,8 @@
 
 ## Done
 - [ ] (template) Task title | Owner: techlead | Finished: YYYY-MM-DD
+- [x] Update the transparent overlay to use a Google link so clicks are observable | Owner: developer | Finished: 2026-05-19
+- [x] Add a transparent full-screen overlay that dismisses on click and reappears every 5 minutes via localStorage | Owner: developer | Finished: 2026-05-19
 - [x] Tighten crawler theme filtering and rejection reasons (episode/series rejected early; strictly over-40-minute floor enforced) | Owner: developer | Finished: 2026-05-13
 - [x] Make runtime catalog read DB-first so crawl updates reach the web immediately | Owner: developer | Finished: 2026-05-05
 - [x] Make every crawl category refill until it keeps at least 5 new movies per day, treating duplicates as backfill triggers instead of stopping early | Owner: developer | Finished: 2026-05-05

@@ -1,5 +1,23 @@
 # Progress Timeline
 
+## 2026-05-19 (developer transparent global overlay)
+- Scope: Add a transparent full-screen overlay that survives route changes/reloads, dismisses on click, and reappears after five minutes using localStorage timing.
+- Actions: Added a small client-only `GlobalDismissOverlay` component with localStorage-backed next-show timing, mounted it once in `src/app/layout.js` so it persists across App Router navigation, and kept the overlay visually transparent while still capturing clicks.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: The overlay is intentionally invisible, so if storage is disabled it will still behave locally but may not persist the dismissal across reloads.
+
+## 2026-05-19 (developer overlay google link follow-up)
+- Scope: Make the transparent global overlay’s click behavior observable by turning it into a real Google link while preserving the dismissal timer.
+- Actions: Swapped the full-screen overlay from a transparent button to a transparent anchor pointing at `https://www.google.com`, while keeping the localStorage-backed 5-minute dismissal flow unchanged.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: The click now navigates away to Google, which is intentionally observable but may not be desired if the overlay must remain on-site.
+
+## 2026-05-19 (developer overlay new-tab follow-up)
+- Scope: Open the transparent Google overlay in a new tab instead of navigating away in the current tab.
+- Actions: Added `target="_blank"` and `rel="noopener noreferrer"` to the overlay anchor while leaving the route-persistent, transparent, localStorage-dismissed behavior unchanged.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: New-tab behavior depends on browser popup/tab settings, so some environments may block it.
+
 ## 2026-05-19 (developer daily crawl schedule timezone fix)
 - Scope: Move the GitHub Actions daily crawl to 2:00 AM Vietnam time by changing the UTC cron to the matching previous-day 19:00 UTC slot.
 - Actions: Updated `.github/workflows/daily-crawl.yml` schedule from `0 2 * * *` to `0 19 * * *` and added a short inline UTC note.
