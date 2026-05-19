@@ -4,6 +4,8 @@
 - [ ] (template) Task title | Owner: techlead | Priority: medium
 
 ## In Progress
+- [ ] Add auto-discovery/suggestion pipeline for good crawl channels | Owner: developer | Priority: high
+- [ ] Implement strict crawl mode that only keeps fresh good films and rejects rác sources | Owner: developer | Priority: high
 - [ ] Stop snapshot cleanup from live-probing every movie | Owner: developer | Priority: high
 - [ ] Fix sitemap catalog exposure so all visible movies are indexed | Owner: developer | Priority: medium
 - [ ] Fix watch video title mask so fullscreen top edge stays crisp | Owner: developer | Priority: medium
@@ -15,6 +17,10 @@
 - [ ] Enforce agreed 4-slot AdSense setup: home after rail 3, category after first block, watch after related, search after 8–12 results | Owner: developer | Priority: medium
 
 ## Review
+- [ ] Protect Hà Nhân branded crawl channels from auto-blocking and prioritize them in crawl ordering | Owner: developer | Priority: high | Verify: `npm.cmd run lint` passed; `npm.cmd run build` passed; live registry smoke passed; crawl dry-run passed with Hà Nhân floor hit; `ha-nhan-cartoon`/`hanhansubchannel` remained `allowed:true`, `blocked:false`
+- [ ] Implement strict crawl mode that only keeps fresh good films and reports explicit deficits instead of backfilling junk | Owner: developer | Priority: high | Verify: `npm.cmd run lint` passed; `npm.cmd run build` passed; strict dry-run passed with `strictMode:true`, `strictFreshnessDays:45`, and explicit underfill logs
+- [ ] Run strict crawl directly into live DB and verify persisted rows | Owner: developer | Priority: high | Verify: `npm.cmd run lint` passed; `npm.cmd run build` passed; live strict crawl persisted `crawl_runs.id=51` and 14 `movies` rows for that run; timestamp normalization smoke passed
+- [ ] Add safe auto-discovery/suggestion queue for brand-aligned channels | Owner: developer | Priority: high | Verify: `npm.cmd run lint` passed; `npm.cmd run build` passed; suggestion smoke queued trusted Hà Nhân signals into `channel_candidates` and marked them registered instead of auto-promoting
 - [ ] Update the transparent overlay to open Google in a new tab | Owner: developer | Priority: medium | Verify: lint/build passed
 - [ ] Update daily crawl schedule to 2:00 AM Vietnam time | Owner: developer | Priority: medium | Verify: workflow cron updated to `0 19 * * *` and YAML parses cleanly
 - [ ] Add a per-item delete button to the recent-watched rail | Owner: developer | Priority: medium | Verify: lint/build/smoke passed
@@ -65,6 +71,7 @@
 
 ## Done
 - [ ] (template) Task title | Owner: techlead | Finished: YYYY-MM-DD
+- [x] Raise strict crawl per-category target from 5 to 10–20 fresh films | Owner: developer | Finished: 2026-05-19
 - [x] Add crawl source quality scoring and blocking so good channels are prioritized and bad audio/review-style sources are downranked or blocked | Owner: developer | Finished: 2026-05-19
 - [x] Update the transparent overlay to use a Google link so clicks are observable | Owner: developer | Finished: 2026-05-19
 - [x] Add a transparent full-screen overlay that dismisses on click and reappears every 5 minutes via localStorage | Owner: developer | Finished: 2026-05-19

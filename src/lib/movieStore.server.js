@@ -12,6 +12,7 @@ const CHANNEL_QUALITY_GOOD_BONUS = 2;
 const CHANNEL_QUALITY_EMPTY_PENALTY = 1;
 const CHANNEL_QUALITY_BAD_PENALTY = 2;
 const CHANNEL_QUALITY_ERROR_PENALTY = 3;
+const CHANNEL_SUGGESTION_JUNK_KEYWORDS = ['audio', 'clip', 'lyrics', 'ost', 'soundtrack', 'review', 'reaction', 'recap', 'summary', 'shorts', 'trailer', 'teaser', 'vlog', 'podcast', 'news', 'karaoke', 'nhac', 'nhạc'];
 const DATABASE_URL_ENV_KEYS = [
   'POSTGRES_URL_NON_POOLING',
   'DATABASE_URL',
@@ -150,6 +151,25 @@ function toSafeInteger(value, fallback = null) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function normalizeBrandText(value = '') {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function isTrustedBrandChannel(channel = {}, slug = '', displayName = '') {
+  const category = String(channel.category || channel.categorySlug || '').trim().toLowerCase();
+  if (category === 'ha-nhan') {
+    return true;
+  }
+
+  const brandText = normalizeBrandText([channel.id, slug, displayName, channel.channelId, channel.channelUrl].filter(Boolean).join(' '));
+  return brandText.includes('ha nhan') || brandText.includes('hanhan');
+}
+
 function toSafeBoolean(value, fallback = null) {
   if (value === undefined || value === null || value === '') {
     return fallback;
@@ -180,8 +200,30 @@ function clampQualityScore(score) {
 }
 
 function toTimestampOrNull(value) {
-  const text = String(value || '').trim();
-  return text ? text : null;
+  if (value === undefined || value === null || value === '') {
+    return null;
+  }
+
+  if (value instanceof Date) {
+    return Number.isFinite(value.getTime()) ? value.toISOString() : null;
+  }
+
+  const text = String(value).trim();
+  if (!text) {
+    return null;
+  }
+
+  const parsed = Date.parse(text);
+  return Number.isFinite(parsed) ? new Date(parsed).toISOString() : text;
+}
+
+function normalizeCandidateKey(value = '') {
+  return normalizeBrandText(value).replace(/\s+/g, '-');
+}
+
+function isLikelyJunkChannelName(value = '') {
+  const normalized = normalizeBrandText(value);
+  return CHANNEL_SUGGESTION_JUNK_KEYWORDS.some(keyword => normalized.includes(normalizeBrandText(keyword)));
 }
 
 function extractChannelIdFromChannelUrl(channelUrl = '') {
@@ -238,12 +280,16 @@ function normalizeChannelRecord(channel = {}, sortOrder = 0) {
   const slug = String(channel.slug || channel.id || '').trim();
   const displayName = String(channel.displayName || channel.display_name || channel.name || slug || '').trim();
   const status = String(channel.status || (channel.enabled === false ? 'disabled' : 'active')).trim() || 'active';
+  const trustedBrand = toSafeBoolean(channel.trustedBrand ?? channel.trusted_brand, isTrustedBrandChannel(channel, slug, displayName));
   const allowed = toSafeBoolean(channel.allowed, channel.enabled === false ? false : true);
   const blocked = toSafeBoolean(channel.blocked, false);
   const qualityScore = toSafeInteger(channel.qualityScore ?? channel.quality_score, 0) ?? 0;
   const lastGoodHit = toTimestampOrNull(channel.lastGoodHit || channel.last_good_hit);
   const lastBadHit = toTimestampOrNull(channel.lastBadHit || channel.last_bad_hit);
-  const enabled = channel.enabled === undefined ? allowed !== false && blocked !== true && status !== 'disabled' : Boolean(channel.enabled);
+  const normalizedAllowed = trustedBrand ? true : allowed;
+  const normalizedBlocked = trustedBrand ? false : blocked;
+  const normalizedStatus = trustedBrand ? 'active' : status;
+  const enabled = channel.enabled === undefined ? normalizedAllowed !== false && normalizedBlocked !== true && normalizedStatus !== 'disabled' : Boolean(channel.enabled);
 
   return {
     id: String(channel.id || slug).trim(),
@@ -252,9 +298,10 @@ function normalizeChannelRecord(channel = {}, sortOrder = 0) {
     channelUrl: String(channel.channelUrl || channel.channel_url || channel.url || '').trim(),
     displayName,
     category: String(channel.category || channel.categorySlug || 'shared').trim() || 'shared',
-    status: blocked ? 'blocked' : status,
-    allowed,
-    blocked,
+    status: normalizedBlocked ? 'blocked' : normalizedStatus,
+    trustedBrand,
+    allowed: normalizedAllowed,
+    blocked: normalizedBlocked,
     qualityScore,
     lastGoodHit,
     lastBadHit,
@@ -294,13 +341,18 @@ export function buildChannelQualityUpdate(channel = {}, signal = {}) {
 
   qualityScore = clampQualityScore(qualityScore);
 
-  const blocked = Boolean(current.blocked) || Boolean(signal.blocked) || qualityScore <= CHANNEL_QUALITY_BLOCK_THRESHOLD;
-  const allowed = signal.allowed === undefined ? current.allowed !== false : Boolean(signal.allowed);
+  const blocked = current.trustedBrand
+    ? false
+    : Boolean(current.blocked) || Boolean(signal.blocked) || qualityScore <= CHANNEL_QUALITY_BLOCK_THRESHOLD;
+  const allowed = current.trustedBrand
+    ? true
+    : signal.allowed === undefined ? current.allowed !== false : Boolean(signal.allowed);
   const status = blocked ? 'blocked' : allowed ? 'active' : 'disabled';
   const enabled = allowed && !blocked && status !== 'disabled';
 
   return {
     ...current,
+    trustedBrand: current.trustedBrand,
     allowed,
     blocked,
     qualityScore,
@@ -371,6 +423,7 @@ async function ensureSchema(client) {
       category TEXT NOT NULL DEFAULT 'shared',
       status TEXT NOT NULL DEFAULT 'active',
       enabled BOOLEAN NOT NULL DEFAULT TRUE,
+      trusted_brand BOOLEAN NOT NULL DEFAULT FALSE,
       allowed BOOLEAN NOT NULL DEFAULT TRUE,
       blocked BOOLEAN NOT NULL DEFAULT FALSE,
       quality_score INTEGER NOT NULL DEFAULT 0,
@@ -385,9 +438,53 @@ async function ensureSchema(client) {
 
   await client.query(`ALTER TABLE channels ADD COLUMN IF NOT EXISTS allowed BOOLEAN NOT NULL DEFAULT TRUE;`);
   await client.query(`ALTER TABLE channels ADD COLUMN IF NOT EXISTS blocked BOOLEAN NOT NULL DEFAULT FALSE;`);
+  await client.query(`ALTER TABLE channels ADD COLUMN IF NOT EXISTS trusted_brand BOOLEAN NOT NULL DEFAULT FALSE;`);
   await client.query(`ALTER TABLE channels ADD COLUMN IF NOT EXISTS quality_score INTEGER NOT NULL DEFAULT 0;`);
   await client.query(`ALTER TABLE channels ADD COLUMN IF NOT EXISTS last_good_hit TIMESTAMPTZ;`);
   await client.query(`ALTER TABLE channels ADD COLUMN IF NOT EXISTS last_bad_hit TIMESTAMPTZ;`);
+
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS channel_candidates (
+      candidate_key TEXT PRIMARY KEY,
+      display_name TEXT NOT NULL,
+      normalized_name TEXT NOT NULL,
+      candidate_slug TEXT NOT NULL DEFAULT '',
+      channel_id TEXT,
+      channel_url TEXT,
+      source_channel_slug TEXT NOT NULL DEFAULT '',
+      source_channel_id TEXT,
+      source_channel_display_name TEXT NOT NULL DEFAULT '',
+      source_category TEXT NOT NULL DEFAULT 'shared',
+      trusted_brand_hint BOOLEAN NOT NULL DEFAULT FALSE,
+      already_registered BOOLEAN NOT NULL DEFAULT FALSE,
+      evidence_count INTEGER NOT NULL DEFAULT 1,
+      keep_count INTEGER NOT NULL DEFAULT 0,
+      score INTEGER NOT NULL DEFAULT 0,
+      status TEXT NOT NULL DEFAULT 'suggested',
+      first_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      metadata JSONB NOT NULL DEFAULT '{}'::jsonb
+    );
+  `);
+
+  await client.query(`ALTER TABLE channel_candidates ADD COLUMN IF NOT EXISTS candidate_slug TEXT NOT NULL DEFAULT '';`);
+  await client.query(`ALTER TABLE channel_candidates ADD COLUMN IF NOT EXISTS channel_id TEXT;`);
+  await client.query(`ALTER TABLE channel_candidates ADD COLUMN IF NOT EXISTS channel_url TEXT;`);
+  await client.query(`ALTER TABLE channel_candidates ADD COLUMN IF NOT EXISTS source_channel_slug TEXT NOT NULL DEFAULT '';`);
+  await client.query(`ALTER TABLE channel_candidates ADD COLUMN IF NOT EXISTS source_channel_id TEXT;`);
+  await client.query(`ALTER TABLE channel_candidates ADD COLUMN IF NOT EXISTS source_channel_display_name TEXT NOT NULL DEFAULT '';`);
+  await client.query(`ALTER TABLE channel_candidates ADD COLUMN IF NOT EXISTS source_category TEXT NOT NULL DEFAULT 'shared';`);
+  await client.query(`ALTER TABLE channel_candidates ADD COLUMN IF NOT EXISTS trusted_brand_hint BOOLEAN NOT NULL DEFAULT FALSE;`);
+  await client.query(`ALTER TABLE channel_candidates ADD COLUMN IF NOT EXISTS already_registered BOOLEAN NOT NULL DEFAULT FALSE;`);
+  await client.query(`ALTER TABLE channel_candidates ADD COLUMN IF NOT EXISTS evidence_count INTEGER NOT NULL DEFAULT 1;`);
+  await client.query(`ALTER TABLE channel_candidates ADD COLUMN IF NOT EXISTS keep_count INTEGER NOT NULL DEFAULT 0;`);
+  await client.query(`ALTER TABLE channel_candidates ADD COLUMN IF NOT EXISTS score INTEGER NOT NULL DEFAULT 0;`);
+  await client.query(`ALTER TABLE channel_candidates ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'suggested';`);
+  await client.query(`ALTER TABLE channel_candidates ADD COLUMN IF NOT EXISTS first_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW();`);
+  await client.query(`ALTER TABLE channel_candidates ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW();`);
+  await client.query(`ALTER TABLE channel_candidates ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::jsonb;`);
+
+  await client.query(`CREATE INDEX IF NOT EXISTS channel_candidates_status_score_idx ON channel_candidates (status ASC, score DESC, last_seen_at DESC);`);
 
   await client.query(`CREATE UNIQUE INDEX IF NOT EXISTS channels_channel_id_idx ON channels (channel_id) WHERE channel_id IS NOT NULL;`);
   await client.query(`CREATE INDEX IF NOT EXISTS channels_enabled_priority_idx ON channels (enabled ASC, priority ASC, created_at DESC);`);
@@ -424,7 +521,7 @@ async function syncChannelRegistryFromJsonFile(client, channels = []) {
 
   const params = [];
   const placeholders = channels.map((channel, index) => {
-    const base = index * 15;
+    const base = index * 16;
     params.push(
       channel.id,
       channel.slug,
@@ -434,6 +531,7 @@ async function syncChannelRegistryFromJsonFile(client, channels = []) {
       channel.category || 'shared',
       channel.status || 'active',
       channel.enabled,
+      channel.trustedBrand,
       channel.allowed,
       channel.blocked,
       channel.qualityScore ?? 0,
@@ -443,12 +541,12 @@ async function syncChannelRegistryFromJsonFile(client, channels = []) {
       channel.lastCrawledAt || null,
     );
 
-    return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7}, $${base + 8}, $${base + 9}, $${base + 10}, $${base + 11}, $${base + 12}, $${base + 13}, $${base + 14}, $${base + 15})`;
+    return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7}, $${base + 8}, $${base + 9}, $${base + 10}, $${base + 11}, $${base + 12}, $${base + 13}, $${base + 14}, $${base + 15}, $${base + 16})`;
   });
 
   await client.query(
     `INSERT INTO channels (
-      id, slug, channel_id, channel_url, display_name, category, status, enabled, allowed, blocked, quality_score, last_good_hit, last_bad_hit, priority, last_crawled_at
+      id, slug, channel_id, channel_url, display_name, category, status, enabled, trusted_brand, allowed, blocked, quality_score, last_good_hit, last_bad_hit, priority, last_crawled_at
     ) VALUES ${placeholders.join(', ')}
     ON CONFLICT (slug) DO UPDATE SET
       channel_id = COALESCE(EXCLUDED.channel_id, channels.channel_id),
@@ -457,6 +555,7 @@ async function syncChannelRegistryFromJsonFile(client, channels = []) {
       category = EXCLUDED.category,
       status = EXCLUDED.status,
       enabled = EXCLUDED.enabled,
+      trusted_brand = EXCLUDED.trusted_brand,
       allowed = EXCLUDED.allowed,
       blocked = EXCLUDED.blocked,
       quality_score = EXCLUDED.quality_score,
@@ -511,6 +610,7 @@ export async function loadChannelRegistry({ allowJsonFallback = true, includeDis
         category,
         status,
         enabled,
+        trusted_brand AS "trustedBrand",
         allowed,
         blocked,
         quality_score AS "qualityScore",
@@ -521,7 +621,7 @@ export async function loadChannelRegistry({ allowJsonFallback = true, includeDis
       FROM channels
       WHERE slug = ANY($1::text[])
       ${includeDisabled ? '' : 'AND enabled = TRUE AND blocked = FALSE'}
-      ORDER BY blocked ASC, quality_score DESC, priority ASC, last_good_hit DESC NULLS LAST, created_at ASC, slug ASC;`,
+      ORDER BY trusted_brand DESC, blocked ASC, quality_score DESC, priority ASC, last_good_hit DESC NULLS LAST, created_at ASC, slug ASC;`,
       [seedChannels.map(channel => channel.slug)],
     );
 
@@ -541,13 +641,14 @@ export async function updateChannelRegistryEntry(slug, updates = {}) {
        SET channel_id = COALESCE($2, channel_id),
            channel_url = COALESCE($3, channel_url),
            last_crawled_at = COALESCE($4, last_crawled_at),
-           allowed = COALESCE($5, allowed),
-           blocked = COALESCE($6, blocked),
-           quality_score = COALESCE($7, quality_score),
-           last_good_hit = COALESCE($8, last_good_hit),
-           last_bad_hit = COALESCE($9, last_bad_hit),
-           status = COALESCE($10, status),
-           enabled = COALESCE($11, enabled),
+           trusted_brand = COALESCE($5, trusted_brand),
+           allowed = COALESCE($6, allowed),
+           blocked = COALESCE($7, blocked),
+           quality_score = COALESCE($8, quality_score),
+           last_good_hit = COALESCE($9, last_good_hit),
+           last_bad_hit = COALESCE($10, last_bad_hit),
+           status = COALESCE($11, status),
+           enabled = COALESCE($12, enabled),
            updated_at = NOW()
         WHERE slug = $1;`,
       [
@@ -555,6 +656,7 @@ export async function updateChannelRegistryEntry(slug, updates = {}) {
         updates.channelId || null,
         updates.channelUrl || null,
         updates.lastCrawledAt || new Date().toISOString(),
+        updates.trustedBrand === undefined ? null : Boolean(updates.trustedBrand),
         updates.allowed === undefined ? null : Boolean(updates.allowed),
         updates.blocked === undefined ? null : Boolean(updates.blocked),
         Number.isFinite(updates.qualityScore) ? Math.trunc(updates.qualityScore) : null,
@@ -575,6 +677,7 @@ export async function updateChannelRegistryEntry(slug, updates = {}) {
         category,
         status,
         enabled,
+        trusted_brand AS "trustedBrand",
         allowed,
         blocked,
         quality_score AS "qualityScore",
@@ -622,6 +725,219 @@ export async function loadPersistedMovies({ allowJsonFallback = true } = {}) {
     `);
 
     return result.rows.map((movie, index) => normalizeMovieRecord(movie, index));
+  });
+}
+
+function buildCandidateScore({ trustedBrandHint = false, keepCount = 0, evidenceCount = 1, alreadyRegistered = false } = {}) {
+  let score = 0;
+
+  score += trustedBrandHint ? 4 : 0;
+  score += Math.min(Math.max(keepCount, 0), 5);
+  score += Math.min(Math.max(evidenceCount, 0), 10) > 1 ? 1 : 0;
+  score += alreadyRegistered ? -2 : 0;
+
+  return score;
+}
+
+async function candidateRegistryMatch(client, candidate = {}) {
+  const candidateSlug = String(candidate.candidateSlug || '').trim();
+  const candidateName = String(candidate.displayName || '').trim();
+  const candidateId = String(candidate.channelId || '').trim();
+  const candidateUrl = String(candidate.channelUrl || '').trim();
+
+  const result = await client.query(
+    `SELECT slug
+     FROM channels
+     WHERE ($1 <> '' AND slug = $1)
+        OR ($2 <> '' AND LOWER(display_name) = LOWER($2))
+        OR ($3 <> '' AND channel_id = $3)
+        OR ($4 <> '' AND channel_url = $4)
+     LIMIT 1;`,
+    [candidateSlug, candidateName, candidateId, candidateUrl],
+  );
+
+  return result.rows[0]?.slug || null;
+}
+
+export async function recordChannelSuggestion(candidate = {}, signal = {}) {
+  const displayName = String(candidate.displayName || '').trim();
+  if (!displayName) {
+    return null;
+  }
+
+  if (isLikelyJunkChannelName(displayName)) {
+    return null;
+  }
+
+  const normalizedName = normalizeBrandText(displayName);
+  const candidateSlug = normalizeCandidateKey(candidate.candidateSlug || candidate.slug || displayName);
+  const candidateKey = candidateSlug || normalizedName;
+  if (!candidateKey) {
+    return null;
+  }
+
+  return withClient(async client => {
+    const alreadyRegisteredSlug = await candidateRegistryMatch(client, {
+      candidateSlug,
+      displayName,
+      channelId: candidate.channelId,
+      channelUrl: candidate.channelUrl,
+    });
+
+    const existingResult = await client.query(
+      `SELECT candidate_key, evidence_count, keep_count, score, trusted_brand_hint, already_registered, source_channel_slug, source_category, metadata
+       FROM channel_candidates
+       WHERE candidate_key = $1
+       LIMIT 1;`,
+      [candidateKey],
+    );
+
+    const existing = existingResult.rows[0] || null;
+    const evidenceCount = Math.max(1, (existing?.evidence_count || 0) + 1);
+    const keepCount = Math.max(0, (existing?.keep_count || 0) + (signal.kept ? 1 : 0));
+    const trustedBrandHint = Boolean(signal.trustedBrandHint ?? candidate.trustedBrandHint ?? false);
+    const alreadyRegistered = Boolean(alreadyRegisteredSlug || existing?.already_registered);
+    const score = buildCandidateScore({ trustedBrandHint, keepCount, evidenceCount, alreadyRegistered });
+    const status = alreadyRegistered
+      ? 'registered'
+      : score >= 6 && evidenceCount >= 2
+        ? 'review-ready'
+        : 'suggested';
+    const now = new Date().toISOString();
+    const metadata = {
+      ...(existing?.metadata || {}),
+      ...(candidate.metadata || {}),
+      ...(signal.metadata || {}),
+    };
+
+    const result = await client.query(
+      `INSERT INTO channel_candidates (
+        candidate_key,
+        display_name,
+        normalized_name,
+        candidate_slug,
+        channel_id,
+        channel_url,
+        source_channel_slug,
+        source_channel_id,
+        source_channel_display_name,
+        source_category,
+        trusted_brand_hint,
+        already_registered,
+        evidence_count,
+        keep_count,
+        score,
+        status,
+        first_seen_at,
+        last_seen_at,
+        metadata
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, COALESCE($17::timestamptz, NOW()), NOW(), $18::jsonb
+      )
+      ON CONFLICT (candidate_key) DO UPDATE SET
+        display_name = EXCLUDED.display_name,
+        normalized_name = EXCLUDED.normalized_name,
+        candidate_slug = EXCLUDED.candidate_slug,
+        channel_id = COALESCE(EXCLUDED.channel_id, channel_candidates.channel_id),
+        channel_url = COALESCE(EXCLUDED.channel_url, channel_candidates.channel_url),
+        source_channel_slug = COALESCE(EXCLUDED.source_channel_slug, channel_candidates.source_channel_slug),
+        source_channel_id = COALESCE(EXCLUDED.source_channel_id, channel_candidates.source_channel_id),
+        source_channel_display_name = COALESCE(EXCLUDED.source_channel_display_name, channel_candidates.source_channel_display_name),
+        source_category = COALESCE(EXCLUDED.source_category, channel_candidates.source_category),
+        trusted_brand_hint = EXCLUDED.trusted_brand_hint OR channel_candidates.trusted_brand_hint,
+        already_registered = EXCLUDED.already_registered OR channel_candidates.already_registered,
+        evidence_count = EXCLUDED.evidence_count,
+        keep_count = EXCLUDED.keep_count,
+        score = EXCLUDED.score,
+        status = EXCLUDED.status,
+        last_seen_at = NOW(),
+        metadata = EXCLUDED.metadata
+      RETURNING
+        candidate_key AS "candidateKey",
+        display_name AS "displayName",
+        normalized_name AS "normalizedName",
+        candidate_slug AS "candidateSlug",
+        channel_id AS "channelId",
+        channel_url AS "channelUrl",
+        source_channel_slug AS "sourceChannelSlug",
+        source_channel_id AS "sourceChannelId",
+        source_channel_display_name AS "sourceChannelDisplayName",
+        source_category AS "sourceCategory",
+        trusted_brand_hint AS "trustedBrandHint",
+        already_registered AS "alreadyRegistered",
+        evidence_count AS "evidenceCount",
+        keep_count AS "keepCount",
+        score,
+        status,
+        first_seen_at AS "firstSeenAt",
+        last_seen_at AS "lastSeenAt",
+        metadata;`,
+      [
+        candidateKey,
+        displayName,
+        normalizedName,
+        candidateSlug,
+        candidate.channelId || null,
+        candidate.channelUrl || null,
+        candidate.sourceChannelSlug || '',
+        candidate.sourceChannelId || null,
+        candidate.sourceChannelDisplayName || '',
+        candidate.sourceCategory || 'shared',
+        trustedBrandHint,
+        alreadyRegistered,
+        evidenceCount,
+        keepCount,
+        score,
+        status,
+        candidate.firstSeenAt || now,
+        JSON.stringify(metadata),
+      ],
+    );
+
+    return result.rows[0] ? {
+      ...result.rows[0],
+      registered: alreadyRegistered,
+    } : null;
+  });
+}
+
+export async function loadChannelSuggestions({ limit = 50, status = null } = {}) {
+  return withClient(async client => {
+    const params = [Math.max(1, Math.min(200, limit))];
+    const statusClause = status ? 'WHERE status = $2' : '';
+    if (status) {
+      params.push(String(status));
+    }
+
+    const result = await client.query(
+      `SELECT
+        candidate_key AS "candidateKey",
+        display_name AS "displayName",
+        normalized_name AS "normalizedName",
+        candidate_slug AS "candidateSlug",
+        channel_id AS "channelId",
+        channel_url AS "channelUrl",
+        source_channel_slug AS "sourceChannelSlug",
+        source_channel_id AS "sourceChannelId",
+        source_channel_display_name AS "sourceChannelDisplayName",
+        source_category AS "sourceCategory",
+        trusted_brand_hint AS "trustedBrandHint",
+        already_registered AS "alreadyRegistered",
+        evidence_count AS "evidenceCount",
+        keep_count AS "keepCount",
+        score,
+        status,
+        first_seen_at AS "firstSeenAt",
+        last_seen_at AS "lastSeenAt",
+        metadata
+      FROM channel_candidates
+      ${statusClause}
+      ORDER BY status ASC, score DESC, last_seen_at DESC
+      LIMIT $1;`,
+      params,
+    );
+
+    return result.rows;
   });
 }
 

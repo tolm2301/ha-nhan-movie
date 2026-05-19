@@ -1,5 +1,5 @@
 import { load as loadCheerio } from 'cheerio';
-import { buildChannelQualityUpdate, loadChannelRegistry, readMoviesFromJsonFile, replacePersistedMovies, updateChannelRegistryEntry } from './movieStore.server.js';
+import { buildChannelQualityUpdate, loadChannelRegistry, readMoviesFromJsonFile, recordChannelSuggestion, replacePersistedMovies, updateChannelRegistryEntry } from './movieStore.server.js';
 import { CATEGORY_TAXONOMY, getCategoryDefinitionBySlug, normalizeMovieCategory, normalizeText, resolveMovieCategory } from './movieCategories.js';
 import { cleanSnapshotMovies } from './movieSnapshot.server.js';
 import { hasRenderableThumbnail } from './thumbnailFilters.js';
@@ -12,6 +12,40 @@ const MAX_STORED_VIDEOS = 1000;
 const CHANNEL_FEED_ENTRY_LIMIT = 20;
 const RETRY_TIMES = 3;
 const RETRY_BASE_DELAY_MS = 250;
+const CRAWL_STRICT_MODE = true;
+const STRICT_MAX_VIDEO_AGE_DAYS = 45;
+const STRICT_MAX_VIDEO_AGE_MS = STRICT_MAX_VIDEO_AGE_DAYS * 24 * 60 * 60 * 1000;
+const STRICT_BAD_CONTENT_KEYWORDS = [
+  'audio',
+  'clip',
+  'clip ngan',
+  'lyrics',
+  'lyric',
+  'ost',
+  'soundtrack',
+  'review',
+  'reaction',
+  'recap',
+  'summary',
+  'tom tat',
+  'tóm tắt',
+  'shorts',
+  'trailer',
+  'teaser',
+  'vlog',
+  'podcast',
+  'news',
+  'tin hot',
+  'music video',
+  'karaoke',
+  'nhac',
+  'nhac phim',
+  'nhac karaoke',
+  'nhạc',
+  'nhạc phim',
+  'nhạc karaoke',
+];
+const DISCOVERY_BRAND_KEYWORDS = ['ha nhan', 'hanhan', 'tu tien', 'xuyen khong', 'trong sinh', 'lieu nhu yen', 'he thong'];
 
 const channelIdentityCache = new Map();
 const channelCandidateCache = new Map();
@@ -40,6 +74,15 @@ function incrementCountMap(map, key, amount = 1) {
 
 function sortCountMap(map = {}) {
   return Object.fromEntries(Object.entries(map).sort(([left], [right]) => String(left).localeCompare(String(right))));
+}
+
+function findStrictBadContentKeyword(value = '') {
+  const normalizedValue = normalizeText(value);
+  if (!normalizedValue) {
+    return '';
+  }
+
+  return STRICT_BAD_CONTENT_KEYWORDS.find(keyword => normalizedValue.includes(normalizeText(keyword))) || '';
 }
 
 function createCategoryRunStats() {
@@ -76,6 +119,13 @@ function createTargetRunStats({ runDay, category, slug, query, type, wave, chann
 }
 
 function sortChannelsForCrawl(left, right) {
+  const leftTrustedBrand = left?.trustedBrand === true;
+  const rightTrustedBrand = right?.trustedBrand === true;
+
+  if (leftTrustedBrand !== rightTrustedBrand) {
+    return leftTrustedBrand ? -1 : 1;
+  }
+
   const leftBlocked = left?.blocked === true;
   const rightBlocked = right?.blocked === true;
 
@@ -109,6 +159,42 @@ function sortChannelsForCrawl(left, right) {
 
 function isCrawlableChannel(channel = {}) {
   return channel?.enabled !== false && channel?.allowed !== false && channel?.blocked !== true;
+}
+
+function explainSourceDecision(channel = {}, strictMode = CRAWL_STRICT_MODE) {
+  if (!strictMode) {
+    return { keep: true, reason: 'accepted' };
+  }
+
+  if (channel?.trustedBrand === true) {
+    return { keep: true, reason: 'trusted brand' };
+  }
+
+  const sourceText = [channel.displayName, channel.slug, channel.channelUrl].filter(Boolean).join(' ');
+  const blockedKeyword = findStrictBadContentKeyword(sourceText);
+  if (blockedKeyword) {
+    return { keep: false, reason: `blocked by strict source keyword (${blockedKeyword})` };
+  }
+
+  return { keep: true, reason: 'accepted' };
+}
+
+function extractDiscoveryHints(video = {}) {
+  const hints = new Set();
+  const authorName = String(video.author?.name || '').trim();
+  const title = String(video.title || '').trim();
+
+  if (authorName) {
+    hints.add(authorName);
+  }
+
+  const trustedMatch = title.match(/(?:\||-|–|—)\s*([^|\-–—]{3,80})\s*$/);
+  const tailSegment = trustedMatch?.[1]?.trim() || '';
+  if (tailSegment && DISCOVERY_BRAND_KEYWORDS.some(keyword => normalizeText(tailSegment).includes(keyword.replace(/\s+/g, '')))) {
+    hints.add(tailSegment);
+  }
+
+  return [...hints].filter(value => !findStrictBadContentKeyword(value));
 }
 
 function summarizeCategoryResults(categorySummaries = []) {
@@ -209,8 +295,8 @@ function isTransientCrawlError(error) {
   return message.includes('socket hang up') || message.includes('timeout') || message.includes('network error');
 }
 
-const CATEGORY_MIN_NEW_MOVIES_PER_DAY = 5;
-const CATEGORY_BATCH_LIMIT = CATEGORY_MIN_NEW_MOVIES_PER_DAY;
+const CATEGORY_MIN_NEW_MOVIES_PER_DAY = 10;
+const CATEGORY_BATCH_LIMIT = 20;
 const CATEGORY_TRUSTED_AUTHOR_WORDS = ['ha nhan', 'h\u00e0 nh\u00e2n', 'review phim', 'hoat hinh', 'ho\u1ea1t h\u00ecnh', 'vietsub', 'anime', 'phim', 'cartoon'];
 
 function getChannelKey(channel = {}) {
@@ -482,6 +568,25 @@ function parseDurationSeconds(value = '', { milliseconds = false } = {}) {
   return null;
 }
 
+function isPublishedAtFresh(publishedAt = '', maxAgeMs = STRICT_MAX_VIDEO_AGE_MS) {
+  const timestampMs = Date.parse(String(publishedAt || '').trim());
+  if (!Number.isFinite(timestampMs)) {
+    return { keep: false, reason: 'missing publishedAt' };
+  }
+
+  const ageMs = Date.now() - timestampMs;
+  if (!Number.isFinite(ageMs) || ageMs < 0) {
+    return { keep: false, reason: 'invalid publishedAt' };
+  }
+
+  if (ageMs > maxAgeMs) {
+    const ageDays = Math.floor(ageMs / (24 * 60 * 60 * 1000));
+    return { keep: false, reason: `too old for strict crawl (${ageDays}d > ${Math.floor(maxAgeMs / (24 * 60 * 60 * 1000))}d)` };
+  }
+
+  return { keep: true, reason: 'accepted' };
+}
+
 function extractWatchPageDurationSeconds(playerResponseOrHtml = '') {
   const playerResponse = typeof playerResponseOrHtml === 'string'
     ? extractWatchPagePlayerResponse(playerResponseOrHtml)
@@ -608,6 +713,7 @@ function findBadVideoTitleKeyword(title = '') {
     'kpop', 'k-pop', 'drama h\u00e0n', 'phim h\u00e0n', '#remembering', '#humor',
     '#xuhuongyoutube', '#mukbang', 'shorts', 'trailer', 'teaser',
     'reaction', 'highlight', 'clip', 'clip ng\u1eafn', 'recap', 'summary', 't\u00f3m t\u1eaft', 'tom tat', 'tin hot', 'news',
+    'audio', 'ost', 'soundtrack', 'lyrics', 'lyric', 'nhac phim', 'nhac karaoke', 'nh\u1ea1c phim', 'nh\u1ea1c karaoke',
     'g\u1ea5u tr\u00fac', 'panda', 't\u1ea5u h\u00e0i', 'gau hai',
   ];
 
@@ -636,12 +742,24 @@ function isBadVideoTitle(title = '') {
   return Boolean(findBadVideoTitleKeyword(title));
 }
 
-export function explainVideoDecision(video, targetType, trustedAuthorWords) {
+export function explainVideoDecision(video, targetType, trustedAuthorWords, { strictMode = CRAWL_STRICT_MODE, maxAgeMs = STRICT_MAX_VIDEO_AGE_MS } = {}) {
   if (!video?.videoId) {
     return { keep: false, reason: 'missing videoId' };
   }
 
   const title = (video.title || '').toLowerCase();
+  if (strictMode) {
+    const strictBlockedTitleKeyword = findStrictBadContentKeyword(title);
+    if (strictBlockedTitleKeyword) {
+      return { keep: false, reason: `blocked by strict title keyword (${strictBlockedTitleKeyword})` };
+    }
+
+    const freshnessDecision = isPublishedAtFresh(video.publishedAt, maxAgeMs);
+    if (!freshnessDecision.keep) {
+      return { keep: false, reason: freshnessDecision.reason };
+    }
+  }
+
   const episodeMarker = findEpisodeTitleMarker(title);
 
   if (episodeMarker || video.type === 'series' || Number.isFinite(video.episodeNumber) || Boolean(video.seriesKey)) {
@@ -714,7 +832,7 @@ function explainThumbnailDecision(movie = {}) {
   return { keep: true, reason: 'accepted' };
 }
 
-export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
+export async function runCrawl({ dryRun = false, syncSnapshot = true, strictMode = CRAWL_STRICT_MODE } = {}) {
   const runStartedAt = timestamp();
   const runDay = runStartedAt.slice(0, 10);
   const registry = await loadChannelRegistry();
@@ -740,6 +858,8 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
     runStartedAt,
     runDay,
     dryRun,
+    strictMode,
+    strictFreshnessDays: STRICT_MAX_VIDEO_AGE_DAYS,
     batchLimitPerCategory: CATEGORY_BATCH_LIMIT,
     minimumNewMoviesPerCategory: CATEGORY_MIN_NEW_MOVIES_PER_DAY,
     categories: categoryPlans.map(plan => ({ slug: plan.slug, tag: plan.tag, minimumNewMoviesPerCategory: CATEGORY_MIN_NEW_MOVIES_PER_DAY, initialSources: plan.initialTargets.length, fallbackSources: plan.refillTargets.length })),
@@ -855,6 +975,25 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
 
         triedQueries.add(targetKey);
 
+        const sourceDecision = explainSourceDecision(target.channel, strictMode);
+        if (!sourceDecision.keep) {
+          targetSummary.status = 'skipped';
+          targetSummary.error = { reason: sourceDecision.reason };
+          targetSummaries.push(targetSummary);
+
+          logCrawl('crawl_category_target_skipped', {
+            runDay,
+            category: tag,
+            slug,
+            query: target.query,
+            type: target.type,
+            wave: wave.name,
+            channelSlug: target.channel?.slug || null,
+            reason: sourceDecision.reason,
+          });
+          continue;
+        }
+
         logCrawl('crawl_category_target_start', {
           runDay,
           category: tag,
@@ -945,7 +1084,7 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
               break;
             }
 
-            const qualityDecision = explainVideoDecision(video, target.type, CATEGORY_TRUSTED_AUTHOR_WORDS);
+            const qualityDecision = explainVideoDecision(video, target.type, CATEGORY_TRUSTED_AUTHOR_WORDS, { strictMode, maxAgeMs: STRICT_MAX_VIDEO_AGE_MS });
             const videoLabel = video?.title || video?.videoId || 'khong ro tieu de';
 
             if (!qualityDecision.keep) {
@@ -1090,6 +1229,50 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
             keptCount += 1;
             waveSummary.kept += 1;
             targetSummary.kept += 1;
+
+            if (!dryRun && (target.channel?.trustedBrand === true || (Number.isFinite(target.channel?.qualityScore) && target.channel.qualityScore >= 5))) {
+              const discoveryHints = extractDiscoveryHints(video);
+              for (const hint of discoveryHints) {
+                try {
+                  await recordChannelSuggestion({
+                    displayName: hint,
+                    candidateSlug: hint,
+                    sourceChannelSlug: target.channel?.slug || '',
+                    sourceChannelId: target.channel?.channelId || null,
+                    sourceChannelDisplayName: target.channel?.displayName || '',
+                    sourceCategory: tag,
+                    trustedBrandHint: target.channel?.trustedBrand === true,
+                    metadata: {
+                      runDay,
+                      query: target.query,
+                      wave: wave.name,
+                      videoId: video.videoId,
+                      videoTitle: normalized.title,
+                      strictMode,
+                    },
+                  }, {
+                    kept: true,
+                    trustedBrandHint: target.channel?.trustedBrand === true,
+                    metadata: {
+                      runDay,
+                      category: tag,
+                      wave: wave.name,
+                      sourceChannelSlug: target.channel?.slug || null,
+                    },
+                  });
+                } catch (error) {
+                  logCrawl('crawl_channel_suggestion_failed', {
+                    runDay,
+                    category: tag,
+                    slug,
+                    query: target.query,
+                    wave: wave.name,
+                    hint,
+                    error: serializeError(error),
+                  });
+                }
+              }
+            }
 
             logCrawl('  + keep', {
               runDay,
@@ -1287,14 +1470,14 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
     });
   }
 
-  const keptOldVideos = oldData.filter(video => {
-    const fakeVideoLike = {
-      videoId: video.id,
-      title: video.title || '',
-      author: { name: 'trusted old data' },
-    };
-    return explainVideoDecision(fakeVideoLike, 'channel', CATEGORY_TRUSTED_AUTHOR_WORDS).keep && hasRenderableThumbnail(video);
-  }).map(video => normalizeMovieCategory(video));
+    const keptOldVideos = strictMode ? [] : oldData.filter(video => {
+      const fakeVideoLike = {
+        videoId: video.id,
+        title: video.title || '',
+        author: { name: 'trusted old data' },
+      };
+      return explainVideoDecision(fakeVideoLike, 'channel', CATEGORY_TRUSTED_AUTHOR_WORDS, { strictMode: false }).keep && hasRenderableThumbnail(video);
+    }).map(video => normalizeMovieCategory(video));
 
   const finalData = [...newVideos, ...keptOldVideos]
     .slice(0, MAX_STORED_VIDEOS)
@@ -1307,6 +1490,8 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true } = {}) {
     runStartedAt,
     runDay,
     dryRun,
+    strictMode,
+    strictFreshnessDays: STRICT_MAX_VIDEO_AGE_DAYS,
     snapshotSyncEnabled: syncSnapshot,
     existingVideos: oldData.length,
     existingKept: keptOldVideos.length,

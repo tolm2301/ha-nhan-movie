@@ -63,7 +63,7 @@ async function handleRequest(request) {
   const dryRun = request.nextUrl.searchParams.get('dryRun') === '1' || request.nextUrl.searchParams.get('dryRun') === 'true';
 
   try {
-    const result = await runCrawl({ dryRun });
+    const result = await runCrawl({ dryRun, strictMode: true });
     return Response.json({
       ok: true,
       trigger: access.trigger,

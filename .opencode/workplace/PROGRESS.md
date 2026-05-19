@@ -6,6 +6,48 @@
 - Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; smoke check confirmed a good signal raises quality, repeated bad signals block the source, and JSON seed normalization exposes the new fields.
 - Risks: The quality thresholds are intentionally simple, so they may need tuning if the registry has many borderline channels.
 
+## 2026-05-19 (developer Hà Nhân brand protection follow-up)
+- Scope: Make Hà Nhân-branded channels resilient so sparse/noisy runs do not auto-block them, and verify the current local environment for live registry access.
+- Actions: Added a derived `trustedBrand` flag for Hà Nhân seeds/rows, forced trusted-brand channels to stay crawlable even when quality drops, and sorted them ahead of generic sources. Checked `.env.local` and confirmed it currently only contains Vercel config, not Postgres/Supabase credentials.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; local smoke confirmed `ha-nhan-cartoon` and `hanhansubchannel` stay `trustedBrand: true`, `allowed: true`, `blocked: false` after negative signals. Live DB registry smoke could not run because the local env lacks Postgres credentials.
+- Risks: Live registry verification remains blocked until a direct Supabase/Postgres connection string is added to `.env.local` or provided in process env.
+
+## 2026-05-19 (developer live DB env setup blocked)
+- Scope: Continue the crawl audit by writing provided Supabase/Postgres env vars into `.env.local` and rerunning the live DB-backed registry smoke.
+- Actions: Verified that no accessible local process env or `.env.local` entry exposed Postgres/Supabase connection values in this workspace, so `.env.local` could not be populated without inventing secrets.
+- Verification: live DB smoke not run; blocked on missing provided connection values.
+- Risks: Once the connection values are supplied, the live registry smoke and crawl dry-run should be rerun to confirm current channel states.
+
+## 2026-05-19 (developer live DB crawl verification)
+- Scope: Re-check the live DB-backed crawl path using the existing local `.env.local`, inspect Hà Nhân registry rows, and run a dry-run crawl.
+- Actions: Loaded `.env.local` into a one-off smoke script, queried the live registry for `ha-nhan-cartoon` and `hanhansubchannel`, and ran `runCrawl({ dryRun: true })` against the live Postgres-backed registry. The run also exposed a channel-registry placeholder mismatch, which was fixed by aligning the upsert parameter count with the trusted-brand column.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; live registry rows showed both Hà Nhân channels as `trustedBrand: true`, `allowed: true`, `blocked: false`; dry-run crawl finished with `totalVideos: 356`, `newVideos: 17`, and Hà Nhân category `floorHit: true`.
+- Risks: Crawl volume is still limited by source quality and category classification; some categories remain under floor because many candidates resolve to other categories or fail duration checks.
+
+## 2026-05-19 (developer strict crawl mode)
+- Scope: Add a strict fail-closed crawl mode so only fresh good films are kept and explicit deficits are reported instead of backfilling junk.
+- Actions: Added strict-mode gating to source selection, title checks, and `publishedAt` freshness (`45` days by default), hard-rejecting audio/review/clip/OST/lyrics-style sources and titles while keeping trusted Hà Nhân channels prioritized. Disabled old snapshot backfill in strict mode so the run only returns live crawl results.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; strict dry-run smoke ran with `strictMode:true` and produced explicit underfill logs for categories that could not meet quota, while Hà Nhân still hit floor.
+- Risks: Strict mode is intentionally fail-closed, so some categories will underfill by design when no recent good films are available.
+
+## 2026-05-19 (developer strict live DB crawl)
+- Scope: Run the strict crawl in non-dry-run mode against the live Supabase/Postgres DB and verify persisted rows.
+- Actions: Executed `runCrawl({ dryRun:false, strictMode:true, syncSnapshot:false })` using the existing `.env.local` credentials; verified the latest `crawl_runs` row and counted `movies` rows linked to the new run id; then normalized timestamp parsing so registry rows round-trip as ISO strings instead of locale-formatted dates.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; live crawl persisted `crawl_runs.id=51` with `persistedMoviesForRun=14` and `totalMovies=459`; timestamp normalization smoke confirmed `hanhansubchannel.lastBadHit` now loads as ISO string and the channel remains `trustedBrand:true`, `allowed:true`, `blocked:false`.
+- Risks: The crawl itself still underfilled several categories by design; one registry update logged a timestamp-format warning before the normalization fix, but the run persisted successfully.
+
+## 2026-05-19 (developer strict quota increase)
+- Scope: Raise the strict crawl target from the 5-film floor/limit to a 10–20 range while keeping the fail-closed junk rejection behavior.
+- Actions: Changed the shared strict crawl constants to `floor=10` and `target=20` in `src/lib/crawl.server.js`, keeping the same strict source/title/freshness gates. Ran a strict dry-run to confirm the new quotas and per-category deficits.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; strict dry-run reported `floor:10`, `target:20`, `kept:12`, `floorMet:0`, and explicit per-category deficits (e.g. Hà Nhân `kept:6`, `deficit:14`).
+- Risks: This is still fail-closed, so categories will continue to underfill when no recent good films exist.
+
+## 2026-05-19 (developer suggestion queue discovery)
+- Scope: Add a safe auto-discovery/suggestion queue so brand-aligned channels can be collected from trusted crawl signals before promotion.
+- Actions: Added a `channel_candidates` table plus `recordChannelSuggestion()` / `loadChannelSuggestions()` helpers, wired strict live-crawl keep-events from trusted sources into the suggestion queue, and kept the registry promotion path manual (no blind auto-approval).
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; suggestion smoke queued trusted Hà Nhân signals into `channel_candidates` and returned them as `status: registered`.
+- Risks: The queue is intentionally conservative, so new channels need repeated trusted evidence before they become review-ready.
+
 ## 2026-05-19 (developer transparent global overlay)
 - Scope: Add a transparent full-screen overlay that survives route changes/reloads, dismisses on click, and reappears after five minutes using localStorage timing.
 - Actions: Added a small client-only `GlobalDismissOverlay` component with localStorage-backed next-show timing, mounted it once in `src/app/layout.js` so it persists across App Router navigation, and kept the overlay visually transparent while still capturing clicks.
