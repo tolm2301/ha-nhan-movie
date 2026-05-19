@@ -4,6 +4,7 @@
 - [ ] (template) Task title | Owner: techlead | Priority: medium
 
 ## In Progress
+- [ ] Install Vignette external script globally in app layout | Owner: developer | Priority: medium
 - [ ] Remove strict freshness gate and reroute resolved-category videos into the category they classify to | Owner: developer | Priority: high
 - [ ] Add auto-discovery/suggestion pipeline for good crawl channels | Owner: developer | Priority: high
 - [ ] Implement strict crawl mode that only keeps fresh good films and rejects rác sources | Owner: developer | Priority: high
@@ -18,6 +19,7 @@
 - [ ] Enforce agreed 4-slot AdSense setup: home after rail 3, category after first block, watch after related, search after 8–12 results | Owner: developer | Priority: medium
 
 ## Review
+- [ ] Install Vignette third-party script globally in the App Router layout | Owner: developer | Priority: medium | Verify: `npm.cmd run lint` passed; `npm.cmd run build` passed; script loaded once at root layout after head via `next/script`
 - [ ] Protect Hà Nhân branded crawl channels from auto-blocking and prioritize them in crawl ordering | Owner: developer | Priority: high | Verify: `npm.cmd run lint` passed; `npm.cmd run build` passed; live registry smoke passed; crawl dry-run passed with Hà Nhân floor hit; `ha-nhan-cartoon`/`hanhansubchannel` remained `allowed:true`, `blocked:false`
 - [ ] Implement strict crawl mode that only keeps fresh good films and reports explicit deficits instead of backfilling junk | Owner: developer | Priority: high | Verify: `npm.cmd run lint` passed; `npm.cmd run build` passed; strict dry-run passed with `strictMode:true`, `strictFreshnessDays:45`, and explicit underfill logs
 - [ ] Run strict crawl directly into live DB and verify persisted rows | Owner: developer | Priority: high | Verify: `npm.cmd run lint` passed; `npm.cmd run build` passed; live strict crawl persisted `crawl_runs.id=51` and 14 `movies` rows for that run; timestamp normalization smoke passed

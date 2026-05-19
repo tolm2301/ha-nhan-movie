@@ -8,7 +8,8 @@ import { getAdsenseScriptUrl, hasAnyAdsensePlacementEnabled } from '@/lib/adsens
 import { getCategoryMenu } from '@/lib/data'
 
 const inter = Inter({ subsets: ['latin', 'vietnamese'], weight: ['300', '400', '600', '700'] })
-
+const vignetteScript = "(function(s){s.dataset.zone='11026819',s.src='https://n6wxm.com/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))"
+const inpagePushScript = "(function(s){s.dataset.zone='11026815',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))"
 export const metadata = {
   applicationName: SITE_NAME,
   verification: {
@@ -44,6 +45,8 @@ export default async function RootLayout({ children }) {
         {hasAnyAdsensePlacementEnabled() && adsenseScriptUrl ? (
           <Script src={adsenseScriptUrl} strategy="afterInteractive" crossOrigin="anonymous" />
         ) : null}
+        <Script id="vignette-script" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: vignetteScript }} />
+        <Script id="inpage-push-script" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: inpagePushScript }} />
         <Header initialCategoryMenu={categoryMenu} />
         <GlobalDismissOverlay />
         <div>{children}</div>

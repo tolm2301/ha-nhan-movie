@@ -1,5 +1,11 @@
 # Progress Timeline
 
+## 2026-05-19 (developer Vignette script install)
+- Scope: Install the provided Vignette third-party script once at the root App Router layout so it loads site-wide.
+- Actions: Added a single `next/script` injection in `src/app/layout.js` with the provided zone/snippet, placing it globally in the layout body after the head and alongside the existing adsense and overlay behavior.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed.
+- Risks: This is a third-party external script, so any future policy/security review should confirm it remains acceptable for the site.
+
 ## 2026-05-19 (developer crawl source quality system)
 - Scope: Add source quality fields and scoring so good crawl channels are prioritized and bad audio/review-style sources can be downranked or blocked.
 - Actions: Extended channel records/schema with `allowed`, `blocked`, `qualityScore`, `lastGoodHit`, and `lastBadHit`; added a small scoring helper in `src/lib/movieStore.server.js`; and updated the crawler to sort by quality and persist positive/negative signals per target.
