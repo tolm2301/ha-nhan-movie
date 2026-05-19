@@ -48,6 +48,12 @@
 - Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; suggestion smoke queued trusted Hà Nhân signals into `channel_candidates` and returned them as `status: registered`.
 - Risks: The queue is intentionally conservative, so new channels need repeated trusted evidence before they become review-ready.
 
+## 2026-05-19 (developer reroute acceptance)
+- Scope: Remove the 45-day freshness gate and category-mismatch rejection so old videos and resolved categories are accepted under the resolved category.
+- Actions: Removed strict freshness checks from `explainVideoDecision`, replaced the category-mismatch reject with a reroute/accept log in the per-category crawl loop, and kept audio/review/clip/OST/lyrics hard rejects intact.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; strict dry-run smoke reported `oldTitleRejectLogCount: 0` and `rejectedCategoryLogCount: 0`, showing the old freshness/category-mismatch reject paths are no longer active.
+- Risks: Because reroute is now acceptance, more videos may flow into the resolved category; junk filtering remains the main fail-closed guard.
+
 ## 2026-05-19 (developer transparent global overlay)
 - Scope: Add a transparent full-screen overlay that survives route changes/reloads, dismisses on click, and reappears after five minutes using localStorage timing.
 - Actions: Added a small client-only `GlobalDismissOverlay` component with localStorage-backed next-show timing, mounted it once in `src/app/layout.js` so it persists across App Router navigation, and kept the overlay visually transparent while still capturing clicks.

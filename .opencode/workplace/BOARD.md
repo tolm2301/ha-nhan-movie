@@ -4,6 +4,7 @@
 - [ ] (template) Task title | Owner: techlead | Priority: medium
 
 ## In Progress
+- [ ] Remove strict freshness gate and reroute resolved-category videos into the category they classify to | Owner: developer | Priority: high
 - [ ] Add auto-discovery/suggestion pipeline for good crawl channels | Owner: developer | Priority: high
 - [ ] Implement strict crawl mode that only keeps fresh good films and rejects rác sources | Owner: developer | Priority: high
 - [ ] Stop snapshot cleanup from live-probing every movie | Owner: developer | Priority: high
@@ -21,6 +22,7 @@
 - [ ] Implement strict crawl mode that only keeps fresh good films and reports explicit deficits instead of backfilling junk | Owner: developer | Priority: high | Verify: `npm.cmd run lint` passed; `npm.cmd run build` passed; strict dry-run passed with `strictMode:true`, `strictFreshnessDays:45`, and explicit underfill logs
 - [ ] Run strict crawl directly into live DB and verify persisted rows | Owner: developer | Priority: high | Verify: `npm.cmd run lint` passed; `npm.cmd run build` passed; live strict crawl persisted `crawl_runs.id=51` and 14 `movies` rows for that run; timestamp normalization smoke passed
 - [ ] Add safe auto-discovery/suggestion queue for brand-aligned channels | Owner: developer | Priority: high | Verify: `npm.cmd run lint` passed; `npm.cmd run build` passed; suggestion smoke queued trusted Hà Nhân signals into `channel_candidates` and marked them registered instead of auto-promoting
+- [ ] Remove strict freshness/category-mismatch rejection so old videos and resolved categories are accepted | Owner: developer | Priority: high | Verify: `npm.cmd run lint` passed; `npm.cmd run build` passed; strict dry-run showed `oldTitleRejectLogCount:0`, `rejectedCategoryLogCount:0`, and reroute acceptance logs instead of rejects
 - [ ] Update the transparent overlay to open Google in a new tab | Owner: developer | Priority: medium | Verify: lint/build passed
 - [ ] Update daily crawl schedule to 2:00 AM Vietnam time | Owner: developer | Priority: medium | Verify: workflow cron updated to `0 19 * * *` and YAML parses cleanly
 - [ ] Add a per-item delete button to the recent-watched rail | Owner: developer | Priority: medium | Verify: lint/build/smoke passed

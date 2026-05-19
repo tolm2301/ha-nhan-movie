@@ -13,8 +13,6 @@ const CHANNEL_FEED_ENTRY_LIMIT = 20;
 const RETRY_TIMES = 3;
 const RETRY_BASE_DELAY_MS = 250;
 const CRAWL_STRICT_MODE = true;
-const STRICT_MAX_VIDEO_AGE_DAYS = 45;
-const STRICT_MAX_VIDEO_AGE_MS = STRICT_MAX_VIDEO_AGE_DAYS * 24 * 60 * 60 * 1000;
 const STRICT_BAD_CONTENT_KEYWORDS = [
   'audio',
   'clip',
@@ -568,25 +566,6 @@ function parseDurationSeconds(value = '', { milliseconds = false } = {}) {
   return null;
 }
 
-function isPublishedAtFresh(publishedAt = '', maxAgeMs = STRICT_MAX_VIDEO_AGE_MS) {
-  const timestampMs = Date.parse(String(publishedAt || '').trim());
-  if (!Number.isFinite(timestampMs)) {
-    return { keep: false, reason: 'missing publishedAt' };
-  }
-
-  const ageMs = Date.now() - timestampMs;
-  if (!Number.isFinite(ageMs) || ageMs < 0) {
-    return { keep: false, reason: 'invalid publishedAt' };
-  }
-
-  if (ageMs > maxAgeMs) {
-    const ageDays = Math.floor(ageMs / (24 * 60 * 60 * 1000));
-    return { keep: false, reason: `too old for strict crawl (${ageDays}d > ${Math.floor(maxAgeMs / (24 * 60 * 60 * 1000))}d)` };
-  }
-
-  return { keep: true, reason: 'accepted' };
-}
-
 function extractWatchPageDurationSeconds(playerResponseOrHtml = '') {
   const playerResponse = typeof playerResponseOrHtml === 'string'
     ? extractWatchPagePlayerResponse(playerResponseOrHtml)
@@ -742,7 +721,7 @@ function isBadVideoTitle(title = '') {
   return Boolean(findBadVideoTitleKeyword(title));
 }
 
-export function explainVideoDecision(video, targetType, trustedAuthorWords, { strictMode = CRAWL_STRICT_MODE, maxAgeMs = STRICT_MAX_VIDEO_AGE_MS } = {}) {
+export function explainVideoDecision(video, targetType, trustedAuthorWords, { strictMode = CRAWL_STRICT_MODE } = {}) {
   if (!video?.videoId) {
     return { keep: false, reason: 'missing videoId' };
   }
@@ -752,11 +731,6 @@ export function explainVideoDecision(video, targetType, trustedAuthorWords, { st
     const strictBlockedTitleKeyword = findStrictBadContentKeyword(title);
     if (strictBlockedTitleKeyword) {
       return { keep: false, reason: `blocked by strict title keyword (${strictBlockedTitleKeyword})` };
-    }
-
-    const freshnessDecision = isPublishedAtFresh(video.publishedAt, maxAgeMs);
-    if (!freshnessDecision.keep) {
-      return { keep: false, reason: freshnessDecision.reason };
     }
   }
 
@@ -859,7 +833,6 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true, strictMode
     runDay,
     dryRun,
     strictMode,
-    strictFreshnessDays: STRICT_MAX_VIDEO_AGE_DAYS,
     batchLimitPerCategory: CATEGORY_BATCH_LIMIT,
     minimumNewMoviesPerCategory: CATEGORY_MIN_NEW_MOVIES_PER_DAY,
     categories: categoryPlans.map(plan => ({ slug: plan.slug, tag: plan.tag, minimumNewMoviesPerCategory: CATEGORY_MIN_NEW_MOVIES_PER_DAY, initialSources: plan.initialTargets.length, fallbackSources: plan.refillTargets.length })),
@@ -1084,7 +1057,7 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true, strictMode
               break;
             }
 
-            const qualityDecision = explainVideoDecision(video, target.type, CATEGORY_TRUSTED_AUTHOR_WORDS, { strictMode, maxAgeMs: STRICT_MAX_VIDEO_AGE_MS });
+            const qualityDecision = explainVideoDecision(video, target.type, CATEGORY_TRUSTED_AUTHOR_WORDS, { strictMode });
             const videoLabel = video?.title || video?.videoId || 'khong ro tieu de';
 
             if (!qualityDecision.keep) {
@@ -1131,13 +1104,7 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true, strictMode
 
             const resolvedCategory = resolveMovieCategory(video);
             if (resolvedCategory.slug !== slug) {
-              rejectedCount += 1;
-              targetRejectedCount += 1;
-              waveSummary.rejected += 1;
-              targetSummary.rejected += 1;
-              incrementCountMap(categoryRejectReasons, `resolved to ${resolvedCategory.tag}`);
-              incrementCountMap(targetSummary.rejectReasons, `resolved to ${resolvedCategory.tag}`);
-              logCrawl('  - reject', {
+              logCrawl('  ~ reroute', {
                 runDay,
                 category: tag,
                 slug,
@@ -1145,9 +1112,8 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true, strictMode
                 wave: wave.name,
                 title: videoLabel,
                 resolvedCategory: resolvedCategory.tag,
-                reason: `resolved to ${resolvedCategory.tag}`,
+                reason: `rerouted to ${resolvedCategory.tag}`,
               });
-              continue;
             }
 
             if (existingIds.has(video.videoId) || runNewIds.has(video.videoId)) {
@@ -1491,7 +1457,6 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true, strictMode
     runDay,
     dryRun,
     strictMode,
-    strictFreshnessDays: STRICT_MAX_VIDEO_AGE_DAYS,
     snapshotSyncEnabled: syncSnapshot,
     existingVideos: oldData.length,
     existingKept: keptOldVideos.length,
