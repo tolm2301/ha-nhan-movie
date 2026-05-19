@@ -5,7 +5,7 @@ on:
     branches:
       - main
   schedule:
-    - cron: '0 2 * * *'
+    - cron: '0 19 * * *' # GitHub Actions uses UTC; 2:00 AM Vietnam time = 19:00 UTC
   workflow_dispatch:
 
 concurrency:

@@ -5,7 +5,7 @@ import { hasRenderableThumbnail } from '@/lib/thumbnailFilters';
 import styles from './MovieCarousel.module.css';
 import MovieCard from '../MovieCard/MovieCard';
 
-export default function MovieCarousel({ title, movies, viewAllHref }) {
+export default function MovieCarousel({ title, movies, viewAllHref, onRemoveMovie, removeMovieLabel }) {
   const scrollRef = useRef(null);
   const visibleMovies = (movies || []).filter(movie => Boolean(movie?.id) && hasRenderableThumbnail(movie));
 
@@ -43,7 +43,7 @@ export default function MovieCarousel({ title, movies, viewAllHref }) {
       <div className={styles.slider} ref={scrollRef}>
         {visibleMovies.map((movie) => (
           <div key={movie.id} className={styles.slideItem}>
-            <MovieCard movie={movie} />
+            <MovieCard movie={movie} onRemoveMovie={onRemoveMovie} removeMovieLabel={removeMovieLabel} />
           </div>
         ))}
       </div>

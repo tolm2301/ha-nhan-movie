@@ -132,6 +132,21 @@ export function cleanupWatchedHistory() {
   return cleanedHistory;
 }
 
+export function removeWatchedMovie(movieId) {
+  if (!movieId) return [];
+
+  const history = readStorage(WATCHED_HISTORY_KEY, []);
+  const cleanedHistory = sanitizeWatchedHistory(history);
+  const nextHistory = cleanedHistory.filter(item => item?.id !== movieId);
+
+  if (!isSameWatchedHistory(nextHistory, cleanedHistory)) {
+    writeStorage(WATCHED_HISTORY_KEY, nextHistory);
+    notifyWatchedHistoryUpdated();
+  }
+
+  return nextHistory;
+}
+
 export function pushWatchedMovie(movie) {
   if (!movie?.id) return;
   if (!shouldKeepWatchedHistoryItem(movie)) return;

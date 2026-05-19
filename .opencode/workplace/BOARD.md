@@ -15,6 +15,8 @@
 - [ ] Enforce agreed 4-slot AdSense setup: home after rail 3, category after first block, watch after related, search after 8–12 results | Owner: developer | Priority: medium
 
 ## Review
+- [ ] Update daily crawl schedule to 2:00 AM Vietnam time | Owner: developer | Priority: medium | Verify: workflow cron updated to `0 19 * * *` and YAML parses cleanly
+- [ ] Add a per-item delete button to the recent-watched rail | Owner: developer | Priority: medium | Verify: lint/build/smoke passed
 - [ ] Fix null-safe thumbnail helper crash on prerender | Owner: developer | Priority: high | Verify: `npm.cmd run lint` passed; `npm.cmd run build` passed; `/` prerender completed without the null-thumbnail crash
 - [ ] Strictly clean snapshot generation so private / removed / unavailable Tu Tiên / Xuyên Không watch pages never persist into runtime cards | Owner: developer | Priority: high | Verify: lint/build/crawl:dry passed; `src/lib/movies.json` no longer contains the known stale ids
 - [ ] Hide stale bad items from public UI lists and the recent watched rail | Owner: developer | Priority: high | Verify: lint/build/smoke passed

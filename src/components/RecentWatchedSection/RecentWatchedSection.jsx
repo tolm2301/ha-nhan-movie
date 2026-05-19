@@ -1,7 +1,7 @@
 "use client";
 import { useSyncExternalStore } from 'react';
 import MovieCarousel from '@/components/MovieCarousel/MovieCarousel';
-import { getCleanWatchedHistory } from '@/lib/watchHistory';
+import { getCleanWatchedHistory, removeWatchedMovie } from '@/lib/watchHistory';
 
 const EMPTY_SNAPSHOT = [];
 let cachedSnapshot = EMPTY_SNAPSHOT;
@@ -51,5 +51,12 @@ export default function RecentWatchedSection() {
   const watchedMovies = useSyncExternalStore(subscribeWatchedHistory, getWatchedSnapshot, () => EMPTY_SNAPSHOT);
   if (watchedMovies.length === 0) return null;
 
-  return <MovieCarousel title="🕘 Đã xem gần đây" movies={watchedMovies} />;
+  return (
+    <MovieCarousel
+      title="🕘 Đã xem gần đây"
+      movies={watchedMovies}
+      onRemoveMovie={removeWatchedMovie}
+      removeMovieLabel="Xóa khỏi danh sách đã xem gần đây"
+    />
+  );
 }

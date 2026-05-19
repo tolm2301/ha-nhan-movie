@@ -1,5 +1,17 @@
 # Progress Timeline
 
+## 2026-05-19 (developer daily crawl schedule timezone fix)
+- Scope: Move the GitHub Actions daily crawl to 2:00 AM Vietnam time by changing the UTC cron to the matching previous-day 19:00 UTC slot.
+- Actions: Updated `.github/workflows/daily-crawl.yml` schedule from `0 2 * * *` to `0 19 * * *` and added a short inline UTC note.
+- Verification: `python -c "from pathlib import Path; import yaml; yaml.safe_load(Path(r'C:/Users/Admin/Desktop/project/hanhan-movie/.github/workflows/daily-crawl.yml').read_text(encoding='utf-8')); print('yaml ok')"` passed.
+- Risks: None beyond the existing UTC-based GitHub Actions schedule behavior.
+
+## 2026-05-18 (developer recent watched remove control)
+- Scope: Add a per-item delete control to the "🕘 Đã xem gần đây" rail only, so users can remove watched items from localStorage without affecting catalog cards.
+- Actions: Added `removeWatchedMovie(movieId)` in `src/lib/watchHistory.js`, threaded an optional remove callback through `src/components/MovieCarousel/MovieCarousel.jsx` and `src/components/MovieCard/MovieCard.jsx`, and rendered a scoped accessible remove button only for the recent-watched rail via `src/components/RecentWatchedSection/RecentWatchedSection.jsx`.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; smoke check with a mocked browser storage layer confirmed `removeWatchedMovie('drop-1')` rewrites watched history to keep the remaining item and `getCleanWatchedHistory(20)` returns the cleaned list immediately.
+- Risks: The button is intentionally limited to the recent-watched rail; if future UI wants the same affordance elsewhere, it will need an explicit prop opt-in.
+
 ## 2026-05-18 (developer snapshot cleanup live-probe removal)
 - Scope: Stop snapshot generation from live-checking every YouTube watch page so valid catalogs do not get wiped out during cleanup/write.
 - Actions: Removed the per-movie `checkWatchPageAvailability()` probe from `src/lib/movieSnapshot.server.js`, kept only the already-known cleanup signals (known-bad ids, explicit unavailable flags/strings, recorded playability state, renderable thumbnail, and non-empty title), and left crawl-time watch-page rejection untouched.
