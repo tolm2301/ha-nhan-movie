@@ -31,6 +31,7 @@ export default async function RootLayout({ children }) {
   return (
     <html lang="vi">
       <head>
+        <meta name="monetag" content="a583331237e4e8666b6962c573ceb86c" />
         <link rel="preconnect" href="https://www.youtube.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://www.youtube.com" />
         <link rel="preconnect" href="https://www.youtube-nocookie.com" crossOrigin="anonymous" />
