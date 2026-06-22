@@ -39,16 +39,22 @@ Useful scripts:
 - `npm run build:fresh`: crawl first, then build
 - `npm run lint`: run ESLint
 
-## Deploy to Vercel Local
+## Deploy via GitLab CI/CD to Vercel
 
-1. Install Vercel CLI: `npm i -g vercel`
-2. Login to Vercel: `vercel login`
-3. Link the project: `vercel link`
-4. Deploy to production: `vercel --prod`
+1. Configure the following required CI/CD variables in your GitLab project settings:
+   - `VERCEL_TOKEN`: Your Vercel personal access token
+   - `VERCEL_ORG_ID`: Your Vercel organization ID
+   - `VERCEL_PROJECT_ID`: Your Vercel project ID
+   - `POSTGRES_URL_NON_POOLING`: Your database connection URL
+   - `GITLAB_ACCESS_TOKEN`: A project or personal access token with repository write access (needed for hourly snapshots)
+
+2. Create scheduled pipelines in GitLab:
+   - For `daily_crawl`: Create a schedule, add variable `SCHEDULE_TARGET = crawl`
+   - For `hourly_snapshot`: Create a schedule, add variable `SCHEDULE_TARGET = snapshot`
+
+3. The pipeline runs automatically on pushes to the `main` branch.
 
 Because build/deploy regenerates the runtime snapshot first, Vercel deployments stay snapshot-driven without tying freshness to crawl runs.
-
-No `VERCEL_TOKEN`, `VERCEL_ORG_ID`, or `VERCEL_PROJECT_ID` secrets are required for this setup.
 
 ## Recommended Vercel project setup
 
