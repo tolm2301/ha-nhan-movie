@@ -128,8 +128,6 @@ export default function SearchContent({ query = '', movies = [] }) {
             ))}
           </div>
 
-          {adBreakIndex > -1 && <AdSlot placement="searchAfterResults" minHeight={250} />}
-
           {remainingResults.length > 0 && (
             <div className={styles.grid}>
               {remainingResults.map(movie => (

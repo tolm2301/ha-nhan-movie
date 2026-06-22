@@ -45,8 +45,6 @@ export default async function Home() {
               movies={category.movies.slice(0, 20)}
               viewAllHref={`/category/${category.slug}`}
             />
-
-            {index === 2 && <AdSlot placement="homeAfterRails" minHeight={250} />}
           </div>
         );
       })}

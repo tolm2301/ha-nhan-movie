@@ -1,6 +1,7 @@
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { Pool } from 'pg';
+import { CATEGORY_TAXONOMY, normalizeText as normalizeCategoryText } from './movieCategories.js';
 import { cleanSnapshotMovies, isMovieSnapshotStale, readMovieSnapshot, MOVIE_SNAPSHOT_TTL_MS, writeMovieSnapshot } from './movieSnapshot.server.js';
 
 const CHANNEL_SEEDS_PATH = path.resolve('src/lib/channel-seeds.json');
@@ -13,6 +14,7 @@ const CHANNEL_QUALITY_EMPTY_PENALTY = 1;
 const CHANNEL_QUALITY_BAD_PENALTY = 2;
 const CHANNEL_QUALITY_ERROR_PENALTY = 3;
 const CHANNEL_SUGGESTION_JUNK_KEYWORDS = ['audio', 'clip', 'lyrics', 'ost', 'soundtrack', 'review', 'reaction', 'recap', 'summary', 'shorts', 'trailer', 'teaser', 'vlog', 'podcast', 'news', 'karaoke', 'nhac', 'nhạc'];
+const CATEGORY_TAG_TO_SLUG = new Map(CATEGORY_TAXONOMY.map(category => [normalizeCategoryText(category.tag), category.slug]));
 const DATABASE_URL_ENV_KEYS = [
   'POSTGRES_URL_NON_POOLING',
   'DATABASE_URL',
@@ -224,6 +226,28 @@ function normalizeCandidateKey(value = '') {
 function isLikelyJunkChannelName(value = '') {
   const normalized = normalizeBrandText(value);
   return CHANNEL_SUGGESTION_JUNK_KEYWORDS.some(keyword => normalized.includes(normalizeBrandText(keyword)));
+}
+
+function resolveCategorySlugFromTag(tag = '') {
+  const normalizedTag = normalizeCategoryText(tag);
+  const directMatch = CATEGORY_TAG_TO_SLUG.get(normalizedTag);
+  if (directMatch) {
+    return directMatch;
+  }
+
+  const slugMatch = CATEGORY_TAXONOMY.find(category => normalizeCategoryText(category.slug) === normalizedTag);
+  return slugMatch?.slug || 'shared';
+}
+
+function isPromotableChannelCandidate(candidate = {}) {
+  return Boolean(
+    candidate
+    && candidate.status === 'review-ready'
+    && candidate.channelId
+    && candidate.channelUrl
+    && !candidate.alreadyRegistered
+    && (candidate.trustedBrandHint || (Number.isFinite(candidate.score) && candidate.score >= 6))
+  );
 }
 
 function extractChannelIdFromChannelUrl(channelUrl = '') {
@@ -572,11 +596,71 @@ async function syncChannelRegistryFromJsonFile(client, channels = []) {
      SET enabled = FALSE,
          status = 'disabled',
          updated_at = NOW()
-     WHERE slug <> ALL($1::text[]);`,
+     WHERE slug <> ALL($1::text[])
+       AND trusted_brand = FALSE
+       AND COALESCE(quality_score, 0) < 6
+       AND last_good_hit IS NULL;`,
     [channels.map(channel => channel.slug)],
   );
 
   return { channels: channels.length, staleDisabled: staleDisabledResult.rowCount || 0 };
+}
+
+async function promoteChannelCandidatesIntoRegistry(client, candidateRows = []) {
+  const promotable = candidateRows.filter(isPromotableChannelCandidate);
+  if (promotable.length === 0) {
+    return { promoted: 0 };
+  }
+
+  const params = [];
+  const placeholders = promotable.map((candidate, index) => {
+    const base = index * 16;
+    params.push(
+      candidate.candidateKey,
+      candidate.candidateSlug,
+      candidate.channelId,
+      candidate.channelUrl,
+      candidate.displayName,
+      resolveCategorySlugFromTag(candidate.sourceCategory),
+      'active',
+      true,
+      candidate.trustedBrandHint,
+      true,
+      false,
+      Math.max(0, Number.isFinite(candidate.score) ? candidate.score : 0),
+      candidate.lastSeenAt || null,
+      null,
+      0,
+      candidate.lastSeenAt || null,
+    );
+
+    return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7}, $${base + 8}, $${base + 9}, $${base + 10}, $${base + 11}, $${base + 12}, $${base + 13}, $${base + 14}, $${base + 15}, $${base + 16})`;
+  });
+
+  await client.query(
+    `INSERT INTO channels (
+      id, slug, channel_id, channel_url, display_name, category, status, enabled, trusted_brand, allowed, blocked, quality_score, last_good_hit, last_bad_hit, priority, last_crawled_at
+    ) VALUES ${placeholders.join(', ')}
+    ON CONFLICT (slug) DO UPDATE SET
+      channel_id = COALESCE(EXCLUDED.channel_id, channels.channel_id),
+      channel_url = COALESCE(EXCLUDED.channel_url, channels.channel_url),
+      display_name = EXCLUDED.display_name,
+      category = EXCLUDED.category,
+      status = 'active',
+      enabled = TRUE,
+      trusted_brand = channels.trusted_brand OR EXCLUDED.trusted_brand,
+      allowed = TRUE,
+      blocked = FALSE,
+      quality_score = GREATEST(channels.quality_score, EXCLUDED.quality_score),
+      last_good_hit = COALESCE(channels.last_good_hit, EXCLUDED.last_good_hit),
+      last_bad_hit = COALESCE(channels.last_bad_hit, EXCLUDED.last_bad_hit),
+      priority = LEAST(channels.priority, EXCLUDED.priority),
+      last_crawled_at = COALESCE(EXCLUDED.last_crawled_at, channels.last_crawled_at),
+      updated_at = NOW();`,
+    params,
+  );
+
+  return { promoted: promotable.length };
 }
 
 export async function loadChannelRegistry({ allowJsonFallback = true, includeDisabled = false } = {}) {
@@ -595,6 +679,35 @@ export async function loadChannelRegistry({ allowJsonFallback = true, includeDis
     if (seedChannels.length > 0) {
       await syncChannelRegistryFromJsonFile(client, seedChannels);
     }
+
+    const promotableCandidatesResult = await client.query(
+      `SELECT
+        candidate_key AS "candidateKey",
+        display_name AS "displayName",
+        normalized_name AS "normalizedName",
+        candidate_slug AS "candidateSlug",
+        channel_id AS "channelId",
+        channel_url AS "channelUrl",
+        source_channel_slug AS "sourceChannelSlug",
+        source_channel_id AS "sourceChannelId",
+        source_channel_display_name AS "sourceChannelDisplayName",
+        source_category AS "sourceCategory",
+        trusted_brand_hint AS "trustedBrandHint",
+        already_registered AS "alreadyRegistered",
+        evidence_count AS "evidenceCount",
+        keep_count AS "keepCount",
+        score,
+        status,
+        first_seen_at AS "firstSeenAt",
+        last_seen_at AS "lastSeenAt",
+        metadata
+      FROM channel_candidates
+      WHERE status = 'review-ready'
+      ORDER BY score DESC, last_seen_at DESC
+      LIMIT 50;`,
+    );
+
+    await promoteChannelCandidatesIntoRegistry(client, promotableCandidatesResult.rows);
 
     if (seedChannels.length === 0) {
       return [];
@@ -619,7 +732,8 @@ export async function loadChannelRegistry({ allowJsonFallback = true, includeDis
         priority,
         last_crawled_at AS "lastCrawledAt"
       FROM channels
-      WHERE slug = ANY($1::text[])
+      WHERE (slug = ANY($1::text[])
+        OR (trusted_brand = TRUE OR COALESCE(quality_score, 0) >= 6 OR last_good_hit IS NOT NULL))
       ${includeDisabled ? '' : 'AND enabled = TRUE AND blocked = FALSE'}
       ORDER BY trusted_brand DESC, blocked ASC, quality_score DESC, priority ASC, last_good_hit DESC NULLS LAST, created_at ASC, slug ASC;`,
       [seedChannels.map(channel => channel.slug)],

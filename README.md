@@ -6,25 +6,12 @@ Next.js movie site with automated YouTube crawling, build-time snapshot generati
 
 - Runtime reads `src/lib/movies.json`.
 - Build/deploy runs `prebuild` first, so `npm run build` always refreshes the snapshot via `npm run snapshot:movies` before Next.js builds.
-- Hourly sync is handled by `.github/workflows/hourly-snapshot-sync.yml`, which refreshes the snapshot from Postgres and commits the updated JSON back to the repo.
-- Crawl is separate: `.github/workflows/daily-crawl.yml` updates the database only (`npm run crawl -- --no-snapshot`) and is no longer the freshness owner for the runtime snapshot.
 
 ## Postgres data
 
 Runtime movie data now lives in Postgres (Supabase-compatible). Set the direct Supabase URL in `POSTGRES_URL_NON_POOLING` on Vercel (preferred) or `DATABASE_URL` if that is your server-only direct URL.
 
 The crawl registry also lives in Postgres as a `channels` table. When that table is empty, the app bootstraps it from `src/lib/channel-seeds.json` so crawl discovery has a repo-backed recovery path.
-
-## AdSense
-
-The shared AdSense framework stays intact, but only four placements are active now: home after the third rail, category after the first block, watch after the related block, and search after 8–12 results. To enable them, set:
-
-- `NEXT_PUBLIC_ADSENSE_SLOT_HOME_AFTER_RAILS`
-- `NEXT_PUBLIC_ADSENSE_SLOT_CATEGORY_AFTER_FIRST_BLOCK`
-- `NEXT_PUBLIC_ADSENSE_SLOT_WATCH_AFTER_RELATED`
-- `NEXT_PUBLIC_ADSENSE_SLOT_SEARCH_AFTER_RESULTS`
-
-Missing slot env vars keep those placements inert.
 
 ## Local development
 
@@ -52,51 +39,16 @@ Useful scripts:
 - `npm run build:fresh`: crawl first, then build
 - `npm run lint`: run ESLint
 
-## Daily crawl (DB ingestion)
+## Deploy to Vercel Local
 
-GitHub Actions workflow: `.github/workflows/daily-crawl.yml`
+1. Install Vercel CLI: `npm i -g vercel`
+2. Login to Vercel: `vercel login`
+3. Link the project: `vercel link`
+4. Deploy to production: `vercel --prod`
 
-- Runs every day at `02:00 UTC`
-- Runs the crawler directly in GitHub Actions and upserts refreshed data into Postgres so repeated runs grow the catalog without duplicating movie ids
-- Operational goal: deliver at least `5` new movies per category per day.
-- Crawl strategy is category-first and source-first: daily crawl/backfill starts from the curated channel registry and channel feeds/uploads, not from ytsearch or search backfill.
-- Does not update the runtime snapshot; snapshot freshness is owned by build/deploy and the hourly sync workflow
-- Crawls are split by category (`Hà Nhân`, `Tu Tiên`, `Xuyên Không`, `Trọng Sinh`, `Liễu Như Yên`, `Hệ Thống`, `Khác`) and use the DB-backed channel registry as the source list. The registry keeps only 2D movie/animation video sources; audio, review, and truyện sources are excluded. Channel metadata is bootstrapped from `src/lib/channel-seeds.json` when the registry is empty, and the crawler reports any category quota deficit honestly instead of trying free-form discovery.
-- Logs include the category batch name, run day, and how many items were added/skipped
-
-## Hourly snapshot sync
-
-GitHub Actions workflow: `.github/workflows/hourly-snapshot-sync.yml`
-
-- Runs every hour
-- Runs `npm run snapshot:movies` only
-- Requires Postgres credentials from GitHub Secrets and pushes `src/lib/movies.json` only when the snapshot content actually changes
-- Uploads the snapshot log as an artifact for debugging
-
-Required secret/env vars:
-
-- `POSTGRES_URL_NON_POOLING` (preferred) or `DATABASE_URL`: direct Supabase Postgres connection string for the GitHub Actions crawl job
-- `CRON_SECRET` (optional): manual-access secret for `/api/cron/crawl` if you still use the endpoint by hand
-- `POSTGRES_URL_NON_POOLING` (preferred) or `DATABASE_URL`: direct Supabase Postgres connection string for the hourly snapshot sync job
-
-## Deploy to Vercel (no token flow)
-
-Deployment is handled by Vercel Git Integration (no GitHub Actions token required):
-
-1. Connect this GitHub repository in Vercel.
-2. Set production branch to `main` (or `master`, depending on your repo).
-3. Every push to production branch is auto-deployed by Vercel.
-
-Because build/deploy regenerates the runtime snapshot first, and the hourly sync keeps `src/lib/movies.json` updated, Vercel deployments stay snapshot-driven without tying freshness to crawl runs.
+Because build/deploy regenerates the runtime snapshot first, Vercel deployments stay snapshot-driven without tying freshness to crawl runs.
 
 No `VERCEL_TOKEN`, `VERCEL_ORG_ID`, or `VERCEL_PROJECT_ID` secrets are required for this setup.
-
-## CI checks
-
-Workflow: `.github/workflows/ci.yml`
-
-- Runs lint on push and pull requests
-- Keeps code quality checks in GitHub Actions while deploy stays on Vercel
 
 ## Recommended Vercel project setup
 

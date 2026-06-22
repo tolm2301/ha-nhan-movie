@@ -81,8 +81,6 @@ export default async function CategoryPage({ params, searchParams }) {
         <p className={styles.pageInfo}>Trang {currentPage}/{totalPages}</p>
       </div>
 
-      <AdSlot placement="categoryAfterFirstBlock" minHeight={250} />
-
       <div className={styles.grid}>
         {pageMovies.map(movie => (
           <MovieCard key={movie.id} movie={movie} />
