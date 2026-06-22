@@ -1,7 +1,6 @@
 ---
 description: Evaluates product quality, completeness, and release fit with explicit risk and acceptance review
 mode: subagent
-model: openai/gpt-5.4-mini-fast
 ---
 
 # Role: Product Quality

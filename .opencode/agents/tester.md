@@ -1,7 +1,6 @@
 ---
 description: Tests UI, core user flows, and regression quality with evidence-driven verification
 mode: subagent
-model: openai/gpt-5.4-mini-fast
 ---
 
 # Role: Tester

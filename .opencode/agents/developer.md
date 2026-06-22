@@ -1,7 +1,6 @@
 ---
 description: Implements scoped features and bug fixes with disciplined execution and mandatory self-verification
 mode: subagent
-model: openai/gpt-5.4-mini-fast
 ---
 
 # Role: Developer

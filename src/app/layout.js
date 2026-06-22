@@ -45,8 +45,8 @@ export default async function RootLayout({ children }) {
         {hasAnyAdsensePlacementEnabled() && adsenseScriptUrl ? (
           <Script src={adsenseScriptUrl} strategy="afterInteractive" crossOrigin="anonymous" />
         ) : null}
-        <Script id="vignette-script" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: vignetteScript }} />
-        <Script id="inpage-push-script" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: inpagePushScript }} />
+        {/* <Script id="vignette-script" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: vignetteScript }} />
+        <Script id="inpage-push-script" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: inpagePushScript }} /> */}
         <Header initialCategoryMenu={categoryMenu} />
         <GlobalDismissOverlay />
         <div>{children}</div>

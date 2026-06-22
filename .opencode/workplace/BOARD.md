@@ -4,6 +4,8 @@
 - [ ] (template) Task title | Owner: techlead | Priority: medium
 
 ## In Progress
+- [ ] Increase persisted movie count by promoting review-ready good channels into crawl source pool | Owner: developer | Priority: high
+- [ ] Add per-target crawl audit logs for discovered/kept/rejected/duplicated/persisted counts | Owner: developer | Priority: high
 - [ ] Install Vignette external script globally in app layout | Owner: developer | Priority: medium
 - [ ] Remove strict freshness gate and reroute resolved-category videos into the category they classify to | Owner: developer | Priority: high
 - [ ] Add auto-discovery/suggestion pipeline for good crawl channels | Owner: developer | Priority: high
@@ -19,6 +21,10 @@
 - [ ] Enforce agreed 4-slot AdSense setup: home after rail 3, category after first block, watch after related, search after 8–12 results | Owner: developer | Priority: medium
 
 ## Review
+- [ ] Increase persisted movies by promoting review-ready channel candidates into the active crawl pool | Owner: developer | Priority: high | Verify: `npm.cmd run lint` passed; `npm.cmd run build` passed; dry-run promotion smoke showed a promoted non-seed channel, `targetsWithPersistedRows: 6`, and `totals.kept: 18`
+- [ ] Add structured crawl audit logging per target and final run summary | Owner: developer | Priority: high | Verify: `npm.cmd run lint` passed; `npm.cmd run build` passed; dry-run smoke emitted `crawl_target_audit` logs for 119 targets and a final run summary with persisted/discovery counters
+- [ ] Investigate latest live crawl run with zero new persisted movies | Owner: developer | Priority: high | Verify: live DB audit showed latest run `id=53`, `fetched_count=0`, runtime `snapshotSource=db`, and no `movies.crawl_run_id=53` rows
+- [ ] Investigate why crawl output seems large but not saved to DB | Owner: developer | Priority: high | Verify: live DB audit showed latest run exists, runtime is DB-backed, and `movies.crawl_run_id` rows belong to older runs, not the latest run
 - [ ] Install Vignette third-party script globally in the App Router layout | Owner: developer | Priority: medium | Verify: `npm.cmd run lint` passed; `npm.cmd run build` passed; script loaded once at root layout after head via `next/script`
 - [ ] Protect Hà Nhân branded crawl channels from auto-blocking and prioritize them in crawl ordering | Owner: developer | Priority: high | Verify: `npm.cmd run lint` passed; `npm.cmd run build` passed; live registry smoke passed; crawl dry-run passed with Hà Nhân floor hit; `ha-nhan-cartoon`/`hanhansubchannel` remained `allowed:true`, `blocked:false`
 - [ ] Implement strict crawl mode that only keeps fresh good films and reports explicit deficits instead of backfilling junk | Owner: developer | Priority: high | Verify: `npm.cmd run lint` passed; `npm.cmd run build` passed; strict dry-run passed with `strictMode:true`, `strictFreshnessDays:45`, and explicit underfill logs

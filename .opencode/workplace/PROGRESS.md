@@ -1,5 +1,29 @@
 # Progress Timeline
 
+## 2026-05-19 (developer source pool promotion)
+- Scope: Increase persisted movies by promoting review-ready channel candidates into the active crawl pool without loosening junk filters.
+- Actions: Added a promotion path that upserts review-ready candidates with real channel ids/URLs into `channels`, kept promoted rows from being disabled on JSON sync, and let the registry loader include trusted/promoted rows alongside seed channels.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; dry-run promotion smoke showed a promoted non-seed channel (`ngoc-duc-channel`), `targetsWithPersistedRows: 6`, `targetsWithDiscoveryOnly: 92`, and `totals.kept: 18`.
+- Risks: Only review-ready candidates with real channel ids/URLs are promoted, so growth remains conservative and dependent on trusted source evidence.
+
+## 2026-05-19 (developer crawl audit logging)
+- Scope: Add structured crawl audit logging so each target/route clearly shows discovered, kept, rejected, duplicate, error, and persisted contributions.
+- Actions: Added `crawl_target_audit` logs per target with category/slug/query/wave plus discovered, kept, rejected, duplicates, errors, persisted, and reason maps; extended the final `crawl_run_summary` with target-level persistence gap counters.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; dry-run smoke emitted 119 `crawl_target_audit` logs and a final run summary showing `targetsWithPersistedRows: 0`, `targetsWithDiscoveryOnly: 91`, `targetsWithNoDiscovery: 28`.
+- Risks: Logging now makes the gap obvious, but it does not change crawl behavior; the underlying source exhaustion still needs separate content/channel expansion.
+
+## 2026-05-19 (developer zero-new live crawl audit)
+- Scope: Investigate why the latest live crawl run completed with zero new persisted movies.
+- Actions: Queried the latest live crawl summary and DB state with the existing `.env.local` credentials, compared `crawl_runs.id=53` against `movies.crawl_run_id` counts, and confirmed the runtime load path is DB-backed.
+- Verification: latest run `id=53` has `status=completed`, `kept_count=459`, `fetched_count=0`; runtime reports `snapshotSource: "db"` and `catalogSource: "db"`; movie rows are still attributed to older run ids only (`49`, `37`, `51`, `42`, `17`, `38`).
+- Risks: The latest crawl run did not add new rows because the current source set was duplicate-heavy / exhausted, not because DB persistence failed.
+
+## 2026-05-19 (developer crawl DB audit)
+- Scope: Investigate why the crawl output looked large but not saved to DB.
+- Actions: Queried the live Postgres-backed registry and catalog using the existing `.env.local` credentials, compared the latest `crawl_runs` row to `movies.crawl_run_id` counts, and checked the runtime load path.
+- Verification: live DB showed latest crawl run `id=53`, `status=completed`, `kept_count=459`, `fetched_count=0`; movie rows were still attributed to older run ids (`49`, `37`, `51`, `42`, `17`, `38`), while runtime reported `snapshotSource: "db"` and `catalogSource: "db"`.
+- Risks: The crawl did not add new rows in the latest run; the visible large catalog is the carried-forward DB state, not a new ingest.
+
 ## 2026-05-19 (developer Vignette script install)
 - Scope: Install the provided Vignette third-party script once at the root App Router layout so it loads site-wide.
 - Actions: Added a single `next/script` injection in `src/app/layout.js` with the provided zone/snippet, placing it globally in the layout body after the head and alongside the existing adsense and overlay behavior.

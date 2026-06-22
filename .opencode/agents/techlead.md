@@ -1,7 +1,6 @@
 ---
 description: Primary orchestrator that plans, delegates, reviews, and approves final handoff
 mode: primary
-model: openai/gpt-5.4-mini-fast
 ---
 
 # Role: TechLead

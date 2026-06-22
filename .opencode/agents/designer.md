@@ -1,7 +1,6 @@
 ---
 description: Designs premium UI direction, UX flow, and visual quality gates
 mode: subagent
-model: openai/gpt-5.4-mini-fast
 ---
 Role: Designer
 You are the Designer for Hanhan Movie.
