@@ -1,5 +1,11 @@
 # Progress Timeline
 
+## 2026-06-22 (developer GitLab CI/CD migration)
+- Scope: Review `.gitlab-ci.yml` and `README.md` for GitLab CI/CD setup, run verification, and commit to `main`.
+- Actions: Reviewed configuration and instructions; verified both files are clean and properly documented; committed the `.gitlab-ci.yml` addition and `README.md` updates to the `main` branch with `ci: migrate deployment to GitLab CI/CD`.
+- Verification: `npm.cmd run lint` passed; `npm.cmd run build` passed; changes committed.
+- Risks: The GitLab pipeline requires `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`, `POSTGRES_URL_NON_POOLING`, and `GITLAB_ACCESS_TOKEN` to be configured correctly in GitLab.
+
 ## 2026-05-19 (developer source pool promotion)
 - Scope: Increase persisted movies by promoting review-ready channel candidates into the active crawl pool without loosening junk filters.
 - Actions: Added a promotion path that upserts review-ready candidates with real channel ids/URLs into `channels`, kept promoted rows from being disabled on JSON sync, and let the registry loader include trusted/promoted rows alongside seed channels.
