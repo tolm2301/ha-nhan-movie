@@ -4,6 +4,7 @@ Use this queue for new requests, escalation, and final review tasks.
 
 ## Entries
 - (template) YYYY-MM-DD | From: user | Task: ... | Context: ...
+- 2026-07-24 | From: PM | Task: Architecture design for Admin Crawl Trigger and UI Auto-Refresh (CRAWL-002) | Context: We need a hidden page (`/system-trigger`) to POST to `/api/cron/crawl?secret=...` via a button. To avoid 504 on Vercel, the API should respond immediately and execute crawl async (fire-and-forget), or keep it synchronous but warn the admin. We also need a global client component (`AutoRefresh`) that calls `router.refresh()` every 30 mins to fetch the new DB snapshot seamlessly. Please provide design constraints and handoff to Developer.
 - 2026-06-22 | From: developer | Task: Review GitLab CI/CD migration | Context: `.gitlab-ci.yml` and `README.md` reviewed and committed. `npm.cmd run lint` and `npm.cmd run build` passed. Handing off to techlead for final review and closeout.
 - 2026-05-05 | From: creator | Task: Registry cleanup docs update | Context: README now says the crawl registry keeps only 2D movie/animation video sources and excludes audio, review, and truyện sources.
 - 2026-05-05 | From: creator | Task: Crawler docs pivot update | Context: README now says the crawler is feed-only/source-first, no longer relies on ytsearch/search backfill, and reports quota deficits honestly instead of using free-form discovery.

@@ -9,7 +9,7 @@ export const metadata = {
   },
 };
 
-export const revalidate = 300;
+export const revalidate = 1800;
 
 export default async function SearchPage({ searchParams }) {
   const resolvedSearchParams = await searchParams;

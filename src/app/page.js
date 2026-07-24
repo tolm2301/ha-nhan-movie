@@ -6,7 +6,7 @@ import { getMovieCatalog } from '@/lib/data';
 import { getRenderableThumbnail } from '@/lib/thumbnailFilters';
 import { buildMetadata, buildWebsiteJsonLd, toJsonLd } from '@/lib/seo';
 
-export const revalidate = 300;
+export const revalidate = 1800;
 
 export async function generateMetadata() {
   const catalog = await getMovieCatalog();

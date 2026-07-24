@@ -129,33 +129,6 @@ function getServerSnapshot() {
 }
 
 export default function GlobalDismissOverlay() {
-  const visible = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
-
-  const handleDismiss = () => {
-    const nextValue = Date.now() + HIDE_DURATION_MS
-
-    try {
-      window.localStorage.setItem(STORAGE_KEY, String(nextValue))
-    } catch {
-      // Ignore storage errors; local visibility state still updates.
-    }
-
-    scheduleReveal(nextValue)
-  }
-
-  if (!visible) {
-    return null
-  }
-
-  return (
-    <a
-      href="https://omg10.com/4/11026171"
-      className={styles.overlay}
-      aria-label="Open Google and dismiss temporary overlay"
-      target="_blank"
-      rel="noopener noreferrer"
-      tabIndex={-1}
-      onClick={handleDismiss}
-    />
-  )
+  // Disabled by user request to improve UX and hide ads/overlay
+  return null
 }

@@ -10,6 +10,13 @@ Use this queue for implementation and bugfix tasks.
 
 ## Entries
 - (template) YYYY-MM-DD | From: techlead/designer | Scope: ... | Verify: ...
+- 2026-07-24 | From: PM | Scope: CRAWL-002 - Implement Admin Crawl Trigger and 30m Auto-Refresh. 
+  1. Create a hidden page at `src/app/system-trigger/page.js` with an input for `secret` and a button to trigger `POST /api/cron/crawl?secret=XYZ`. Inform user that wait may take minutes or hit 504.
+  2. Create a global Client Component in `src/app/layout.js` (or similar) that uses `useEffect`, `setInterval` (1.8M ms / 30m), and Next.js `useRouter().refresh()` to auto-refresh the UI without full reload.
+  3. Ensure existing `CRON_SECRET` remains secure. 
+  Verify: `npm run lint` and `npm run build`. 
+  [DONE]
+
 - 2026-04-30 | From: techlead | Scope: Fix Next image host config so ytimg subdomains like `i4.ytimg.com` are allowed for hero thumbnails and the runtime error stops. Verify: the home page no longer throws the `next/image` unconfigured host runtime error, ytimg thumbnails render, and lint/build still pass.
 - 2026-04-30 | From: techlead | Scope: Remove all drama-related seed channels and keep only non-drama clip-style sources for release. Verify: the seed list contains no drama-specific sources, only non-drama clip-style channels remain, and lint/build still pass.
 - 2026-04-30 | From: techlead | Scope: Prune the channel seed list down to only high-signal clip-style sources for release; creator-led seed research is canceled. Verify: no audio/radio or irrelevant channels remain in the seed list, and the release path stays clean.

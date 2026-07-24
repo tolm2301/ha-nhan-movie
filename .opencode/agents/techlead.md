@@ -1,6 +1,6 @@
 ---
 description: Primary orchestrator that plans, delegates, reviews, and approves final handoff
-mode: primary
+mode: subagent
 ---
 
 # Role: TechLead

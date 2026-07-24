@@ -11,18 +11,21 @@ Build and maintain a modern Next.js movie product with deliberate UI quality, cl
 - Prefer explicit, readable code over clever abstractions.
 
 ## Team Model
-- `techlead`: fixed primary orchestrator, plans work, delegates execution, and owns final delivery quality.
+- `project-manager`: fixed primary orchestrator, plans work, delegates execution, and owns final delivery quality.
+- `techlead`: architecture fit, review, and technical guidance.
 - `designer`: owns UI direction, UX flow, and visual consistency.
 - `creator`: owns production readiness, automation, and delivery ergonomics.
 - `developer`: owns implementation, bug fixes, and self-verification.
+- `tester`: verifies UI behavior and acceptance criteria with evidence.
+- `analyzer`: read-only investigation and codebase mapping.
 
-There is no separate tester role. Verification is owned by `developer` and reviewed by `techlead`.
+Verification is owned by `tester` or `developer` and reviewed by `techlead` or `project-manager`.
 
 ## Primary Orchestration Policy
-- `techlead` is the fixed primary role for this repository.
-- All multi-step feature and bug requests must be triaged by `techlead` before role assignment.
-- `designer`, `developer`, and `creator` operate as execution roles through workplace handoffs.
-- Only `techlead` can mark a task Done on the board after verification evidence is explicit.
+- `project-manager` is the fixed primary role for this repository.
+- All multi-step feature and bug requests must be triaged by `project-manager` before role assignment.
+- `techlead`, `designer`, `developer`, `tester`, and `analyzer` operate as execution roles through workplace handoffs.
+- Only `project-manager` can mark a task Done on the board after verification evidence is explicit.
 
 ## Working Agreements
 - Start substantial work with a short plan and explicit acceptance criteria.

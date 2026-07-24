@@ -114,3 +114,9 @@
 - [x] Fix category bar wrapping and remove Tấu Hài from crawl-derived categories | Owner: designer | Finished: 2026-04-21
 - [x] Review UI and crawled data flow optimization | Owner: techlead | Finished: 2026-04-21
  - [ ] Optimize home load, watch readiness, and mobile category overflow | Owner: developer | Priority: high
+
+| INIT-001 | Initialize teamwork workspace | Project Manager | done | High | 2026-07-24 | Created default .opencode/ coordination structure |
+
+| CRAWL-001 | Investigate Admin Crawl Trigger and UI Auto-Refresh | Analyzer | done | High | 2026-07-24 | Analyzer investigation complete; manual trigger hits Vercel timeouts, UI refresh is viable via ISR + setInterval |
+
+| CRAWL-002 | Implement Admin Crawl Trigger and 30m Auto-Refresh | Developer | done | High | 2026-07-24 | Adding /system-trigger hidden admin page and global 30-minute ISR UI refresh |

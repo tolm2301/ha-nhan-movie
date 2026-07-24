@@ -4,7 +4,7 @@ import { getRenderableThumbnail } from '@/lib/thumbnailFilters';
 import { buildMetadata } from '@/lib/seo';
 import WatchClient from '@/app/watch/[id]/WatchClient';
 
-export const revalidate = 300;
+export const revalidate = 1800;
 
 export async function generateStaticParams() {
   const catalog = await getMovieCatalog();

@@ -7,7 +7,7 @@ import AdSlot from '@/components/Adsense/AdSlot';
 import styles from './Category.module.css';
 import { buildBreadcrumbJsonLd, buildItemListJsonLd, buildMetadata, buildAbsoluteUrl, toJsonLd } from '@/lib/seo';
 
-export const revalidate = 300;
+export const revalidate = 1800;
 
 const PAGE_SIZE = 24;
 
