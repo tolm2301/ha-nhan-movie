@@ -1,9 +1,23 @@
 {
   "snapshotVersion": 1,
   "source": "db",
-  "generatedAt": "2026-07-24T05:48:37.721Z",
+  "generatedAt": "2026-07-24T07:32:27.715Z",
   "fallbackReason": null,
   "movies": [
+    {
+      "id": "mOr0dytmU2Y",
+      "title": "Nhà Chài Những Năm 90 - Tôi Có Năng Lực Giao Tiếp Với Sinh Vật Biển Giúp Cả THôn Đổi Đời",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i2.ytimg.com/vi/mOr0dytmU2Y/hqdefault.jpg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 0
+    },
     {
       "id": "QSwWjk37LLw",
       "title": "( FULL VERSION ) Trường An Đệ Nhất Công Tử | Hà Nhân Xuyên Không | Hà Nhân Cartoon",
@@ -171,6 +185,20 @@
       "tags": "Hà Nhân",
       "rating": "N/A",
       "sortOrder": 0
+    },
+    {
+      "id": "ZlbgnAr8lYs",
+      "title": "Bị Chê Thức Tỉnh Dị Năng Phế Vật Cấp F, Tôi Vào Viện Dưỡng Lão Học Tuyệt Chiêu Đổi Đời",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "?? views",
+      "thumbnail": "https://i3.ytimg.com/vi/ZlbgnAr8lYs/hqdefault.jpg",
+      "tags": "Tu Tiên",
+      "rating": "N/A",
+      "sortOrder": 1
     },
     {
       "id": "8-yywcPiiOI",

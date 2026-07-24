@@ -28,3 +28,15 @@
 - Required Evidence:
 - Due / Priority:
 ```
+### CRAWL-005 — Investigate 1-Movie Crawl Limit
+- Status: todo
+- Objective: The user reported that the current crawl flow is only fetching/saving 1 movie at a time. Investigate the codebase to identify the root cause of this limitation and find how to optimize the crawl flow to fetch more movies.
+- Questions to Answer:
+  - Where are the limits defined for crawl fetching (e.g. per category, per run, total)?
+  - Is there a bug causing the crawler to stop after 1 movie, or is it a hardcoded limit?
+  - How can we safely increase this limit without hitting timeouts or memory issues?
+- Files / Areas to Inspect: `src/lib/crawl.server.js`, `src/app/api/cron/crawl/route.js`, `scripts/crawl.mjs`
+- Scope IN: Backend crawl logic, limits, quotas, and filtering.
+- Scope OUT: Writing the fix code.
+- Required Evidence: Code snippets showing the limits and variables.
+- Due / Priority: High

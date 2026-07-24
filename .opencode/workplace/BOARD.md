@@ -120,3 +120,5 @@
 | CRAWL-001 | Investigate Admin Crawl Trigger and UI Auto-Refresh | Analyzer | done | High | 2026-07-24 | Analyzer investigation complete; manual trigger hits Vercel timeouts, UI refresh is viable via ISR + setInterval |
 
 | CRAWL-002 | Implement Admin Crawl Trigger and 30m Auto-Refresh | Developer | done | High | 2026-07-24 | Adding /system-trigger hidden admin page and global 30-minute ISR UI refresh |
+| CRAWL-005 | Optimize crawling flow 1-movie limit | Developer | done | High | 2026-07-24 | Fixed strict mode reporting bug, reroute category tracking, and handled handle-resolutions to fetch more movies safely |
+

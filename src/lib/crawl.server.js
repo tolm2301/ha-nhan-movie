@@ -9,7 +9,7 @@ const EPISODE_REGEX = /(t\u1eadp|tap|episode|ep\.?|ph\u1ea7n)\s*(\d{1,4})/i;
 const EPISODE_RANGE_REGEX = /(?:\b(?:ep|episode|tap|t\u1eadp|phan|ph\u1ea7n)\s*[\[(]?\s*\d{1,4}\s*(?:[-–—]|to|\u0111\u1ebfn|den|\/)\s*\d{1,4}\b|\[\s*ep\s*\d{1,4}\s*[-–—]\s*\d{1,4}\s*\])/i;
 const MIN_VIDEO_DURATION_SECONDS = 600;
 const MAX_STORED_VIDEOS = 1000;
-const CHANNEL_FEED_ENTRY_LIMIT = 20;
+const CHANNEL_FEED_ENTRY_LIMIT = 40;
 const RETRY_TIMES = 3;
 const RETRY_BASE_DELAY_MS = 250;
 const CRAWL_STRICT_MODE = true;
@@ -331,7 +331,7 @@ function isTransientCrawlError(error) {
 }
 
 const CATEGORY_MIN_NEW_MOVIES_PER_DAY = 10;
-const CATEGORY_BATCH_LIMIT = 20;
+const CATEGORY_BATCH_LIMIT = 40;
 const CATEGORY_TRUSTED_AUTHOR_WORDS = ['ha nhan', 'h\u00e0 nh\u00e2n', 'review phim', 'hoat hinh', 'ho\u1ea1t h\u00ecnh', 'vietsub', 'anime', 'phim', 'cartoon'];
 
 function getChannelKey(channel = {}) {
@@ -485,8 +485,29 @@ async function resolveChannelIdentity(channel) {
     return resolved;
   }
 
-  const channelIdFromUrl = extractChannelIdFromChannelUrl(channel.channelUrl);
+  let channelIdFromUrl = extractChannelIdFromChannelUrl(channel.channelUrl);
+  
+  if (!channelIdFromUrl && channel.channelUrl && channel.channelUrl.includes('@')) {
+    try {
+      const pageResult = await fetchTextWithRetry(channel.channelUrl);
+      if (pageResult.ok) {
+        const match = pageResult.result.match(/(?:<link rel="canonical" href="https:\/\/www\.youtube\.com\/channel\/|"externalId":")(UC[\w-]+)["']/i);
+        if (match?.[1]) {
+          channelIdFromUrl = match[1];
+        }
+      }
+    } catch (e) {
+      logCrawl('crawl_channel_resolve_failed', { channelUrl: channel.channelUrl, error: serializeError(e) });
+    }
+  }
+
   if (!channelIdFromUrl) {
+    logCrawl('crawl_channel_identity_unresolved', {
+      channelSlug: channel.slug || null,
+      displayName: channel.displayName || null,
+      channelUrl: channel.channelUrl || null,
+      reason: 'missing channelId and unable to resolve @handle URL for RSS feed',
+    });
     return null;
   }
 
@@ -884,10 +905,20 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true, strictMode
   const existingIds = new Set(oldData.map(video => video.id));
   const runNewIds = new Set();
   const newVideos = [];
+  const keptVideosByCategory = new Map();
+  const getKeptVideosForCategory = (categorySlug) => {
+    const normalizedSlug = categorySlug || 'khac';
+    if (!keptVideosByCategory.has(normalizedSlug)) {
+      keptVideosByCategory.set(normalizedSlug, []);
+    }
+
+    return keptVideosByCategory.get(normalizedSlug);
+  };
   const categorySummaries = [];
   const crawlCategoryTargets = async (plan) => {
     const { tag, slug, initialTargets, refillTargets = [], reason } = plan;
-    const keptVideos = [];
+    const currentCategoryKeptVideos = getKeptVideosForCategory(slug);
+    const startingKeptCount = currentCategoryKeptVideos.length;
     let targetErrors = 0;
     let rejectedCount = 0;
     let duplicateCount = 0;
@@ -915,11 +946,11 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true, strictMode
     });
 
     for (const wave of waves) {
-      if (keptVideos.length >= targetQuota) {
+      if (currentCategoryKeptVideos.length >= targetQuota) {
         break;
       }
 
-      const deficitBeforeWave = targetQuota - keptVideos.length;
+      const deficitBeforeWave = targetQuota - currentCategoryKeptVideos.length;
       const waveSummary = {
         runDay,
         category: tag,
@@ -927,8 +958,8 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true, strictMode
         wave: wave.name,
         reason: wave.reason,
         target: targetQuota,
-        startKept: keptVideos.length,
-        endKept: keptVideos.length,
+        startKept: currentCategoryKeptVideos.length,
+        endKept: currentCategoryKeptVideos.length,
         deficitBefore: deficitBeforeWave,
         deficitAfter: deficitBeforeWave,
         targets: 0,
@@ -946,14 +977,14 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true, strictMode
         reason: wave.reason,
         target: targetQuota,
         floor: CATEGORY_MIN_NEW_MOVIES_PER_DAY,
-        kept: keptVideos.length,
+        kept: currentCategoryKeptVideos.length,
         deficit: deficitBeforeWave,
         targets: wave.targets.map(target => target.query),
       });
 
       for (const target of wave.targets) {
-        if (keptVideos.length >= targetQuota) {
-          logCrawl('crawl_category_batch_limit_reached', { runDay, category: tag, slug, kept: keptVideos.length, batchLimit: targetQuota });
+        if (currentCategoryKeptVideos.length >= targetQuota) {
+          logCrawl('crawl_category_batch_limit_reached', { runDay, category: tag, slug, kept: currentCategoryKeptVideos.length, batchLimit: targetQuota });
           break;
         }
 
@@ -1106,7 +1137,7 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true, strictMode
           let targetRejectedCount = 0;
 
           for (const video of candidates) {
-            if (keptVideos.length >= targetQuota) {
+            if (currentCategoryKeptVideos.length >= targetQuota) {
               break;
             }
 
@@ -1250,7 +1281,7 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true, strictMode
 
             const normalized = normalizeVideoData(video, resolvedCategory);
             runNewIds.add(video.videoId);
-            keptVideos.push(normalized);
+            getKeptVideosForCategory(resolvedCategory.slug).push(normalized);
             newVideos.push(normalized);
             keptCount += 1;
             waveSummary.kept += 1;
@@ -1310,7 +1341,9 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true, strictMode
               seconds: video?.seconds ?? null,
               durationSeconds: durationResult.result,
               author: video?.author?.name ?? null,
-              keptForCategory: keptVideos.length,
+              keptForCategory: getKeptVideosForCategory(resolvedCategory.slug).length,
+              resolvedCategory: resolvedCategory.tag,
+              resolvedCategorySlug: resolvedCategory.slug,
               batchLimit: targetQuota,
             });
           }
@@ -1454,34 +1487,34 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true, strictMode
         }
       }
 
-      waveSummary.endKept = keptVideos.length;
-      waveSummary.deficitAfter = Math.max(0, targetQuota - keptVideos.length);
+      waveSummary.endKept = currentCategoryKeptVideos.length;
+      waveSummary.deficitAfter = Math.max(0, targetQuota - currentCategoryKeptVideos.length);
       waveSummaries.push(waveSummary);
 
-      if (keptVideos.length < targetQuota) {
+      if (currentCategoryKeptVideos.length < targetQuota) {
         logCrawl('crawl_category_refill_needed', {
           runDay,
           category: tag,
           slug,
           wave: wave.name,
           target: targetQuota,
-          kept: keptVideos.length,
-          deficit: targetQuota - keptVideos.length,
+          kept: currentCategoryKeptVideos.length,
+          deficit: targetQuota - currentCategoryKeptVideos.length,
         });
       }
 
       logCrawl('crawl_category_wave_summary', waveSummary);
     }
 
-    if (keptVideos.length < targetQuota) {
+    if (currentCategoryKeptVideos.length < targetQuota) {
       logCrawl('crawl_category_underfilled', {
         runDay,
         category: tag,
         slug,
         target: targetQuota,
         floor: CATEGORY_MIN_NEW_MOVIES_PER_DAY,
-        kept: keptVideos.length,
-        deficit: targetQuota - keptVideos.length,
+        kept: currentCategoryKeptVideos.length,
+        deficit: targetQuota - currentCategoryKeptVideos.length,
         triedQueries: triedQueries.size,
       });
     }
@@ -1493,11 +1526,11 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true, strictMode
       target: targetQuota,
       batchLimit: targetQuota,
       floor: CATEGORY_MIN_NEW_MOVIES_PER_DAY,
-      floorHit: keptVideos.length >= CATEGORY_MIN_NEW_MOVIES_PER_DAY,
-      kept: keptVideos.length,
-      deficit: Math.max(0, targetQuota - keptVideos.length),
-      remainingDeficit: Math.max(0, targetQuota - keptVideos.length),
-      added: keptVideos.length,
+      floorHit: currentCategoryKeptVideos.length >= CATEGORY_MIN_NEW_MOVIES_PER_DAY,
+      kept: currentCategoryKeptVideos.length,
+      deficit: Math.max(0, targetQuota - currentCategoryKeptVideos.length),
+      remainingDeficit: Math.max(0, targetQuota - currentCategoryKeptVideos.length),
+      added: currentCategoryKeptVideos.length - startingKeptCount,
       duplicates: duplicateCount,
       rejected: rejectedCount,
       errors: targetErrors,
@@ -1510,7 +1543,7 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true, strictMode
 
     categorySummaries.push(summary);
     logCrawl('crawl_category_summary', summary);
-    return keptVideos;
+    return currentCategoryKeptVideos;
   };
 
   for (const plan of categoryPlans) {
@@ -1519,12 +1552,12 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true, strictMode
       runDay,
       category: plan.tag,
       slug: plan.slug,
-      added: categoryVideos.length,
+      totalKeptForCategory: categoryVideos.length,
       totalNewSoFar: newVideos.length,
     });
   }
 
-    const keptOldVideos = strictMode ? [] : oldData.filter(video => {
+    const keptOldVideos = oldData.filter(video => {
       const fakeVideoLike = {
         videoId: video.id,
         title: video.title || '',
@@ -1549,8 +1582,10 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true, strictMode
     existingVideos: oldData.length,
     existingKept: keptOldVideos.length,
     newVideos: newVideos.length,
+    fetchedCount: newVideos.length,
     totalFetched: newVideos.length,
     totalVideos: cleanedFinalData.length,
+    persistedCatalogTotal: cleanedFinalData.length,
     snapshotCleanupRemoved,
     categoryCount: categorySummaries.length,
     totals: summarizeCategoryResults(categorySummaries),
@@ -1568,6 +1603,7 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true, strictMode
       runDay,
       finishedAt,
       totalVideos: cleanedFinalData.length,
+      persistedCatalogTotal: cleanedFinalData.length,
       newVideos: newVideos.length,
       fetchedCount: newVideos.length,
       categorySummaries,
@@ -1598,6 +1634,7 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true, strictMode
       runDay,
       finishedAt,
       totalVideos: cleanedFinalData.length,
+      persistedCatalogTotal: cleanedFinalData.length,
       newVideos: newVideos.length,
       fetchedCount: newVideos.length,
       categorySummaries,
@@ -1622,6 +1659,7 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true, strictMode
       runDay,
       finishedAt,
       totalVideos: cleanedFinalData.length,
+      persistedCatalogTotal: cleanedFinalData.length,
       newVideos: newVideos.length,
       fetchedCount: newVideos.length,
       categorySummaries,

@@ -67,6 +67,9 @@ async function handleRequest(request) {
     return Response.json({
       ok: true,
       trigger: access.trigger,
+      newVideos: result.newVideos,
+      fetchedCount: result.fetchedCount,
+      persistedCatalogTotal: result.persistedCatalogTotal,
       ...result,
     });
   } catch (error) {
