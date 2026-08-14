@@ -1,5 +1,5 @@
 import { load as loadCheerio } from 'cheerio';
-import { buildChannelQualityUpdate, loadChannelRegistry, readMoviesFromJsonFile, recordChannelSuggestion, replacePersistedMovies, updateChannelRegistryEntry } from './movieStore.server.js';
+import { buildChannelQualityUpdate, loadChannelRegistry, loadPersistedMovies, recordChannelSuggestion, replacePersistedMovies, updateChannelRegistryEntry } from './movieStore.server.js';
 import { CATEGORY_TAXONOMY, getCategoryDefinitionBySlug, normalizeMovieCategory, normalizeText, resolveMovieCategory } from './movieCategories.js';
 import { cleanSnapshotMovies } from './movieSnapshot.server.js';
 import { hasRenderableThumbnail } from './thumbnailFilters.js';
@@ -899,8 +899,8 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true, strictMode
     registrySources: enabledChannels.length,
   });
 
-  const oldData = await readMoviesFromJsonFile();
-  logCrawl('crawl_existing_catalog_loaded', { existingVideos: oldData.length, source: 'json' });
+  const oldData = await loadPersistedMovies();
+  logCrawl('crawl_existing_catalog_loaded', { existingVideos: oldData.length, source: 'db-or-json' });
 
   const existingIds = new Set(oldData.map(video => video.id));
   const runNewIds = new Set();
