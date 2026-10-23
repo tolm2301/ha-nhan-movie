@@ -3,7 +3,31 @@ let currentTab = 'dashboard';
 let currentMoviePage = 1;
 const moviePageLimit = 24;
 const selectedMovieIds = new Set();
-let currentMoviesList = [];
+
+// ==========================================
+// BỘ ĐỆM LOCALSTORAGE CHO PHIM (BUFFER ZONE)
+// ==========================================
+const KEY_BUFFER_MOVIES = 'hanhan_buffer_movies';
+const KEY_PENDING_DELETES = 'hanhan_pending_deletes';
+const KEY_SYNCED_AT = 'hanhan_movies_synced_at';
+
+let bufferMovies = [];
+let pendingDeleteIds = new Set();
+let countdownSec = 10;
+let countdownInterval = null;
+
+// Khởi tạo hàng đợi xoá từ LocalStorage nếu có phiên trước dở dang
+try {
+  const savedPending = localStorage.getItem(KEY_PENDING_DELETES);
+  if (savedPending) {
+    const parsed = JSON.parse(savedPending);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      pendingDeleteIds = new Set(parsed);
+    }
+  }
+} catch {
+  pendingDeleteIds = new Set();
+}
 
 function switchTab(tabName) {
   currentTab = tabName;
@@ -17,7 +41,7 @@ function switchTab(tabName) {
   if (targetTab) targetTab.classList.add('active');
 
   if (tabName === 'movies') {
-    loadMovies();
+    initMovies();
   }
 }
 
@@ -55,7 +79,7 @@ function initSSE() {
         loadStatus();
       }
     } catch (e) {
-      console.error('Lỗi phân tích cú pháp SSE:', e);
+      console.error('Lỗi SSE:', e);
     }
   };
 }
@@ -70,11 +94,11 @@ async function loadStatus() {
     if (data.crawlerState === 'running') {
       badge.className = 'badge running';
       badge.textContent = 'Đang Cào Dữ Liệu...';
-      runBtn.disabled = true;
+      if (runBtn) runBtn.disabled = true;
     } else {
       badge.className = 'badge';
       badge.textContent = 'Sẵn sàng (Idle)';
-      runBtn.disabled = false;
+      if (runBtn) runBtn.disabled = false;
     }
 
     const dbStatus = document.getElementById('statDbStatus');
@@ -84,16 +108,16 @@ async function loadStatus() {
       dbStatus.style.color = 'var(--accent-green)';
       dbHost.textContent = data.dbTarget?.host || 'Supabase Direct';
     } else {
-      dbStatus.textContent = 'Không có kết nối DB';
+      dbStatus.textContent = 'Chế độ Snapshot';
       dbStatus.style.color = 'var(--accent-red)';
-      dbHost.textContent = data.dbError || 'Chạy chế độ tệp JSON';
+      dbHost.textContent = data.dbError || 'Tệp tĩnh JSON';
     }
 
-    const countMovies = data.dbMoviesCount != null ? data.dbMoviesCount : data.snapshotCount;
+    const localCount = bufferMovies.length > 0 ? bufferMovies.length : (data.dbMoviesCount || data.snapshotCount);
     document.getElementById('statDbMovies').textContent = (data.dbMoviesCount != null ? data.dbMoviesCount : 0).toLocaleString('vi-VN');
     document.getElementById('statSnapshotMovies').textContent = (data.snapshotCount || 0).toLocaleString('vi-VN');
     document.getElementById('statChannels').textContent = data.channelsCount || 0;
-    document.getElementById('tabMovieCount').textContent = countMovies.toLocaleString('vi-VN');
+    document.getElementById('tabMovieCount').textContent = localCount.toLocaleString('vi-VN');
     document.getElementById('tabChannelCount').textContent = data.channelsCount || 0;
 
     if (data.snapshotMeta?.generatedAt) {
@@ -101,88 +125,146 @@ async function loadStatus() {
       document.getElementById('statSnapshotTime').textContent = 'Lần sinh: ' + dt.toLocaleTimeString('vi-VN') + ' ' + dt.toLocaleDateString('vi-VN');
     }
   } catch (err) {
-    console.error('Không thể nạp trạng thái:', err);
+    console.error('Lỗi loadStatus:', err);
   }
 }
 
-async function loadMovies() {
+// ==========================================
+// QUẢN LÝ PHIM VỚI LOCALSTORAGE (0MS DELAY)
+// ==========================================
+async function initMovies(forceFetch = false) {
   const grid = document.getElementById('movieGrid');
-  const search = document.getElementById('movieSearchInput').value.trim();
-  const category = document.getElementById('movieCategorySelect').value;
 
-  grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-muted);">Đang tải phim...</div>';
+  // 1. Kiểm tra bộ đệm LocalStorage
+  if (!forceFetch) {
+    try {
+      const cached = localStorage.getItem(KEY_BUFFER_MOVIES);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          bufferMovies = parsed.filter(m => !pendingDeleteIds.has(m.id));
+          renderMoviesFromBuffer();
+          if (pendingDeleteIds.size > 0) {
+            scheduleSync();
+          }
+          return;
+        }
+      }
+    } catch {
+      // LocalStorage hỏng hoặc rỗng -> tải mới
+    }
+  }
+
+  // 2. Tải toàn bộ phim từ Server về LocalStorage
+  grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--accent-yellow); font-size:1.1rem;">⚡ Đang nạp toàn bộ danh sách phim từ Database vào bộ đệm LocalStorage...</div>';
+
+  try {
+    const res = await fetch('/api/movies/all' + (forceFetch ? '?refresh=1' : ''));
+    const data = await res.json();
+    const rawMovies = data.movies || [];
+
+    bufferMovies = rawMovies.filter(m => !pendingDeleteIds.has(m.id));
+    localStorage.setItem(KEY_BUFFER_MOVIES, JSON.stringify(bufferMovies));
+    localStorage.setItem(KEY_SYNCED_AT, new Date().toISOString());
+
+    renderMoviesFromBuffer();
+    if (pendingDeleteIds.size > 0) {
+      scheduleSync();
+    }
+  } catch (err) {
+    grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--accent-red);">Lỗi kết nối tải phim: ' + err.message + '</div>';
+  }
+}
+
+function loadMovies(force = false) {
+  initMovies(force);
+}
+
+function renderMoviesFromBuffer() {
+  const grid = document.getElementById('movieGrid');
+  const search = document.getElementById('movieSearchInput').value.trim().toLowerCase();
+  const category = document.getElementById('movieCategorySelect').value.toLowerCase();
+
+  // Lọc tức thì trong RAM (0ms)
+  let filtered = bufferMovies;
+  if (category && category !== 'all') {
+    filtered = filtered.filter(m => {
+      const mCat = String(m.categorySlug || m.tags || '').toLowerCase();
+      return mCat.includes(category);
+    });
+  }
+
+  if (search) {
+    filtered = filtered.filter(m => {
+      const text = `${m.title || ''} ${m.displayTitle || ''} ${m.id || ''} ${m.tags || ''}`.toLowerCase();
+      return text.includes(search);
+    });
+  }
+
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / moviePageLimit));
+  if (currentMoviePage > totalPages) currentMoviePage = totalPages;
+  if (currentMoviePage < 1) currentMoviePage = 1;
+
+  const startIndex = (currentMoviePage - 1) * moviePageLimit;
+  const pageMovies = filtered.slice(startIndex, startIndex + moviePageLimit);
+
+  document.getElementById('tabMovieCount').textContent = bufferMovies.length.toLocaleString('vi-VN');
+  document.getElementById('pageInfoText').textContent = 'Trang ' + currentMoviePage + ' / ' + totalPages + ' (' + total.toLocaleString('vi-VN') + ' phim)';
+
+  document.getElementById('btnPrevPage').disabled = currentMoviePage <= 1;
+  document.getElementById('btnNextPage').disabled = currentMoviePage >= totalPages;
+
   selectedMovieIds.clear();
   updateSelectedUI();
 
-  try {
-    const queryParams = new URLSearchParams({
-      page: currentMoviePage,
-      limit: moviePageLimit,
-      search,
-      category,
-    });
-
-    const res = await fetch('/api/movies?' + queryParams.toString());
-    const data = await res.json();
-
-    currentMoviesList = data.movies || [];
-    document.getElementById('tabMovieCount').textContent = data.total.toLocaleString('vi-VN');
-    document.getElementById('pageInfoText').textContent = 'Trang ' + data.page + ' / ' + data.totalPages + ' (' + data.total.toLocaleString('vi-VN') + ' phim)';
-
-    document.getElementById('btnPrevPage').disabled = data.page <= 1;
-    document.getElementById('btnNextPage').disabled = data.page >= data.totalPages;
-
-    if (!currentMoviesList.length) {
-      grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 60px; color: var(--text-muted); font-size: 1.1rem;">Không tìm thấy bộ phim nào phù hợp.</div>';
-      return;
-    }
-
-    grid.innerHTML = currentMoviesList.map(movie => {
-      const isChecked = selectedMovieIds.has(movie.id);
-      const thumb = movie.thumbnail || ('/api/movie-thumbnail?title=' + encodeURIComponent(movie.title || '') + '&tag=' + encodeURIComponent(movie.tags || 'Phim'));
-
-      return '<div class="movie-card" id="card-' + movie.id + '">' +
-        '<div class="movie-thumb-wrap">' +
-          '<input type="checkbox" class="movie-select-chk" value="' + movie.id + '" ' + (isChecked ? 'checked' : '') + ' onchange="toggleSelectMovie(\'' + movie.id + '\', this.checked)">' +
-          '<img src="' + escapeHtml(thumb) + '" alt="' + escapeHtml(movie.title) + '" class="movie-thumb" loading="lazy" onerror="this.src=\'/api/movie-thumbnail?title=Video&tag=Phim\'">' +
-          '<span class="movie-ep-tag">' + escapeHtml(movie.episodes || 'Full') + '</span>' +
-        '</div>' +
-        '<div class="movie-body">' +
-          '<div>' +
-            '<h4 class="movie-title" title="' + escapeHtml(movie.title) + '">' + escapeHtml(movie.displayTitle || movie.title) + '</h4>' +
-            '<div class="movie-meta-row">' +
-              '<span class="movie-category-tag">' + escapeHtml(movie.tags || 'Khác') + '</span>' +
-              '<span>👁 ' + escapeHtml(movie.views || '0') + '</span>' +
-            '</div>' +
-          '</div>' +
-          '<div class="movie-actions">' +
-            '<a href="https://www.youtube.com/watch?v=' + movie.id + '" target="_blank" rel="noreferrer" class="btn-action btn-preview" title="Xem trên YouTube">▶ Xem Thử</a>' +
-            '<button class="btn-action btn-delete" onclick="deleteSingleMovie(\'' + movie.id + '\', \'' + escapeHtml(movie.title).replace(/'/g, "\\'") + '\')" title="Xoá phim này khỏi hệ thống">🗑️ Xoá</button>' +
-          '</div>' +
-        '</div>' +
-      '</div>';
-    }).join('');
-  } catch (err) {
-    grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--accent-red);">Lỗi tải phim: ' + err.message + '</div>';
+  if (!pageMovies.length) {
+    grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 60px; color: var(--text-muted); font-size: 1.1rem;">Không tìm thấy bộ phim nào phù hợp trong bộ đệm.</div>';
+    return;
   }
+
+  grid.innerHTML = pageMovies.map(movie => {
+    const isChecked = selectedMovieIds.has(movie.id);
+    const thumb = movie.thumbnail || ('/api/movie-thumbnail?title=' + encodeURIComponent(movie.title || '') + '&tag=' + encodeURIComponent(movie.tags || 'Phim'));
+
+    return '<div class="movie-card" id="card-' + movie.id + '">' +
+      '<div class="movie-thumb-wrap">' +
+        '<input type="checkbox" class="movie-select-chk" value="' + movie.id + '" ' + (isChecked ? 'checked' : '') + ' onchange="toggleSelectMovie(\'' + movie.id + '\', this.checked)">' +
+        '<img src="' + escapeHtml(thumb) + '" alt="' + escapeHtml(movie.title) + '" class="movie-thumb" loading="lazy" onerror="this.src=\'/api/movie-thumbnail?title=Video&tag=Phim\'">' +
+        '<span class="movie-ep-tag">' + escapeHtml(movie.episodes || 'Full') + '</span>' +
+      '</div>' +
+      '<div class="movie-body">' +
+        '<div>' +
+          '<h4 class="movie-title" title="' + escapeHtml(movie.title) + '">' + escapeHtml(movie.displayTitle || movie.title) + '</h4>' +
+          '<div class="movie-meta-row">' +
+            '<span class="movie-category-tag">' + escapeHtml(movie.tags || 'Khác') + '</span>' +
+            '<span>👁 ' + escapeHtml(movie.views || '0') + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="movie-actions">' +
+          '<a href="https://www.youtube.com/watch?v=' + movie.id + '" target="_blank" rel="noreferrer" class="btn-action btn-preview" title="Xem trên YouTube">▶ Xem Thử</a>' +
+          '<button class="btn-action btn-delete" onclick="deleteSingleMovie(\'' + movie.id + '\', \'' + escapeHtml(movie.title).replace(/'/g, "\\'") + '\')" title="Xoá phim này vào bộ đệm">🗑️ Xoá</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
 }
 
 function searchMovies() {
   currentMoviePage = 1;
-  loadMovies();
+  renderMoviesFromBuffer();
 }
 
 function resetMovieFilter() {
   document.getElementById('movieSearchInput').value = '';
   document.getElementById('movieCategorySelect').value = 'all';
   currentMoviePage = 1;
-  loadMovies();
+  renderMoviesFromBuffer();
 }
 
 function changeMoviePage(delta) {
   currentMoviePage += delta;
-  if (currentMoviePage < 1) currentMoviePage = 1;
-  loadMovies();
+  renderMoviesFromBuffer();
 }
 
 function toggleSelectMovie(id, checked) {
@@ -195,15 +277,14 @@ function toggleSelectMovie(id, checked) {
 }
 
 function toggleSelectAllMovies(checked) {
-  currentMoviesList.forEach(m => {
-    if (checked) {
-      selectedMovieIds.add(m.id);
-    } else {
-      selectedMovieIds.delete(m.id);
-    }
-  });
-  document.querySelectorAll('.movie-select-chk').forEach(chk => {
+  const chks = document.querySelectorAll('.movie-select-chk');
+  chks.forEach(chk => {
     chk.checked = checked;
+    if (checked) {
+      selectedMovieIds.add(chk.value);
+    } else {
+      selectedMovieIds.delete(chk.value);
+    }
   });
   updateSelectedUI();
 }
@@ -222,43 +303,117 @@ function updateSelectedUI() {
   }
 }
 
-async function deleteSingleMovie(id, title) {
-  if (!confirm('Bạn có chắc chắn muốn xoá phim này không?\n\n"' + title + '" (ID: ' + id + ')')) {
+// Xoá 1 phim (Cập nhật LocalStorage ngay 0ms + Bắt đầu đếm 10 giây đồng bộ)
+function deleteSingleMovie(id, title) {
+  if (!confirm('Bạn có chắc chắn muốn xoá phim rác này không?\n\n"' + title + '" (ID: ' + id + ')')) {
     return;
   }
-
-  try {
-    const res = await fetch('/api/movies/delete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id })
-    });
-    const data = await res.json();
-    if (res.ok) {
-      const card = document.getElementById('card-' + id);
-      if (card) {
-        card.style.opacity = '0.3';
-        card.style.pointerEvents = 'none';
-      }
-      selectedMovieIds.delete(id);
-      updateSelectedUI();
-      loadStatus();
-      setTimeout(loadMovies, 500);
-    } else {
-      alert('Không thể xoá phim: ' + (data.error || 'Lỗi không xác định'));
-    }
-  } catch (err) {
-    alert('Lỗi gọi API xoá: ' + err.message);
-  }
+  removeMoviesBuffer([id]);
 }
 
-async function deleteSelectedMovies() {
+// Xoá hàng loạt phim đã chọn
+function deleteSelectedMovies() {
   const ids = Array.from(selectedMovieIds);
   if (!ids.length) return;
 
-  if (!confirm('CẢNH BÁO: Bạn có chắc chắn muốn xoá vĩnh viễn ' + ids.length + ' bộ phim rác đã chọn khỏi Database và Snapshot không?')) {
+  if (!confirm('Xoá ' + ids.length + ' bộ phim rác đã chọn vào bộ đệm LocalStorage? (Sẽ đồng bộ lên Database sau 10s)')) {
     return;
   }
+
+  removeMoviesBuffer(ids);
+  selectedMovieIds.clear();
+  updateSelectedUI();
+}
+
+// Hàm cốt lõi gỡ phim khỏi LocalStorage và hiển thị banner đếm ngược 10s
+function removeMoviesBuffer(ids) {
+  // 1. Biến mất khỏi DOM ngay tức thì (0ms)
+  ids.forEach(id => {
+    const card = document.getElementById('card-' + id);
+    if (card) {
+      card.style.transition = 'all 0.2s';
+      card.style.transform = 'scale(0.8)';
+      card.style.opacity = '0';
+      setTimeout(() => card.remove(), 200);
+    }
+    pendingDeleteIds.add(id);
+  });
+
+  // 2. Lưu vào LocalStorage
+  const deleteSet = new Set(ids);
+  bufferMovies = bufferMovies.filter(m => !deleteSet.has(m.id));
+  localStorage.setItem(KEY_BUFFER_MOVIES, JSON.stringify(bufferMovies));
+  localStorage.setItem(KEY_PENDING_DELETES, JSON.stringify(Array.from(pendingDeleteIds)));
+
+  // 3. Cập nhật số lượng trên giao diện
+  document.getElementById('tabMovieCount').textContent = bufferMovies.length.toLocaleString('vi-VN');
+
+  // 4. Kích hoạt đếm ngược 10 giây để đồng bộ lên DB
+  scheduleSync();
+}
+
+// ==========================================
+// CƠ CHẾ ĐỒNG BỘ DEBOUNCE 10 GIÂY LÊN DATABASE
+// ==========================================
+function scheduleSync() {
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
+  }
+
+  countdownSec = 10;
+  updateSyncBanner();
+
+  countdownInterval = setInterval(() => {
+    countdownSec--;
+    updateSyncBanner();
+
+    if (countdownSec <= 0) {
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+      flushPendingDeletesNow();
+    }
+  }, 1000);
+}
+
+function updateSyncBanner() {
+  const banner = document.getElementById('syncBanner');
+  const icon = document.getElementById('syncBannerIcon');
+  const text = document.getElementById('syncBannerText');
+  const badge = document.getElementById('syncCountdownBadge');
+
+  if (pendingDeleteIds.size === 0) {
+    banner.classList.add('hidden');
+    return;
+  }
+
+  banner.className = 'sync-banner';
+  icon.textContent = '⏳';
+  text.textContent = 'Đã xoá ' + pendingDeleteIds.size + ' phim vào bộ đệm LocalStorage (Tự đồng bộ lên DB sau)';
+  badge.textContent = countdownSec + 's';
+  badge.style.display = 'inline-block';
+}
+
+async function flushPendingDeletesNow() {
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+  }
+
+  const ids = Array.from(pendingDeleteIds);
+  if (!ids.length) {
+    document.getElementById('syncBanner').classList.add('hidden');
+    return;
+  }
+
+  const banner = document.getElementById('syncBanner');
+  const icon = document.getElementById('syncBannerIcon');
+  const text = document.getElementById('syncBannerText');
+  const badge = document.getElementById('syncCountdownBadge');
+
+  banner.className = 'sync-banner syncing';
+  icon.textContent = '🔄';
+  text.textContent = 'Đang đồng bộ ' + ids.length + ' phim rác lên PostgreSQL & Snapshot...';
+  badge.textContent = 'Đang gửi...';
 
   try {
     const res = await fetch('/api/movies/delete', {
@@ -267,23 +422,120 @@ async function deleteSelectedMovies() {
       body: JSON.stringify({ ids })
     });
     const data = await res.json();
+
     if (res.ok) {
-      alert('Đã xoá thành công ' + data.count + ' phim rác!');
-      selectedMovieIds.clear();
-      updateSelectedUI();
+      pendingDeleteIds.clear();
+      localStorage.removeItem(KEY_PENDING_DELETES);
+
+      banner.className = 'sync-banner synced';
+      icon.textContent = '✓';
+      text.textContent = 'Đã đồng bộ sạch ' + data.count + ' phim rác lên Database thành công!';
+      badge.style.display = 'none';
+
       loadStatus();
-      loadMovies();
+      setTimeout(() => {
+        banner.classList.add('hidden');
+      }, 3000);
     } else {
-      alert('Lỗi xoá phim: ' + (data.error || 'Lỗi không xác định'));
+      banner.className = 'sync-banner';
+      icon.textContent = '⚠️';
+      text.textContent = 'Lỗi đồng bộ DB: ' + (data.error || 'Thử lại');
+      badge.textContent = 'Lỗi';
     }
   } catch (err) {
-    alert('Lỗi kết nối khi xoá: ' + err.message);
+    banner.className = 'sync-banner';
+    icon.textContent = '⚠️';
+    text.textContent = 'Mất kết nối mạng khi đồng bộ: ' + err.message;
+    badge.textContent = 'Thử lại';
   }
 }
 
-async function loadChannels() {
+// Đảm bảo dữ liệu được gửi khi người dùng đóng trang
+window.addEventListener('beforeunload', () => {
+  if (pendingDeleteIds.size > 0) {
+    const payload = JSON.stringify({ ids: Array.from(pendingDeleteIds) });
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon('/api/movies/delete', payload);
+    }
+  }
+});
+
+// ==========================================
+// QUẢN LÝ KÊNH ĐỐI TÁC (TAB 3)
+// ==========================================
+function toggleAddChannelForm(forceState) {
+  const form = document.getElementById('addChannelForm');
+  if (forceState !== undefined) {
+    form.style.display = forceState ? 'block' : 'none';
+  } else {
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+  }
+}
+
+async function submitAddChannel() {
+  const displayName = document.getElementById('newChannelName').value.trim();
+  const channelUrl = document.getElementById('newChannelUrl').value.trim();
+  const category = document.getElementById('newChannelCategory').value;
+  const trustedBrand = document.getElementById('newChannelTrusted').checked;
+
+  if (!displayName || !channelUrl) {
+    alert('Vui lòng nhập tên kênh và link YouTube!');
+    return;
+  }
+
   try {
-    const res = await fetch('/api/channels');
+    const res = await fetch('/api/channels/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ displayName, channelUrl, category, trustedBrand })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      alert('Đã thêm kênh "' + displayName + '" thành công!');
+      document.getElementById('newChannelName').value = '';
+      document.getElementById('newChannelUrl').value = '';
+      toggleAddChannelForm(false);
+      loadChannels(true);
+      loadStatus();
+    } else {
+      alert('Lỗi thêm kênh: ' + (data.error || 'Không xác định'));
+    }
+  } catch (err) {
+    alert('Lỗi kết nối: ' + err.message);
+  }
+}
+
+async function deleteChannel(slug, displayName) {
+  if (!confirm('Bạn có chắc muốn XOÁ VĨNH VIỄN kênh này khỏi danh bạ cào?\n\n"' + displayName + '" (' + slug + ')')) {
+    return;
+  }
+
+  const item = document.getElementById('channel-item-' + slug);
+  if (item) item.remove();
+
+  try {
+    const res = await fetch('/api/channels/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      loadChannels(true);
+      loadStatus();
+    } else {
+      alert('Lỗi xoá kênh: ' + (data.error || 'Không xác định'));
+      loadChannels(true);
+    }
+  } catch (err) {
+    alert('Lỗi kết nối xoá kênh: ' + err.message);
+    loadChannels(true);
+  }
+}
+
+async function loadChannels(forceRefresh = false) {
+  try {
+    const res = await fetch('/api/channels' + (forceRefresh ? '?refresh=1' : ''));
     const data = await res.json();
     const fullContainer = document.getElementById('channelFullList');
     const quickContainer = document.getElementById('channelQuickList');
@@ -296,24 +548,29 @@ async function loadChannels() {
     }
 
     if (countHeader) countHeader.textContent = data.channels.length;
+    document.getElementById('tabChannelCount').textContent = data.channels.length;
 
     const html = data.channels.map(ch => {
       const isEnabled = ch.enabled !== false && ch.blocked !== true;
       const score = Number.isFinite(ch.qualityScore) ? ch.qualityScore : 0;
       const scoreClass = score >= 0 ? 'score-good' : 'score-bad';
 
-      return '<div class="channel-item">' +
+      return '<div class="channel-item" id="channel-item-' + ch.slug + '">' +
         '<div class="channel-info">' +
           '<h4>' + escapeHtml(ch.displayName || ch.slug) + '</h4>' +
           '<div class="channel-meta">' +
             '<span class="score-badge ' + scoreClass + '">Điểm: ' + score + '</span>' +
             '<span>Thể loại: ' + escapeHtml(ch.category || 'Hà Nhân') + '</span>' +
             (ch.trustedBrand ? '<span style="color:var(--accent-yellow)">★ Uy Tín</span>' : '') +
+            '<a href="' + escapeHtml(ch.channelUrl || '#') + '" target="_blank" rel="noreferrer" style="color:var(--accent-blue); text-decoration:none; margin-left:6px;">🔗 Link YouTube</a>' +
           '</div>' +
         '</div>' +
-        '<div>' +
+        '<div style="display:flex; gap:8px;">' +
           '<button class="toggle-btn ' + (isEnabled ? 'enabled' : 'disabled') + '" onclick="toggleChannel(\'' + escapeHtml(ch.slug) + '\', ' + (!isEnabled) + ')">' +
             (isEnabled ? 'Tắt' : 'Bật lại') +
+          '</button>' +
+          '<button class="btn btn-danger" style="padding:4px 10px; font-size:0.75rem;" onclick="deleteChannel(\'' + escapeHtml(ch.slug) + '\', \'' + escapeHtml(ch.displayName || ch.slug).replace(/'/g, "\\'") + '\')" title="Xoá kênh rác này">' +
+            '🗑️ Xoá' +
           '</button>' +
         '</div>' +
       '</div>';
@@ -330,7 +587,7 @@ async function loadChannels() {
       }).join('');
     }
   } catch (err) {
-    console.error('Không thể nạp danh bạ kênh:', err);
+    console.error('Lỗi nạp danh bạ kênh:', err);
   }
 }
 
@@ -377,7 +634,7 @@ async function syncSnapshot() {
     if (res.ok) {
       alert('Đồng bộ thành công! Đã ghi ' + data.total + ' phim vào movies.json.');
       loadStatus();
-      if (currentTab === 'movies') loadMovies();
+      if (currentTab === 'movies') initMovies(true);
     } else {
       alert('Đồng bộ thất bại: ' + (data.error || 'Lỗi không xác định'));
     }
@@ -386,8 +643,8 @@ async function syncSnapshot() {
   }
 }
 
-// Khởi chạy khi nạp trang
+// Khởi chạy
 initSSE();
 loadStatus();
 loadChannels();
-setInterval(loadStatus, 5000);
+setInterval(loadStatus, 15000);

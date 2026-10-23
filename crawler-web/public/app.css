@@ -364,3 +364,61 @@ header {
   padding: 20px 0;
 }
 .page-info { color: var(--text-muted); font-size: 0.95rem; }
+
+/* Floating Sync Banner - Nằm góc dưới bên phải, không che phân trang */
+.sync-banner {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  left: auto;
+  transform: translateY(0);
+  background: #141422;
+  border: 1px solid var(--accent-yellow);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
+  padding: 12px 20px;
+  border-radius: 40px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  z-index: 9999;
+  font-size: 0.9rem;
+  color: #fff;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.sync-banner.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(20px);
+}
+.sync-banner.synced {
+  border-color: var(--accent-green);
+  background: #0d2818;
+}
+.sync-banner.syncing {
+  border-color: var(--accent-blue);
+  background: #0a192f;
+}
+.sync-countdown-badge {
+  background: var(--accent-yellow);
+  color: #000;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+}
+.btn-sync-now {
+  background: var(--accent-yellow);
+  color: #000;
+  border: none;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 6px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.btn-sync-now:hover {
+  transform: scale(1.05);
+  background: #fff;
+}
+

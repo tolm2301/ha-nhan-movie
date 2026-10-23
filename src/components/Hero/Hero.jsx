@@ -40,22 +40,21 @@ export default function Hero({ featuredMovie }) {
       )}
       
       <div className={styles.content}>
-        <span className={styles.badge}>🔥 ĐANG HOT TOP 1 TÓM TẮT 🔥</span>
+        <span className={styles.badge}>🔥 PHIM NỔI BẬT</span>
         <h1 className={styles.title} style={{ fontSize: '3.5rem' }}>
           {featuredMovie ? featuredTitle : "Đang tải dữ liệu..."}
         </h1>
         <p className={styles.description}>
-          Phim hay mới cập nhật từ hệ thống cào dữ liệu xịn sò nhất thế giới.
-          Click Cày Ngay để xem trọn vẹn bộ phim phá án, xuyên không, hệ thống cực chất!
+          Tổng hợp phim hoạt hình, tu tiên, xuyên không và trọng sinh chọn lọc chất lượng cao. Cập nhật liên tục các tập phim mới nhất.
         </p>
         
         <div className={styles.actions}>
-          <button className="btn-primary" onClick={handleWatch}>▶ CÀY NGAY</button>
+          <button className="btn-primary" onClick={handleWatch}>▶ XEM PHIM</button>
           <button 
             className={`btn-secondary ${isBookmarked ? styles.bookmarked : ''}`} 
             onClick={handleBookmark}
           >
-            {isBookmarked ? '✓ ĐÃ LƯU' : '+ BỎ TÚI'}
+            {isBookmarked ? '✓ ĐÃ LƯU' : '+ LƯU PHIM'}
           </button>
         </div>
       </div>

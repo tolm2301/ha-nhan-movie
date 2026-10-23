@@ -37,7 +37,7 @@ export default async function Home() {
         <MovieCarousel title="🔥 Mới cập nhật" movies={catalog.homeTrendingMovies} />
       )}
 
-      {homeCategories.map((category, index) => {
+      {homeCategories.map(category => {
         return (
           <div key={category.slug}>
             <MovieCarousel
@@ -51,20 +51,18 @@ export default async function Home() {
 
       <footer style={{ 
         textAlign: 'center', 
-        padding: '80px 20px', 
-        background: '#000',
-        borderTop: '5px solid #FFDE00'
+        padding: '60px 20px', 
+        background: '#0b0b10',
+        borderTop: '1px solid #262638'
       }}>
-        <h2 style={{ fontSize: '2.5rem', fontWeight: 900, marginBottom: '10px' }}>HÀ NHÂN <span className="comic-text-yellow">MOVIE</span></h2>
-        <p style={{ color: '#888', maxWidth: '600px', margin: '0 auto', fontSize: '1.1rem' }}>
-          Xem phim, tóm tắt phim tu tiên, xuyên không chất lượng cao.
-          Không xem thì thôi, xem là nghiện. Đừng chửi AD, hãy chửi thằng làm phim!
+        <h2 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '10px' }}>HÀ NHÂN <span className="comic-text-yellow">MOVIE</span></h2>
+        <p style={{ color: '#888', maxWidth: '600px', margin: '0 auto', fontSize: '1rem', lineHeight: '1.6' }}>
+          Nền tảng xem phim hoạt hình, tu tiên, xuyên không và trọng sinh chọn lọc chất lượng cao. Cập nhật liên tục các tập phim mới nhất.
         </p>
-        <p style={{ marginTop: '40px', fontSize: '0.9rem', color: '#555' }}>
-          © 2026 Nền tảng xem phim Meme số 1 Việt Nam.
+        <p style={{ marginTop: '30px', fontSize: '0.85rem', color: '#555' }}>
+          © 2026 Hanhan Movie.
         </p>
       </footer>
     </>
   );
 }
-

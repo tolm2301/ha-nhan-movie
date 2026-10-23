@@ -1,23 +1,9 @@
 {
   "snapshotVersion": 1,
   "source": "db",
-  "generatedAt": "2026-07-24T07:32:27.715Z",
+  "generatedAt": "2026-10-23T04:43:08.672Z",
   "fallbackReason": null,
   "movies": [
-    {
-      "id": "lQihTrWkzrk",
-      "title": "Spider Man Approached the Tractor… The Spuniki Were Already There",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "?? views",
-      "thumbnail": "https://i1.ytimg.com/vi/lQihTrWkzrk/hqdefault.jpg",
-      "tags": "Khác",
-      "rating": "N/A",
-      "sortOrder": 0
-    },
     {
       "id": "mOr0dytmU2Y",
       "title": "Nhà Chài Những Năm 90 - Tôi Có Năng Lực Giao Tiếp Với Sinh Vật Biển Giúp Cả THôn Đổi Đời",
@@ -113,20 +99,6 @@
       "views": "?? views",
       "thumbnail": "https://i4.ytimg.com/vi/32qwKjIBtRM/hqdefault.jpg",
       "tags": "Hà Nhân",
-      "rating": "N/A",
-      "sortOrder": 0
-    },
-    {
-      "id": "7irLgTg6qaI",
-      "title": "Ta Xuyên Không Quậy Nát Thủy Hử (Tập 124)",
-      "episodes": "Tập 124",
-      "episodeLabel": "Tập 124",
-      "episodeNumber": 124,
-      "type": "series",
-      "seriesKey": "ta xuy n kh ng qu y n t th y h",
-      "views": "?? views",
-      "thumbnail": "https://i4.ytimg.com/vi/7irLgTg6qaI/hqdefault.jpg",
-      "tags": "Xuyên Không",
       "rating": "N/A",
       "sortOrder": 0
     },
@@ -355,20 +327,6 @@
       "sortOrder": 1
     },
     {
-      "id": "nmwsTsMfTxs",
-      "title": "Ta Xuyên Không Quậy Nát Thủy Hử (Tập 123)",
-      "episodes": "Tập 123",
-      "episodeLabel": "Tập 123",
-      "episodeNumber": 123,
-      "type": "series",
-      "seriesKey": "ta xuy n kh ng qu y n t th y h",
-      "views": "?? views",
-      "thumbnail": "https://i3.ytimg.com/vi/nmwsTsMfTxs/hqdefault.jpg",
-      "tags": "Xuyên Không",
-      "rating": "N/A",
-      "sortOrder": 1
-    },
-    {
       "id": "FJ4wGZL10tU",
       "title": "Hà Nhân Xuyên Không Từ Kẻ Bị Lưu Đày Đến Đệ Nhất Quân Sư Triều Đình | Hà Nhân Sub",
       "episodes": "Full",
@@ -435,20 +393,6 @@
       "views": "20K views",
       "thumbnail": "https://i.ytimg.com/vi/PKI1PRgrE6c/hq720.jpg",
       "tags": "Hà Nhân",
-      "rating": "N/A",
-      "sortOrder": 1
-    },
-    {
-      "id": "YV64j49OeJM",
-      "title": "【EP1-10 】Phim Hoạt Hình 3D | 🌟Đồ Đệ Của Ta Đều Là Đại Lão 🌟 | C-Drama Thuyết Minh",
-      "episodes": "Tập 1",
-      "episodeLabel": "Tập 1",
-      "episodeNumber": 1,
-      "type": "series",
-      "seriesKey": "10 phim ho t h nh 3d c a ta u l i l o c drama",
-      "views": "15K views",
-      "thumbnail": "https://i.ytimg.com/vi/YV64j49OeJM/hq720.jpg",
-      "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 1
     },
@@ -607,20 +551,6 @@
       "sortOrder": 2
     },
     {
-      "id": "LgppFvS3PZk",
-      "title": "Ta Xuyên Không Quậy Nát Thủy Hử (Tập 1-122)",
-      "episodes": "Tập 1",
-      "episodeLabel": "Tập 1",
-      "episodeNumber": 1,
-      "type": "series",
-      "seriesKey": "ta xuy n kh ng qu y n t th y h 122",
-      "views": "?? views",
-      "thumbnail": "https://i1.ytimg.com/vi/LgppFvS3PZk/hqdefault.jpg",
-      "tags": "Xuyên Không",
-      "rating": "N/A",
-      "sortOrder": 2
-    },
-    {
       "id": "z54lZgd042k",
       "title": "Xuyên Không Làm Hoàng Đế, Hà Nhân Đả Bại Trăm Vạn Quân Ngụy | Hà Nhân Sub",
       "episodes": "Full",
@@ -705,20 +635,6 @@
       "sortOrder": 2
     },
     {
-      "id": "Tb1YWgRzvb0",
-      "title": "Spider-Man is hunting down Sprunki, who is in hiding",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "?? views",
-      "thumbnail": "https://i1.ytimg.com/vi/Tb1YWgRzvb0/hqdefault.jpg",
-      "tags": "Khác",
-      "rating": "N/A",
-      "sortOrder": 3
-    },
-    {
       "id": "rAnayp196-s",
       "title": "Hà Nhân Xuyên Không Cổ Đại Làm Thiên Tài Chính Trị | Hà Nhân Sub",
       "episodes": "Full",
@@ -757,20 +673,6 @@
       "views": "?? views",
       "thumbnail": "https://i4.ytimg.com/vi/oGY4m6uYok8/hqdefault.jpg",
       "tags": "Khác",
-      "rating": "N/A",
-      "sortOrder": 3
-    },
-    {
-      "id": "ol5csrk4gEQ",
-      "title": "Hà Nhân Xuyên Không Đưa Đại Minh Thành Bá Chủ Thế Giới | Hà Nhân Sub",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "?? views",
-      "thumbnail": "https://i4.ytimg.com/vi/ol5csrk4gEQ/hqdefault.jpg",
-      "tags": "Hà Nhân",
       "rating": "N/A",
       "sortOrder": 3
     },
@@ -841,20 +743,6 @@
       "views": "?? views",
       "thumbnail": "https://i4.ytimg.com/vi/CAYRJrrmWWE/hqdefault.jpg",
       "tags": "Hệ Thống",
-      "rating": "N/A",
-      "sortOrder": 3
-    },
-    {
-      "id": "LRkYUiC1O3k",
-      "title": "Ta Xuyên Không Quậy Nát Thủy Hử (Tập 121)",
-      "episodes": "Tập 121",
-      "episodeLabel": "Tập 121",
-      "episodeNumber": 121,
-      "type": "series",
-      "seriesKey": "ta xuy n kh ng qu y n t th y h",
-      "views": "?? views",
-      "thumbnail": "https://i1.ytimg.com/vi/LRkYUiC1O3k/hqdefault.jpg",
-      "tags": "Xuyên Không",
       "rating": "N/A",
       "sortOrder": 3
     },
@@ -955,20 +843,6 @@
       "tags": "Trọng Sinh",
       "rating": "N/A",
       "sortOrder": 3
-    },
-    {
-      "id": "hD1XVIlqqcQ",
-      "title": "This Truck Was Carrying a Secret… Spider Man Found Spuniki",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "?? views",
-      "thumbnail": "https://i1.ytimg.com/vi/hD1XVIlqqcQ/hqdefault.jpg",
-      "tags": "Khác",
-      "rating": "N/A",
-      "sortOrder": 4
     },
     {
       "id": "2cyL2bUikmc",
@@ -1097,34 +971,6 @@
       "sortOrder": 4
     },
     {
-      "id": "GURfHDwwWnM",
-      "title": "Hà Nhân Xuyên Không, Thần Đồng Bần Nông 3 Tuổi Mở Đường Quan Lộ | Hà Nhân Sub",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "?? views",
-      "thumbnail": "https://i4.ytimg.com/vi/GURfHDwwWnM/hqdefault.jpg",
-      "tags": "Hà Nhân",
-      "rating": "N/A",
-      "sortOrder": 4
-    },
-    {
-      "id": "OKJIT5yoaQ4",
-      "title": "Ta Xuyên Không Quậy Nát Thủy Hử (Tập 120)",
-      "episodes": "Tập 120",
-      "episodeLabel": "Tập 120",
-      "episodeNumber": 120,
-      "type": "series",
-      "seriesKey": "ta xuy n kh ng qu y n t th y h",
-      "views": "?? views",
-      "thumbnail": "https://i4.ytimg.com/vi/OKJIT5yoaQ4/hqdefault.jpg",
-      "tags": "Xuyên Không",
-      "rating": "N/A",
-      "sortOrder": 4
-    },
-    {
       "id": "Op97B-1owBc",
       "title": "Hà Nhân Xuyên Không Mang Hệ Thống Y Thuật, Trở Thành Quyền Thần Triều Minh | Hà Nhân Sub",
       "episodes": "Full",
@@ -1195,48 +1041,6 @@
       "sortOrder": 4
     },
     {
-      "id": "EvzXuJn2aUM",
-      "title": "Thôn Thiên Ký  | Phim Hoạt Hình 3D Tiên Hiệp Thuyết Minh Full HD | Diệp Phàm Nghịch Thiên Xưng Đế",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "51K views",
-      "thumbnail": "https://i.ytimg.com/vi/EvzXuJn2aUM/hq720.jpg",
-      "tags": "Tu Tiên",
-      "rating": "N/A",
-      "sortOrder": 4
-    },
-    {
-      "id": "4cdKd1UH50o",
-      "title": "Spider Man Found TOO MANY SPRUNIKI Hiding in This Cart",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "?? views",
-      "thumbnail": "https://i1.ytimg.com/vi/4cdKd1UH50o/hqdefault.jpg",
-      "tags": "Khác",
-      "rating": "N/A",
-      "sortOrder": 5
-    },
-    {
-      "id": "9tZUlEc_etE",
-      "title": "Hà Nhân Xuyên Không Làm Diêm Vương Sống Dùng Toán Học Khuấy Đảo Triều Đình | Hà Nhân Sub",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "?? views",
-      "thumbnail": "https://i2.ytimg.com/vi/9tZUlEc_etE/hqdefault.jpg",
-      "tags": "Hà Nhân",
-      "rating": "N/A",
-      "sortOrder": 5
-    },
-    {
       "id": "WmACN0ZlRMo",
       "title": "Thái tử tối cao | Xuyên không từ công tử ăn chơi thành người nắm quyền thiên hạ",
       "episodes": "Full",
@@ -1251,34 +1055,6 @@
       "sortOrder": 5
     },
     {
-      "id": "0CLLTyrwExo",
-      "title": "khui túi mù(p1)",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "?? views",
-      "thumbnail": "https://i1.ytimg.com/vi/0CLLTyrwExo/hqdefault.jpg",
-      "tags": "Khác",
-      "rating": "N/A",
-      "sortOrder": 5
-    },
-    {
-      "id": "7k0QGmLifsg",
-      "title": "người lính dũng cảm và bài học đang nhớ0",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "?? views",
-      "thumbnail": "https://i4.ytimg.com/vi/7k0QGmLifsg/hqdefault.jpg",
-      "tags": "Khác",
-      "rating": "N/A",
-      "sortOrder": 5
-    },
-    {
       "id": "B5QV-kF-HN8",
       "title": "P8 | Trận Pháp Thất Thăng Cấp 2: Kế Duyên Chính Thức Làm Chủ Tinh Trần Huyễn Sát Trận Cực Hạn!",
       "episodes": "Full",
@@ -1289,20 +1065,6 @@
       "views": "?? views",
       "thumbnail": "https://i3.ytimg.com/vi/B5QV-kF-HN8/hqdefault.jpg",
       "tags": "Khác",
-      "rating": "N/A",
-      "sortOrder": 5
-    },
-    {
-      "id": "S7PJTsrVJy4",
-      "title": "Ta Xuyên Không Quậy Nát Thủy Hử (Tập 130) | Võ Tòng Thu Phục Tám Đại Lôi Tướng",
-      "episodes": "Tập 130",
-      "episodeLabel": "Tập 130",
-      "episodeNumber": 130,
-      "type": "series",
-      "seriesKey": "ta xuy n kh ng qu y n t th y h v t ng thu ph c t m i l i t ng",
-      "views": "?? views",
-      "thumbnail": "https://i4.ytimg.com/vi/S7PJTsrVJy4/hqdefault.jpg",
-      "tags": "Xuyên Không",
       "rating": "N/A",
       "sortOrder": 5
     },
@@ -1359,20 +1121,6 @@
       "views": "?? views",
       "thumbnail": "https://i2.ytimg.com/vi/YFEtNVd31c0/hqdefault.jpg",
       "tags": "Hệ Thống",
-      "rating": "N/A",
-      "sortOrder": 5
-    },
-    {
-      "id": "bmNwsR6zYjk",
-      "title": "[Phần 3] Thiên tài phá án bằng tai",
-      "episodes": "Tập 3",
-      "episodeLabel": "Tập 3",
-      "episodeNumber": 3,
-      "type": "series",
-      "seriesKey": "thi n t i ph n b ng tai",
-      "views": "?? views",
-      "thumbnail": "https://i3.ytimg.com/vi/bmNwsR6zYjk/hqdefault.jpg",
-      "tags": "Khác",
       "rating": "N/A",
       "sortOrder": 5
     },
@@ -1531,20 +1279,6 @@
       "sortOrder": 6
     },
     {
-      "id": "d1Ej55IYbr8",
-      "title": "Ta Xuyên Không Quậy Nát Thủy Hử (Tập 119)",
-      "episodes": "Tập 119",
-      "episodeLabel": "Tập 119",
-      "episodeNumber": 119,
-      "type": "series",
-      "seriesKey": "ta xuy n kh ng qu y n t th y h",
-      "views": "?? views",
-      "thumbnail": "https://i1.ytimg.com/vi/d1Ej55IYbr8/hqdefault.jpg",
-      "tags": "Xuyên Không",
-      "rating": "N/A",
-      "sortOrder": 6
-    },
-    {
       "id": "mSaS1WBZRXI",
       "title": "Xuyên không vào bát thiếu gia ăn chơi, được giao gánh vác cả đại gia tộc và cái kết",
       "episodes": "Full",
@@ -1657,20 +1391,6 @@
       "sortOrder": 6
     },
     {
-      "id": "06L89xjdetw",
-      "title": "Hà Nhân Cầm Hệ Thống Thôn Phệ Xuyên Không Vào Hậu Cung Đại Minh | Hà Nhân Sub",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "?? views",
-      "thumbnail": "https://i1.ytimg.com/vi/06L89xjdetw/hqdefault.jpg",
-      "tags": "Hà Nhân",
-      "rating": "N/A",
-      "sortOrder": 6
-    },
-    {
       "id": "3_9VmsT58eQ",
       "title": "Chàng Trai Tu Tiên 20 Năm Trên Núi Cấm, Bất Ngờ Bị Nữ Chiến Thần Vung Kiếm Ép Anh Làm Chồng",
       "episodes": "Full",
@@ -1681,20 +1401,6 @@
       "views": "141K views",
       "thumbnail": "https://i.ytimg.com/vi/3_9VmsT58eQ/hq720.jpg",
       "tags": "Tu Tiên",
-      "rating": "N/A",
-      "sortOrder": 6
-    },
-    {
-      "id": "dam-CdY_93o",
-      "title": "Full SS1 • Hệ Thống Ngưu Nhân Đại Đường - Hà Nhân Xuyên Không • Đại Lão Vietsub",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "6K views",
-      "thumbnail": "https://i.ytimg.com/vi/dam-CdY_93o/hq720.jpg",
-      "tags": "Hà Nhân",
       "rating": "N/A",
       "sortOrder": 6
     },
@@ -1711,20 +1417,6 @@
       "tags": "Khác",
       "rating": "N/A",
       "sortOrder": 6
-    },
-    {
-      "id": "qkWKw3xW4_w",
-      "title": "Spuniki Were Trapped! Spider Man Comes to the Rescue!",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "?? views",
-      "thumbnail": "https://i2.ytimg.com/vi/qkWKw3xW4_w/hqdefault.jpg",
-      "tags": "Khác",
-      "rating": "N/A",
-      "sortOrder": 7
     },
     {
       "id": "rro02GErlho",
@@ -1750,48 +1442,6 @@
       "seriesKey": "",
       "views": "?? views",
       "thumbnail": "https://i1.ytimg.com/vi/LDnzS6O89vw/hqdefault.jpg",
-      "tags": "Xuyên Không",
-      "rating": "N/A",
-      "sortOrder": 7
-    },
-    {
-      "id": "tOESGB5LHNE",
-      "title": "ai là siêu nhân thật? #short",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "?? views",
-      "thumbnail": "https://i1.ytimg.com/vi/tOESGB5LHNE/hqdefault.jpg",
-      "tags": "Khác",
-      "rating": "N/A",
-      "sortOrder": 7
-    },
-    {
-      "id": "7nlnV5fSmpo",
-      "title": "Ta Xuyên Không Quậy Nát Thủy Hử (Tập 118)",
-      "episodes": "Tập 118",
-      "episodeLabel": "Tập 118",
-      "episodeNumber": 118,
-      "type": "series",
-      "seriesKey": "ta xuy n kh ng qu y n t th y h",
-      "views": "?? views",
-      "thumbnail": "https://i4.ytimg.com/vi/7nlnV5fSmpo/hqdefault.jpg",
-      "tags": "Xuyên Không",
-      "rating": "N/A",
-      "sortOrder": 7
-    },
-    {
-      "id": "0LiOlCd3CbA",
-      "title": "Xuyên không vào thiếu gia ăn hại với hệ thống phản diện, ta bỗng trở thành hung thần triều đình",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "?? views",
-      "thumbnail": "https://i1.ytimg.com/vi/0LiOlCd3CbA/hqdefault.jpg",
       "tags": "Xuyên Không",
       "rating": "N/A",
       "sortOrder": 7
@@ -1951,20 +1601,6 @@
       "sortOrder": 7
     },
     {
-      "id": "1swetzg5D_g",
-      "title": "This Car Was Hiding TOO MANY Spuniki",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "?? views",
-      "thumbnail": "https://i2.ytimg.com/vi/1swetzg5D_g/hqdefault.jpg",
-      "tags": "Khác",
-      "rating": "N/A",
-      "sortOrder": 8
-    },
-    {
       "id": "XDkZqbK-0Ds",
       "title": "Xuyên Không Mang Theo Hệ Thống Thay Đổi Lịch Sử Đại Minh | Hà Nhân Sub",
       "episodes": "Full",
@@ -1989,20 +1625,6 @@
       "views": "?? views",
       "thumbnail": "https://i4.ytimg.com/vi/3fRpauUEU6c/hqdefault.jpg",
       "tags": "Hệ Thống",
-      "rating": "N/A",
-      "sortOrder": 8
-    },
-    {
-      "id": "fk4J1Xs2IW0",
-      "title": "Ta Là Anh Trai Võ Tòng (Tập 31) | Xuyên Không Thủy Hử",
-      "episodes": "Tập 31",
-      "episodeLabel": "Tập 31",
-      "episodeNumber": 31,
-      "type": "series",
-      "seriesKey": "ta l anh trai v t ng xuy n kh ng th y h",
-      "views": "?? views",
-      "thumbnail": "https://i3.ytimg.com/vi/fk4J1Xs2IW0/hqdefault.jpg",
-      "tags": "Xuyên Không",
       "rating": "N/A",
       "sortOrder": 8
     },
@@ -2105,20 +1727,6 @@
       "sortOrder": 8
     },
     {
-      "id": "jco6yUkofDw",
-      "title": "Ta Xuyên Không Quậy Nát Thủy Hử (Tập 128) | Tống Giang Lên Ngôi Thủ Lĩnh",
-      "episodes": "Tập 128",
-      "episodeLabel": "Tập 128",
-      "episodeNumber": 128,
-      "type": "series",
-      "seriesKey": "ta xuy n kh ng qu y n t th y h t ng giang l n ng i th l nh",
-      "views": "?? views",
-      "thumbnail": "https://i3.ytimg.com/vi/jco6yUkofDw/hqdefault.jpg",
-      "tags": "Xuyên Không",
-      "rating": "N/A",
-      "sortOrder": 8
-    },
-    {
       "id": "YdYtKKm_6xU",
       "title": "Hà Nhân Vừa Xuyên Không Đã Bị Mất Nước, Thức Tỉnh Hệ Thống Lật Kèo Thành Bá Chủ | Hà Nhân Sub",
       "episodes": "Full",
@@ -2189,20 +1797,6 @@
       "sortOrder": 8
     },
     {
-      "id": "81PBKKKdY-E",
-      "title": "This Bedroom Looks Normal… Until Spider Man Finds Hidden Spuniki",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "?? views",
-      "thumbnail": "https://i1.ytimg.com/vi/81PBKKKdY-E/hqdefault.jpg",
-      "tags": "Khác",
-      "rating": "N/A",
-      "sortOrder": 9
-    },
-    {
       "id": "uvuEjUZclwA",
       "title": "Xuyên Không Cổ Đại Làm Quan, Hà Nhân Bị Ép Làm Phản | Hà Nhân Sub",
       "episodes": "Full",
@@ -2227,34 +1821,6 @@
       "views": "?? views",
       "thumbnail": "https://i4.ytimg.com/vi/OPusyoS9Gy4/hqdefault.jpg",
       "tags": "Khác",
-      "rating": "N/A",
-      "sortOrder": 9
-    },
-    {
-      "id": "2YOIGpe5ni0",
-      "title": "Đúng rồi đó má #funny #tuyetbichcollection",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "?? views",
-      "thumbnail": "https://i3.ytimg.com/vi/2YOIGpe5ni0/hqdefault.jpg",
-      "tags": "Khác",
-      "rating": "N/A",
-      "sortOrder": 9
-    },
-    {
-      "id": "HH9CptHAaaE",
-      "title": "Ta Xuyên Không Quậy Nát Thủy Hử (Tập 117)",
-      "episodes": "Tập 117",
-      "episodeLabel": "Tập 117",
-      "episodeNumber": 117,
-      "type": "series",
-      "seriesKey": "ta xuy n kh ng qu y n t th y h",
-      "views": "?? views",
-      "thumbnail": "https://i1.ytimg.com/vi/HH9CptHAaaE/hqdefault.jpg",
-      "tags": "Xuyên Không",
       "rating": "N/A",
       "sortOrder": 9
     },
@@ -2371,34 +1937,6 @@
       "sortOrder": 9
     },
     {
-      "id": "uKD7Z5Q3YZg",
-      "title": "FULL Mùa 2 | THÁI HƯ THANH TU - Tạp Dịch Phế Vật Nhặt Được TỤ BẢO BỒN Âm Thầm Tu Luyện Thành Vô Địch",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "?? views",
-      "thumbnail": "https://i2.ytimg.com/vi/uKD7Z5Q3YZg/hqdefault.jpg",
-      "tags": "Tu Tiên",
-      "rating": "N/A",
-      "sortOrder": 9
-    },
-    {
-      "id": "f1V6Xujg0g0",
-      "title": "[Full-S1] Xuyên Không Đến Tinh Cầu Tội Lỗi Làm Hướng Dẫn Viên Ác Độc: Thu Phục Dàn Thú Nhân Cấp SSS",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "79K views",
-      "thumbnail": "https://i.ytimg.com/vi/f1V6Xujg0g0/hq720.jpg",
-      "tags": "Xuyên Không",
-      "rating": "N/A",
-      "sortOrder": 9
-    },
-    {
       "id": "girTYjXBu6c",
       "title": "Full End | Ăn Mày Tu Tiên , Từ Rác Rưởi Thành Đế Tôn | QQ VietSub",
       "episodes": "Full",
@@ -2427,20 +1965,6 @@
       "sortOrder": 9
     },
     {
-      "id": "HtVhXQIhR5Y",
-      "title": "How Many Spuniki Can You Spot Before Spider Man",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "?? views",
-      "thumbnail": "https://i1.ytimg.com/vi/HtVhXQIhR5Y/hqdefault.jpg",
-      "tags": "Khác",
-      "rating": "N/A",
-      "sortOrder": 10
-    },
-    {
       "id": "Vp1rWKbzAkY",
       "title": "Hà Nhân Xuyên Không Thành Lục Hoàng Tử Nháo Loạn Triều Minh | Hà Nhân Sub",
       "episodes": "Full",
@@ -2464,20 +1988,6 @@
       "seriesKey": "",
       "views": "?? views",
       "thumbnail": "https://i4.ytimg.com/vi/gubvgbR67CM/hqdefault.jpg",
-      "tags": "Khác",
-      "rating": "N/A",
-      "sortOrder": 10
-    },
-    {
-      "id": "YdjgRIm8j6I",
-      "title": "Gia Môn Bất Hạnh #tuyetbichcollection #funny",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "?? views",
-      "thumbnail": "https://i2.ytimg.com/vi/YdjgRIm8j6I/hqdefault.jpg",
       "tags": "Khác",
       "rating": "N/A",
       "sortOrder": 10
@@ -2539,20 +2049,6 @@
       "sortOrder": 10
     },
     {
-      "id": "Wrw8DKvlLAE",
-      "title": "Ta Xuyên Không Quậy Nát Thủy Hử (Tập 126) | Tống Giang Chiêu An",
-      "episodes": "Tập 126",
-      "episodeLabel": "Tập 126",
-      "episodeNumber": 126,
-      "type": "series",
-      "seriesKey": "ta xuy n kh ng qu y n t th y h t ng giang chi u an",
-      "views": "?? views",
-      "thumbnail": "https://i4.ytimg.com/vi/Wrw8DKvlLAE/hqdefault.jpg",
-      "tags": "Xuyên Không",
-      "rating": "N/A",
-      "sortOrder": 10
-    },
-    {
       "id": "Jg8qCEpWK1U",
       "title": "Tập 1-57 | TÔ NHA LINH CĂN - PHẾ VẬT VẼ BẬY Nhưng Lại Vẽ Thành LINH CĂN Nghịch Thiên",
       "episodes": "Tập 1",
@@ -2562,48 +2058,6 @@
       "seriesKey": "57 t nha linh c n ph v t v b y nh ng l i v th nh linh c n ngh ch thi n",
       "views": "?? views",
       "thumbnail": "https://i3.ytimg.com/vi/Jg8qCEpWK1U/hqdefault.jpg",
-      "tags": "Tu Tiên",
-      "rating": "N/A",
-      "sortOrder": 10
-    },
-    {
-      "id": "EmGEb5qXSds",
-      "title": "FULL Mùa 1 | THÁI HƯ THANH TU - Tạp Dịch Phế Vật Nhặt Được TỤ BẢO BỒN Âm Thầm Tu Luyện Thành Vô Địch",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "?? views",
-      "thumbnail": "https://i2.ytimg.com/vi/EmGEb5qXSds/hqdefault.jpg",
-      "tags": "Tu Tiên",
-      "rating": "N/A",
-      "sortOrder": 10
-    },
-    {
-      "id": "FfS6nDyQbmY",
-      "title": "Chàng Trai Xuyên Không Thành Thiếu Gia Phế Vật Dùng Tri Thức Hiện Đại Làm Văn Thơ Khiến Mỹ Nữ Say Mê",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "10K views",
-      "thumbnail": "https://i.ytimg.com/vi/FfS6nDyQbmY/hq720.jpg",
-      "tags": "Xuyên Không",
-      "rating": "N/A",
-      "sortOrder": 10
-    },
-    {
-      "id": "GG3RcVHROqU",
-      "title": "Chàng Trai Đi Thử Thách Tu Vi, Bị Chê Là Phế Vật, Ai Ngờ Chỉ Dùng 1 Chiêu Phá Nát Tượng Đá Ngàn Năm",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "46K views",
-      "thumbnail": "https://i.ytimg.com/vi/GG3RcVHROqU/hq720_custom_1.jpg",
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 10
@@ -2621,20 +2075,6 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 10
-    },
-    {
-      "id": "8G8LIvJN8G0",
-      "title": "Spiderman’s Ball House Challenge Can He Catch Sprunki?",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "?? views",
-      "thumbnail": "https://i1.ytimg.com/vi/8G8LIvJN8G0/hqdefault.jpg",
-      "tags": "Khác",
-      "rating": "N/A",
-      "sortOrder": 11
     },
     {
       "id": "P-2pHOWquw8",
@@ -2660,20 +2100,6 @@
       "seriesKey": "",
       "views": "?? views",
       "thumbnail": "https://i3.ytimg.com/vi/v6eBS_zKFa4/hqdefault.jpg",
-      "tags": "Khác",
-      "rating": "N/A",
-      "sortOrder": 11
-    },
-    {
-      "id": "596xoJzSl8w",
-      "title": "Hong bé ơi. Bận đánh bài ời #tuyetbichcollection",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "?? views",
-      "thumbnail": "https://i2.ytimg.com/vi/596xoJzSl8w/hqdefault.jpg",
       "tags": "Khác",
       "rating": "N/A",
       "sortOrder": 11
@@ -2875,20 +2301,6 @@
       "sortOrder": 12
     },
     {
-      "id": "joIjMiBzqgY",
-      "title": "Full 91-120 : Thế Giới Huyền Bí - 25 Cánh Cửa Sinh Tử / Như Yên Sub",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "?? views",
-      "thumbnail": "https://i3.ytimg.com/vi/joIjMiBzqgY/hqdefault.jpg",
-      "tags": "Khác",
-      "rating": "N/A",
-      "sortOrder": 12
-    },
-    {
       "id": "hZAHOxc57Fg",
       "title": "(Full) [phần 4] sinh tồn ngày tận thế, bắt đầu từ triệu hoán bạch cốt khô lâu",
       "episodes": "Tập 4",
@@ -2987,34 +2399,6 @@
       "sortOrder": 12
     },
     {
-      "id": "hBamzELLVh4",
-      "title": "Nghiên Cứu Sinh Xuyên Không Thành Con Tri Huyện, Dùng Trí Tuệ Hiện Đại Phá Giải Vụ Gian Lận Khoa Cử",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "16K views",
-      "thumbnail": "https://i.ytimg.com/vi/hBamzELLVh4/hq720.jpg",
-      "tags": "Xuyên Không",
-      "rating": "N/A",
-      "sortOrder": 12
-    },
-    {
-      "id": "pEt9Qnq6S2M",
-      "title": "Can you find Sprunki in the Abandoned House  Observation Challenge",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "?? views",
-      "thumbnail": "https://i1.ytimg.com/vi/pEt9Qnq6S2M/hqdefault.jpg",
-      "tags": "Khác",
-      "rating": "N/A",
-      "sortOrder": 13
-    },
-    {
       "id": "KdovR59BtNs",
       "title": "Hà Nhân Xuyên Không Cổ Đại Làm Quốc Sư Đảo Ngược Lịch Sử | Hà Nhân Sub",
       "episodes": "Full",
@@ -3052,20 +2436,6 @@
       "seriesKey": "",
       "views": "?? views",
       "thumbnail": "https://i2.ytimg.com/vi/YRfU-nxMyAg/hqdefault.jpg",
-      "tags": "Khác",
-      "rating": "N/A",
-      "sortOrder": 13
-    },
-    {
-      "id": "usiCa7lsWBU",
-      "title": "Full 56-90 : Thế Giới Huyền Bí - 25 Cánh Cửa Sinh Tử / Như Yên Sub",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "?? views",
-      "thumbnail": "https://i2.ytimg.com/vi/usiCa7lsWBU/hqdefault.jpg",
       "tags": "Khác",
       "rating": "N/A",
       "sortOrder": 13
@@ -3127,20 +2497,6 @@
       "sortOrder": 13
     },
     {
-      "id": "fuOkNLzyk5M",
-      "title": "[ FULL Mùa 2 ] Trở Về Sau 15 Năm Tu Luyện Nào Ngờ Cả Nhà Lẫn Thân Phận Của Mình Đều Đã Bị Cướp Sạch",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "?? views",
-      "thumbnail": "https://i3.ytimg.com/vi/fuOkNLzyk5M/hqdefault.jpg",
-      "tags": "Khác",
-      "rating": "N/A",
-      "sortOrder": 13
-    },
-    {
       "id": "9VHQQ7Y_FoE",
       "title": "Tôi Tu Tiên 8 Năm Trở Về Đô Thị Thành Siêu Cấp Cường Giả Mạnh Nhất Full Version | HH VietSub",
       "episodes": "Full",
@@ -3151,20 +2507,6 @@
       "views": "95K views",
       "thumbnail": "https://i.ytimg.com/vi/9VHQQ7Y_FoE/hq720.jpg",
       "tags": "Tu Tiên",
-      "rating": "N/A",
-      "sortOrder": 13
-    },
-    {
-      "id": "a5L5PweeMpU",
-      "title": "Xuyên Không Vào Thế Giới Võ Đạo, Anh Từ Phế Nhân Thành Kẻ Vô Địch Nhờ Hệ Thống Siêu Cấp",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "21K views",
-      "thumbnail": "https://i.ytimg.com/vi/a5L5PweeMpU/hq720.jpg",
-      "tags": "Xuyên Không",
       "rating": "N/A",
       "sortOrder": 13
     },
@@ -3309,62 +2651,6 @@
       "sortOrder": 14
     },
     {
-      "id": "3IxK3RVctao",
-      "title": "Võ Thần Chúa Tể Tập 550 - 590 Thuyết Minh | Phim Hoạt Hình 3D Hay Nhất 2026",
-      "episodes": "Tập 550",
-      "episodeLabel": "Tập 550",
-      "episodeNumber": 550,
-      "type": "series",
-      "seriesKey": "v th n ch a t 590 phim ho t h nh 3d hay nh t 2026",
-      "views": "81K views",
-      "thumbnail": "https://i.ytimg.com/vi/3IxK3RVctao/hq720.jpg",
-      "tags": "Tu Tiên",
-      "rating": "N/A",
-      "sortOrder": 14
-    },
-    {
-      "id": "j-9vXTogqNU",
-      "title": "Xuyên Không Thành Phản Diện Sắp Hẹo Anh Thức Tỉnh Hệ Thống, Chọn Lại Kiếp Sống Vô Địch!",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "40K views",
-      "thumbnail": "https://i.ytimg.com/vi/j-9vXTogqNU/hq720.jpg",
-      "tags": "Xuyên Không",
-      "rating": "N/A",
-      "sortOrder": 14
-    },
-    {
-      "id": "O7HIo7dJOJ8",
-      "title": "Thanh Niên Giấu Nghề Lại Là Kỳ Tài Tu Tiên Sở Hữu Thần Khí Bá Đạo | Full | Tóm Tắt Phim Hay 2024",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "513K views",
-      "thumbnail": "https://i.ytimg.com/vi/O7HIo7dJOJ8/hq720.jpg",
-      "tags": "Tu Tiên",
-      "rating": "N/A",
-      "sortOrder": 14
-    },
-    {
-      "id": "YzeHoPu_NQ0",
-      "title": "RC excavator #huina1580",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "?? views",
-      "thumbnail": "https://i2.ytimg.com/vi/YzeHoPu_NQ0/hqdefault.jpg",
-      "tags": "Khác",
-      "rating": "N/A",
-      "sortOrder": 15
-    },
-    {
       "id": "slkra6SM33k",
       "title": "Hà Nhân Xuyên Không Cứu Cả Gia Tộc Khỏi Tay Hoàng Đế | Hà Nhân Sub",
       "episodes": "Full",
@@ -3389,20 +2675,6 @@
       "views": "?? views",
       "thumbnail": "https://i2.ytimg.com/vi/-nvy4m8DEak/hqdefault.jpg",
       "tags": "Khác",
-      "rating": "N/A",
-      "sortOrder": 15
-    },
-    {
-      "id": "GX7D8WSRQRk",
-      "title": "Song Thương Thiên Vũ │ Tập 1 - 2 │ Hoạt hình hài hước │ Hệ thống tu tiên │ Đấu la đại lục",
-      "episodes": "Tập 1",
-      "episodeLabel": "Tập 1",
-      "episodeNumber": 1,
-      "type": "series",
-      "seriesKey": "song th ng thi n v 2 ho t h nh h i h c h th ng tu ti n u la i l c",
-      "views": "?? views",
-      "thumbnail": "https://i4.ytimg.com/vi/GX7D8WSRQRk/hqdefault.jpg",
-      "tags": "Hệ Thống",
       "rating": "N/A",
       "sortOrder": 15
     },
@@ -3477,34 +2749,6 @@
       "sortOrder": 15
     },
     {
-      "id": "lqaE1UyeRfI",
-      "title": "Chàng Trai Ở Rể Bị Coi Thường, Trọng Sinh Dùng Kí Ức Kiếp Trước Khởi Nghiệp Trở Thành Tỷ Phú 1000 Tỷ",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "9K views",
-      "thumbnail": "https://i.ytimg.com/vi/lqaE1UyeRfI/hq720.jpg",
-      "tags": "Trọng Sinh",
-      "rating": "N/A",
-      "sortOrder": 15
-    },
-    {
-      "id": "nUfWbhsWyZ4",
-      "title": "Bộ Ba Xe Công Trình Ra Quân Sau Một Tuần Mưa Gió  | RC Máy Xúc",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "?? views",
-      "thumbnail": "https://i3.ytimg.com/vi/nUfWbhsWyZ4/hqdefault.jpg",
-      "tags": "Khác",
-      "rating": "N/A",
-      "sortOrder": 16
-    },
-    {
       "id": "e38rftmcxS0",
       "title": "Thần Đồng Hà Nhân Giúp Cả Gia Tộc Nghèo Đổi Đời | Hà Nhân Sub",
       "episodes": "Full",
@@ -3571,20 +2815,6 @@
       "views": "?? views",
       "thumbnail": "https://i4.ytimg.com/vi/KRBnm_6NQnU/hqdefault.jpg",
       "tags": "Khác",
-      "rating": "N/A",
-      "sortOrder": 16
-    },
-    {
-      "id": "_nl97QGcxuA",
-      "title": "Chàng Trai Trọng Sinh Đến Hậu Tận Thế Dùng Vật Phẩm Mang Từ Quá Khứ Trở Thành Tỷ Phú Số 1 Thế Giới",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "18K views",
-      "thumbnail": "https://i.ytimg.com/vi/_nl97QGcxuA/hq720.jpg",
-      "tags": "Trọng Sinh",
       "rating": "N/A",
       "sortOrder": 16
     },
@@ -3715,20 +2945,6 @@
       "sortOrder": 17
     },
     {
-      "id": "vPrkYmXGlM8",
-      "title": "Thực địa với chiếc máy xúc điều khiển từ xa huina 1593 | RC Máy Xúc",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "?? views",
-      "thumbnail": "https://i3.ytimg.com/vi/vPrkYmXGlM8/hqdefault.jpg",
-      "tags": "Khác",
-      "rating": "N/A",
-      "sortOrder": 18
-    },
-    {
       "id": "Xwavg1Sf7yU",
       "title": "Doanh Địa 32 | Nam Hoang Thương Ma",
       "episodes": "Full",
@@ -3752,20 +2968,6 @@
       "seriesKey": "",
       "views": "?? views",
       "thumbnail": "https://i4.ytimg.com/vi/GSC-LJh4jgk/hqdefault.jpg",
-      "tags": "Hệ Thống",
-      "rating": "N/A",
-      "sortOrder": 18
-    },
-    {
-      "id": "In1kmxASV-A",
-      "title": "Du Hành Thời Gian Trở Thành Cha Của Tiêu Chiến │ Tập 18 - 19 │ Hoạt hình hài hước │ Hệ thống tu tiên",
-      "episodes": "Tập 18",
-      "episodeLabel": "Tập 18",
-      "episodeNumber": 18,
-      "type": "series",
-      "seriesKey": "du h nh th i gian tr th nh cha c a ti u chi n 19 ho t h nh h i h c h th ng tu ti n",
-      "views": "?? views",
-      "thumbnail": "https://i2.ytimg.com/vi/In1kmxASV-A/hqdefault.jpg",
       "tags": "Hệ Thống",
       "rating": "N/A",
       "sortOrder": 18
@@ -3855,20 +3057,6 @@
       "sortOrder": 19
     },
     {
-      "id": "n5kSJTR4qSM",
-      "title": "Du Hành Thời Gian Trở Thành Cha Của Tiêu Chiến │ Tập 16 - 17 │ Hoạt hình hài hước │ Hệ thống tu tiên",
-      "episodes": "Tập 16",
-      "episodeLabel": "Tập 16",
-      "episodeNumber": 16,
-      "type": "series",
-      "seriesKey": "du h nh th i gian tr th nh cha c a ti u chi n 17 ho t h nh h i h c h th ng tu ti n",
-      "views": "?? views",
-      "thumbnail": "https://i3.ytimg.com/vi/n5kSJTR4qSM/hqdefault.jpg",
-      "tags": "Hệ Thống",
-      "rating": "N/A",
-      "sortOrder": 19
-    },
-    {
       "id": "rhQ1o2L-DEA",
       "title": "Full End | Tái Sinh Trả Thù Liễu Như Yên, Tôi Không Còn Là Nô Lệ Của Lòng Tốt Nữa | Thế Vietsub",
       "episodes": "Full",
@@ -3893,20 +3081,6 @@
       "views": "67K views",
       "thumbnail": "https://i.ytimg.com/vi/ShNgIplmYQg/hq720.jpg",
       "tags": "Tu Tiên",
-      "rating": "N/A",
-      "sortOrder": 19
-    },
-    {
-      "id": "Y0VcDcBz7mg",
-      "title": "Chàng Trai Bị Vợ Phản Bội, Trọng Sinh Đến Hậu Thế Mang Vật Phẩm Về Quá Khứ Trở Thành Tỷ Phú Thế Giới",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "8K views",
-      "thumbnail": "https://i.ytimg.com/vi/Y0VcDcBz7mg/hq720.jpg",
-      "tags": "Trọng Sinh",
       "rating": "N/A",
       "sortOrder": 19
     },
@@ -3939,34 +3113,6 @@
       "sortOrder": 20
     },
     {
-      "id": "7BISJ2GGsGU",
-      "title": "Du Hành Thời Gian Trở Thành Cha Của Tiêu Chiến  │ Tập 9 - 15 │ Hoạt hình hài hước │ Hệ thống tu tiên",
-      "episodes": "Tập 9",
-      "episodeLabel": "Tập 9",
-      "episodeNumber": 9,
-      "type": "series",
-      "seriesKey": "du h nh th i gian tr th nh cha c a ti u chi n 15 ho t h nh h i h c h th ng tu ti n",
-      "views": "?? views",
-      "thumbnail": "https://i4.ytimg.com/vi/7BISJ2GGsGU/hqdefault.jpg",
-      "tags": "Hệ Thống",
-      "rating": "N/A",
-      "sortOrder": 20
-    },
-    {
-      "id": "hbhF5PpaUII",
-      "title": "Full version | Trả giá đi liễu như yên | Tờ Thích Vietsub",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "4K views",
-      "thumbnail": "https://i.ytimg.com/vi/hbhF5PpaUII/hq720.jpg",
-      "tags": "Liễu Như Yên",
-      "rating": "N/A",
-      "sortOrder": 20
-    },
-    {
       "id": "UbtmdeWfETM",
       "title": "Full Version | Liễu Như Yên, Cô Sẽ Phải Hối Hận ! | Dii Vietsub",
       "episodes": "Full",
@@ -3977,20 +3123,6 @@
       "views": "62K views",
       "thumbnail": "https://i.ytimg.com/vi/UbtmdeWfETM/hq720.jpg",
       "tags": "Liễu Như Yên",
-      "rating": "N/A",
-      "sortOrder": 20
-    },
-    {
-      "id": "W3ecJtyrBLw",
-      "title": "Chàng Trai Xuyên Không Vào Ngôi Làng Nghèo, Dùng Y Thuật Hiện Đại Lật Ngược Số Phận Bảo Vệ Gia Đình",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "27K views",
-      "thumbnail": "https://i.ytimg.com/vi/W3ecJtyrBLw/hq720.jpg",
-      "tags": "Xuyên Không",
       "rating": "N/A",
       "sortOrder": 20
     },
@@ -4019,34 +3151,6 @@
       "views": "?? views",
       "thumbnail": "https://i3.ytimg.com/vi/nUWMf-s9Hy8/hqdefault.jpg",
       "tags": "Khác",
-      "rating": "N/A",
-      "sortOrder": 21
-    },
-    {
-      "id": "72OYFp8TvPA",
-      "title": "Du Hành Thời Gian Trở Thành Cha Của Tiêu Chiến  │ Tập 6 - 8 │ Hoạt hình hài hước │ Hệ thống tu tiên",
-      "episodes": "Tập 6",
-      "episodeLabel": "Tập 6",
-      "episodeNumber": 6,
-      "type": "series",
-      "seriesKey": "du h nh th i gian tr th nh cha c a ti u chi n 8 ho t h nh h i h c h th ng tu ti n",
-      "views": "?? views",
-      "thumbnail": "https://i4.ytimg.com/vi/72OYFp8TvPA/hqdefault.jpg",
-      "tags": "Hệ Thống",
-      "rating": "N/A",
-      "sortOrder": 21
-    },
-    {
-      "id": "WsdaFfYYQpM",
-      "title": "Chàng Trai Xuyên Không Thành Công Tử Ăn Chơi, Dùng Kiến Thức Cứu Đại Minh Khỏi Cảnh Nước Mất Nhà Tan",
-      "episodes": "Full",
-      "episodeLabel": "Full",
-      "episodeNumber": null,
-      "type": "full",
-      "seriesKey": "",
-      "views": "16K views",
-      "thumbnail": "https://i.ytimg.com/vi/WsdaFfYYQpM/hq720.jpg",
-      "tags": "Xuyên Không",
       "rating": "N/A",
       "sortOrder": 21
     },

@@ -1423,7 +1423,7 @@ export default function WatchClient({ movieId = '', initialMovies = [], popupMod
               <span className={styles.tag}>{getEpisodeLabel(movie)}</span>
             </div>
             <p className={styles.desc}>
-              Nguồn cung cấp: Kênh đối tác (Sưu tầm Internet)
+              Nguồn phát: Đối tác tổng hợp
             </p>
           </div>
         )}
@@ -1451,3 +1451,4 @@ export default function WatchClient({ movieId = '', initialMovies = [], popupMod
     </div>
   );
 }
+

@@ -1,4 +1,4 @@
-import { readFile } from 'fs/promises';
+import { readFile, writeFile } from 'fs/promises';
 import path from 'path';
 import { Pool } from 'pg';
 import { CATEGORY_TAXONOMY, normalizeText as normalizeCategoryText } from './movieCategories.js';
@@ -1327,4 +1327,113 @@ export async function deletePersistedMovie(movieId) {
     deletedId: movieId,
     deletedMovie: result.deletedMovies?.[0] || null,
   };
+}
+
+
+export async function deleteChannelRegistryEntry(slug) {
+  const normalizedSlug = String(slug || '').trim();
+  if (!normalizedSlug) {
+    throw new Error('Slug kênh không được để trống');
+  }
+
+  if (hasDatabaseConfig()) {
+    await withClient(async client => {
+      await client.query('DELETE FROM channels WHERE slug = $1 OR id = $1;', [normalizedSlug]);
+      await client.query('DELETE FROM channel_candidates WHERE candidate_slug = $1 OR source_channel_slug = $1;', [normalizedSlug]);
+    });
+  }
+
+  try {
+    const raw = await readFile(CHANNEL_SEEDS_PATH, 'utf8');
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      const filtered = parsed.filter(ch => (ch.slug || ch.id) !== normalizedSlug);
+      if (filtered.length !== parsed.length) {
+        await writeFile(CHANNEL_SEEDS_PATH, `${JSON.stringify(filtered, null, 2)}\n`, 'utf8');
+      }
+    }
+  } catch (err) {
+    console.warn('[deleteChannelRegistryEntry] Không thể cập nhật channel-seeds.json:', err.message);
+  }
+
+  return { ok: true, deletedSlug: normalizedSlug };
+}
+
+export async function addChannelRegistryEntry(data = {}) {
+  const displayName = String(data.displayName || data.name || '').trim();
+  const channelUrl = String(data.channelUrl || data.url || '').trim();
+  if (!displayName || !channelUrl) {
+    throw new Error('Tên kênh và đường dẫn YouTube không được để trống');
+  }
+
+  let slug = String(data.slug || '').trim();
+  if (!slug) {
+    const handleMatch = channelUrl.match(/@([a-zA-Z0-9._-]+)/);
+    if (handleMatch) {
+      slug = handleMatch[1].toLowerCase().replace(/[^a-z0-9_-]/g, '-');
+    } else {
+      slug = displayName
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    }
+  }
+
+  const category = String(data.category || 'ha-nhan').trim();
+  const trustedBrand = Boolean(data.trustedBrand);
+
+  const newChannel = {
+    id: slug,
+    slug,
+    channelUrl,
+    displayName,
+    category,
+    status: 'active',
+    enabled: true,
+    trustedBrand,
+    allowed: true,
+    blocked: false,
+    priority: 50,
+    qualityScore: 5,
+    lastCrawledAt: null,
+  };
+
+  if (hasDatabaseConfig()) {
+    await withClient(async client => {
+      await client.query(
+        `INSERT INTO channels (
+          id, slug, channel_url, display_name, category, status, enabled, trusted_brand, allowed, blocked, priority, quality_score
+        ) VALUES ($1, $2, $3, $4, $5, 'active', TRUE, $6, TRUE, FALSE, 50, 5)
+        ON CONFLICT (slug) DO UPDATE SET
+          channel_url = EXCLUDED.channel_url,
+          display_name = EXCLUDED.display_name,
+          category = EXCLUDED.category,
+          enabled = TRUE,
+          blocked = FALSE,
+          trusted_brand = EXCLUDED.trusted_brand,
+          updated_at = NOW();`,
+        [slug, slug, channelUrl, displayName, category, trustedBrand]
+      );
+    });
+  }
+
+  try {
+    const raw = await readFile(CHANNEL_SEEDS_PATH, 'utf8');
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      const existingIdx = parsed.findIndex(ch => (ch.slug || ch.id) === slug);
+      if (existingIdx >= 0) {
+        parsed[existingIdx] = { ...parsed[existingIdx], ...newChannel };
+      } else {
+        parsed.push(newChannel);
+      }
+      await writeFile(CHANNEL_SEEDS_PATH, `${JSON.stringify(parsed, null, 2)}\n`, 'utf8');
+    }
+  } catch (err) {
+    console.warn('[addChannelRegistryEntry] Không thể cập nhật channel-seeds.json:', err.message);
+  }
+
+  return { ok: true, channel: newChannel };
 }

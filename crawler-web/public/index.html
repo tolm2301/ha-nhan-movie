@@ -11,7 +11,7 @@
     <header>
       <div class="logo-group">
         <h1>HANHAN <span>CONTROL</span> CENTER</h1>
-        <p class="logo-subtitle">Bộ điều khiển cào dữ liệu & Quản lý phim cục bộ (Local Residential IP)</p>
+        <p class="logo-subtitle">Bộ điều khiển cào dữ liệu & Quản lý phim cục bộ</p>
       </div>
       <div>
         <span id="crawlerBadge" class="badge">Sẵn sàng (Idle)</span>
@@ -64,7 +64,7 @@
           <button id="btnSyncSnapshot" class="btn btn-secondary" onclick="syncSnapshot()">
             🔄 Đồng Bộ Snapshot từ DB
           </button>
-          <button class="btn btn-secondary" onclick="loadStatus(); loadChannels();">
+          <button class="btn btn-secondary" onclick="loadStatus(); loadChannels(true);">
             ↻ Làm Mới
           </button>
         </div>
@@ -138,6 +138,7 @@
           </select>
           <button class="btn btn-primary" onclick="searchMovies()">Tìm Kiếm</button>
           <button class="btn btn-secondary" onclick="resetMovieFilter()">Đặt Lại</button>
+          <button class="btn btn-secondary" onclick="loadMovies(true)" title="Tải lại từ DB">↻ Làm Mới</button>
         </div>
 
         <div class="bulk-actions">
@@ -151,9 +152,18 @@
         </div>
       </div>
 
+      <!-- Thanh phân trang nhanh phía trên -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 14px; padding: 4px 2px;">
+        <span id="pageInfoTextTop" class="page-info" style="font-weight:600; color:var(--text-main);">Trang 1 / 1 (0 phim)</span>
+        <div style="display:flex; gap:8px;">
+          <button id="btnPrevPageTop" class="btn btn-secondary" style="padding:6px 14px; font-size:0.85rem;" onclick="changeMoviePage(-1)">‹ Trang Trước</button>
+          <button id="btnNextPageTop" class="btn btn-secondary" style="padding:6px 14px; font-size:0.85rem;" onclick="changeMoviePage(1)">Trang Sau ›</button>
+        </div>
+      </div>
+
       <div id="movieGrid" class="movie-grid">
         <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-muted);">
-          Đang tải danh sách phim từ cơ sở dữ liệu...
+          Đang tải danh sách phim...
         </div>
       </div>
 
@@ -169,8 +179,53 @@
       <div class="panel" style="height: auto; min-height: 600px;">
         <div class="panel-header">
           <div class="panel-title">📺 Danh Bạ Kênh Đối Tác (<span id="channelCountHeader">0</span>)</div>
-          <div style="font-size: 0.85rem; color: var(--text-muted);">Bật/Tắt kênh để kiểm soát nguồn cào</div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-primary" style="padding: 6px 14px; font-size: 0.85rem;" onclick="toggleAddChannelForm()">
+              + Thêm Kênh Mới
+            </button>
+            <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;" onclick="loadChannels(true)">
+              ↻ Làm Mới
+            </button>
+          </div>
         </div>
+
+        <!-- Form thêm kênh mới -->
+        <div id="addChannelForm" style="display:none; padding: 20px; background: #1b1b2a; border-bottom: 2px solid var(--accent-yellow);">
+          <h3 style="margin-bottom: 12px; font-size: 1.1rem; color: var(--accent-yellow);">Thêm Kênh YouTube Mới Vào Danh Bạ</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-bottom: 14px;">
+            <div>
+              <label style="display:block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Tên hiển thị kênh:</label>
+              <input type="text" id="newChannelName" class="input-text" style="width:100%;" placeholder="Ví dụ: Phim Hoạt Hình 3D">
+            </div>
+            <div>
+              <label style="display:block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Link kênh YouTube hoặc Handle:</label>
+              <input type="text" id="newChannelUrl" class="input-text" style="width:100%;" placeholder="https://www.youtube.com/@KenhPhim">
+            </div>
+            <div>
+              <label style="display:block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px;">Thể loại gán mặc định:</label>
+              <select id="newChannelCategory" class="select-dropdown" style="width:100%;">
+                <option value="ha-nhan">Hà Nhân</option>
+                <option value="tu-tien">Tu Tiên</option>
+                <option value="xuyen-khong">Xuyên Không</option>
+                <option value="trong-sinh">Trọng Sinh</option>
+                <option value="lieu-nhu-yen">Liễu Như Yên</option>
+                <option value="he-thong">Hệ Thống</option>
+                <option value="khac">Khác</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex; justify-content: space-between; align-items:center;">
+            <label style="display:flex; align-items:center; gap: 8px; cursor:pointer; font-size: 0.9rem;">
+              <input type="checkbox" id="newChannelTrusted">
+              Kênh thương hiệu tin cậy (Bỏ qua một số bộ lọc tiêu đề gắt gao)
+            </label>
+            <div style="display:flex; gap: 10px;">
+              <button class="btn btn-secondary" onclick="toggleAddChannelForm(false)">Hủy</button>
+              <button class="btn btn-primary" onclick="submitAddChannel()">Lưu Kênh</button>
+            </div>
+          </div>
+        </div>
+
         <div id="channelFullList" class="channel-list" style="padding: 16px;">
           <div style="text-align: center; padding: 40px; color: var(--text-muted);">
             Đang nạp danh bạ kênh...
@@ -180,6 +235,16 @@
     </div>
   </div>
 
+  <!-- Floating Sync Banner (Bộ đệm LocalStorage -> DB sau 10s) -->
+  <div id="syncBanner" class="sync-banner hidden">
+    <span id="syncBannerIcon">⏳</span>
+    <span id="syncBannerText">Đã xoá phim vào bộ đệm LocalStorage</span>
+    <span id="syncCountdownBadge" class="sync-countdown-badge">10s</span>
+    <button id="btnSyncNow" class="btn-sync-now" onclick="flushPendingDeletesNow()">Đồng Bộ Ngay</button>
+  </div>
+
   <script src="/app.js"></script>
 </body>
 </html>
+
+
