@@ -572,3 +572,30 @@ initSSE();
 loadStatus();
 loadChannels();
 setInterval(loadStatus, 15000);
+
+
+async function triggerSyncVercel() {
+  const btn = document.getElementById("btnSyncVercel");
+  const originalText = btn ? btn.innerText : "";
+  if (btn) {
+    btn.disabled = true;
+    btn.innerText = "⏳ Đang gửi tín hiệu...";
+  }
+
+  try {
+    const res = await fetch("/api/sync/vercel", { method: "POST" });
+    const data = await res.json();
+    if (res.ok && data.ok) {
+      alert("✅ Đã gửi tín hiệu làm mới thành công! Vercel Production đã xóa cache và cập nhật toàn bộ phim mới.");
+    } else {
+      alert("⚠️ Không thể kích hoạt đồng bộ Vercel: " + (data.error || "Lỗi không xác định"));
+    }
+  } catch (err) {
+    alert("❌ Lỗi mạng khi gọi server: " + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerText = originalText;
+    }
+  }
+}

@@ -1,3 +1,22 @@
+
+async function triggerVercelRevalidate() {
+  const prodUrl = process.env.PRODUCTION_URL || 'https://hanhan-movie.vercel.app';
+  const secret = process.env.CRON_SECRET || 'hanhan-crawl-2026-secret';
+  const target = `${prodUrl.replace(/\/$/, '')}/api/revalidate?secret=${encodeURIComponent(secret)}`;
+
+  const res = await fetch(target, {
+    method: 'POST',
+    signal: AbortSignal.timeout(10000),
+  });
+
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}`);
+  }
+
+  const json = await res.json();
+  return { success: true, url: prodUrl, data: json };
+}
+
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -240,6 +259,23 @@ const server = http.createServer(async (req, res) => {
   }
 
   // REST API: Trạng thái hệ thống (< 2ms)
+  
+  // Kích hoạt đồng bộ Vercel Production ngay lập tức
+  if (pathname === '/api/sync/vercel' && req.method === 'POST') {
+    try {
+      pushLog('info', '[Vercel Sync] Đang gửi tín hiệu làm mới bộ đệm lên Vercel Production...');
+      const resData = await triggerVercelRevalidate();
+      pushLog('info', `[Vercel Sync] Thành công! Vercel đã xóa cache và cập nhật phim mới (${resData.url})`);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, message: 'Đã kích hoạt đồng bộ Vercel thành công!', result: resData }));
+    } catch (err) {
+      pushLog('warn', `[Vercel Sync] Không thể kết nối Vercel: ${err.message}`);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: false, error: err.message }));
+    }
+    return;
+  }
+
   if (pathname === '/api/status' && req.method === 'GET') {
     try {
       const status = await getSystemStatus();
@@ -493,6 +529,17 @@ const server = http.createServer(async (req, res) => {
           };
           cachedMovies = null;
           pushLog('info', `[Crawl] Hoàn tất thành công! Video mới: ${result.newVideos}, Tổng phim: ${result.persistedCatalogTotal}`);
+
+          if (!dryRun) {
+            triggerVercelRevalidate()
+              .then(resData => {
+                pushLog('info', `[Vercel Sync] Tự động đồng bộ Vercel Production thành công! (${resData.url})`);
+              })
+              .catch(syncErr => {
+                pushLog('warn', `[Vercel Sync] Tự động revalidate Vercel gặp lỗi: ${syncErr.message}`);
+              });
+          }
+
         })
         .catch(error => {
           lastCrawlResult = {
