@@ -1,27 +1,16 @@
-"use client";
+﻿"use client";
 
-import { useSyncExternalStore } from "react";
+import { useSyncExternalStore, useMemo } from "react";
 import Link from "next/link";
 import MovieCard from "@/components/MovieCard/MovieCard";
-import { getCachedCatalog } from "@/lib/clientCatalog";
+import {
+  subscribeCatalog,
+  getCatalogMoviesSnapshot,
+  getServerCatalogSnapshot,
+} from "@/lib/clientCatalog";
 import styles from "./Category.module.css";
 
 const PAGE_SIZE = 24;
-
-function subscribeCatalog(callback) {
-  if (typeof window === "undefined") return () => {};
-  window.addEventListener("storage", callback);
-  return () => window.removeEventListener("storage", callback);
-}
-
-function getCatalogSnapshot() {
-  const cached = getCachedCatalog();
-  return cached?.data?.movies || null;
-}
-
-function getServerSnapshot() {
-  return null;
-}
 
 export default function CategoryContent({
   categorySlug,
@@ -31,27 +20,37 @@ export default function CategoryContent({
   totalPages = 1,
   pageBaseHref = "",
 }) {
-  const cachedAllMovies = useSyncExternalStore(subscribeCatalog, getCatalogSnapshot, getServerSnapshot);
+  const cachedAllMovies = useSyncExternalStore(
+    subscribeCatalog,
+    getCatalogMoviesSnapshot,
+    getServerCatalogSnapshot
+  );
 
-  let activeMovies = initialMovies;
-  let activeTotal = initialCategory?.count || initialMovies.length;
-  let activeTotalPages = totalPages;
+  const clientData = useMemo(() => {
+    if (!cachedAllMovies || !Array.isArray(cachedAllMovies) || cachedAllMovies.length === 0) {
+      return null;
+    }
 
-  if (cachedAllMovies && Array.isArray(cachedAllMovies) && cachedAllMovies.length > 0) {
-    const matched = cachedAllMovies.filter(m => {
-      const slug = m.categorySlug || "";
-      const tags = m.tags || "";
+    const matched = cachedAllMovies.filter((movie) => {
+      const slug = movie.categorySlug || "";
+      const tags = movie.tags || "";
       return slug === categorySlug || tags === initialCategory?.tag;
     });
 
-    if (matched.length > 0) {
-      activeTotal = matched.length;
-      activeTotalPages = Math.max(1, Math.ceil(activeTotal / PAGE_SIZE));
-      const page = Math.min(Math.max(currentPage, 1), activeTotalPages);
-      const startIndex = (page - 1) * PAGE_SIZE;
-      activeMovies = matched.slice(startIndex, startIndex + PAGE_SIZE);
-    }
-  }
+    if (matched.length === 0) return null;
+
+    const total = matched.length;
+    const computedTotalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    const page = Math.min(Math.max(currentPage, 1), computedTotalPages);
+    const startIndex = (page - 1) * PAGE_SIZE;
+    const movies = matched.slice(startIndex, startIndex + PAGE_SIZE);
+
+    return { movies, total, totalPages: computedTotalPages };
+  }, [cachedAllMovies, categorySlug, initialCategory?.tag, currentPage]);
+
+  const activeMovies = clientData ? clientData.movies : initialMovies;
+  const activeTotal = clientData ? clientData.total : (initialCategory?.count || initialMovies.length);
+  const activeTotalPages = clientData ? clientData.totalPages : totalPages;
 
   return (
     <>
@@ -63,7 +62,7 @@ export default function CategoryContent({
       </div>
 
       <div className={styles.grid}>
-        {activeMovies.map(movie => (
+        {activeMovies.map((movie) => (
           <MovieCard key={movie.id} movie={movie} />
         ))}
       </div>
@@ -80,7 +79,7 @@ export default function CategoryContent({
           </Link>
 
           <div className={styles.pageNumbers}>
-            {Array.from({ length: activeTotalPages }, (_, index) => index + 1).map(pageNumber => (
+            {Array.from({ length: activeTotalPages }, (_, index) => index + 1).map((pageNumber) => (
               <Link
                 key={pageNumber}
                 className={`${styles.pageLink} ${pageNumber === currentPage ? styles.pageLinkActive : ""}`}

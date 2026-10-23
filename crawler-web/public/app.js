@@ -275,7 +275,7 @@ function renderMoviesFromBuffer() {
         '</div>' +
         '<div class="movie-actions">' +
           '<a href="https://www.youtube.com/watch?v=' + movie.id + '" target="_blank" rel="noreferrer" class="btn-action btn-preview" title="Xem trên YouTube">▶ Xem Thử</a>' +
-          '<button class="btn-action btn-delete" onclick="deleteSingleMovie(\'" + movie.id + "\')" title="Xoá phim này ngay (0ms)">🗑️ Xoá</button>' +
+          '<button class="btn-action btn-delete" onclick="deleteSingleMovie(\'' + movie.id + '\')" title="Xoá phim rác này">🗑️ Xoá</button>' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -380,12 +380,18 @@ function removeMoviesBuffer(ids) {
 }
 
 function deleteSingleMovie(id) {
+  const movie = bufferMovies.find(m => m.id === id);
+  const title = movie ? (movie.displayTitle || movie.title || id) : id;
+  const ok = confirm("Bạn có chắc chắn muốn xoá bộ phim rác này không?\n\n\"" + title + "\" (ID: " + id + ")");
+  if (!ok) return;
   removeMoviesBuffer([id]);
 }
 
 function deleteSelectedMovies() {
   const ids = Array.from(selectedMovieIds);
   if (!ids.length) return;
+  const ok = confirm("Bạn có chắc chắn muốn xoá " + ids.length + " bộ phim rác đã chọn không?");
+  if (!ok) return;
   removeMoviesBuffer(ids);
   selectedMovieIds.clear();
   updateSelectedUI();

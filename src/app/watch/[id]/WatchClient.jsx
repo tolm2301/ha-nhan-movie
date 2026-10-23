@@ -21,12 +21,9 @@ const QUALITY_LABELS = {
   auto: 'Tự động',
 };
 
-const SEEK_STEP_SECONDS = 30;
+const SEEK_STEP_SECONDS = 10;
 const YOUTUBE_API_LOAD_TIMEOUT_MS = 10000;
 const YOUTUBE_IFRAME_API_SRC = 'https://www.youtube.com/iframe_api';
-const POPUP_HELPER_TITLE = 'Hanhan Mini Popup';
-const POPUP_HELPER_PIN_COMMAND = 'powershell -ExecutionPolicy Bypass -File ".\\tools\\window-pin\\PinHanhanPopup.ps1" -Mode pin';
-const POPUP_HELPER_UNPIN_COMMAND = 'powershell -ExecutionPolicy Bypass -File ".\\tools\\window-pin\\PinHanhanPopup.ps1" -Mode unpin';
 
 function loadYouTubeApi() {
   if (typeof window === 'undefined') return Promise.resolve();
@@ -209,7 +206,7 @@ function isInteractiveKeyboardTarget(target) {
   );
 }
 
-export default function WatchClient({ movieId = '', initialMovies = [], popupMode = false, popupStartTime = 0, popupShouldPlay = true }) {
+export default function WatchClient({ movieId = '', initialMovies = [] }) {
   const router = useRouter();
   const [movies, setMovies] = useState(() => initialMovies);
   const [isCatalogLoaded, setIsCatalogLoaded] = useState(() => Array.isArray(initialMovies) && initialMovies.length > 0);
@@ -227,9 +224,6 @@ export default function WatchClient({ movieId = '', initialMovies = [], popupMod
   const playableMarkedRef = useRef(false);
   const lastKnownTimeRef = useRef(0);
   const lastKnownPlayingRef = useRef(true);
-  const popupWindowRef = useRef(null);
-  const popupRestoreStateRef = useRef({ time: 0, playing: true });
-  const popupPollTimerRef = useRef(null);
 
   const [isReady, setIsReady] = useState(false);
   const [isPlayable, setIsPlayable] = useState(false);
@@ -244,56 +238,18 @@ export default function WatchClient({ movieId = '', initialMovies = [], popupMod
   const [captionOptions, setCaptionOptions] = useState([]);
   const [selectedCaption, setSelectedCaption] = useState('off');
   const [isCaptionModuleAvailable, setIsCaptionModuleAvailable] = useState(false);
-  const [isDetachedPopupOpen, setIsDetachedPopupOpen] = useState(false);
-  const [isPopupPinned, setIsPopupPinned] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isNativePlayerFullscreen, setIsNativePlayerFullscreen] = useState(false);
   const [isPseudoFullscreen, setIsPseudoFullscreen] = useState(false);
   const [isControlsVisible, setIsControlsVisible] = useState(true);
   const [playerLoadError, setPlayerLoadError] = useState('');
-  const [popupNotice, setPopupNotice] = useState('');
-  const [isPopupPinHelperSupported, setIsPopupPinHelperSupported] = useState(false);
 
   const movie = movies.find(m => m.id === movieId) || movies[0] || null;
   const movieDisplayTitle = movie?.displayTitle || movie?.title;
   const shouldShowEpisodes = isSeriesMovie(movie);
-  const isPopupWindow = Boolean(popupMode);
 
   useEffect(() => {
-    if (!isPopupWindow) return undefined;
-
-    let nextPinned = false;
-    try {
-      nextPinned = window.localStorage.getItem(`hanhan-popup-pinned:${movieId}`) === '1';
-    } catch {
-      nextPinned = false;
-    }
-
-    const nextSupported = /win/i.test(window.navigator.platform || window.navigator.userAgent || '');
-    const frame = window.requestAnimationFrame(() => {
-      setIsPopupPinned(nextPinned);
-      setIsPopupPinHelperSupported(nextSupported);
-    });
-
-    return () => window.cancelAnimationFrame(frame);
-  }, [isPopupWindow, movieId]);
-
-  useEffect(() => {
-    if (!isPopupWindow) return undefined;
-
-    try {
-      window.localStorage.setItem(`hanhan-popup-pinned:${movieId}`, isPopupPinned ? '1' : '0');
-    } catch {
-      // Ignore storage failures; the popup still keeps the current session state.
-    }
-
-    document.title = `${POPUP_HELPER_TITLE} • ${isPopupPinned ? 'Đã ghim' : 'Chưa ghim'}${movieDisplayTitle ? ` | ${movieDisplayTitle}` : ''}`;
-
-    return undefined;
-  }, [isPopupPinned, isPopupWindow, movieDisplayTitle, movieId]);
-
-  useEffect(() => {
-    if (!shouldShowEpisodes || isPopupWindow) {
+    if (!shouldShowEpisodes) {
       return undefined;
     }
 
@@ -336,10 +292,10 @@ export default function WatchClient({ movieId = '', initialMovies = [], popupMod
       active = false;
       window.clearTimeout(fetchTimer);
     };
-  }, [isPopupWindow, movieId, shouldShowEpisodes]);
+  }, [movieId, shouldShowEpisodes]);
 
   const episodes = useMemo(() => {
-    if (!movie || !shouldShowEpisodes || isPopupWindow) return [];
+    if (!movie || !shouldShowEpisodes) return [];
 
     const movieSeriesKey = movie.seriesKey || normalizeSeriesKey(movie.title);
     const related = movies
@@ -362,7 +318,7 @@ export default function WatchClient({ movieId = '', initialMovies = [], popupMod
     }
 
     return related.slice(0, 40);
-  }, [isPopupWindow, movie, movies, shouldShowEpisodes]);
+  }, [movie, movies, shouldShowEpisodes]);
 
   const clearHideControlsTimer = useCallback(() => {
     if (hideControlsTimerRef.current) {
@@ -540,20 +496,7 @@ export default function WatchClient({ movieId = '', initialMovies = [], popupMod
               resumeAppliedRef.current = true;
             }
 
-            if (isPopupWindow && Number.isFinite(popupStartTime) && popupStartTime > 0) {
-              event.target.seekTo(popupStartTime, true);
-              setCurrentTime(popupStartTime);
-              lastKnownTimeRef.current = popupStartTime;
-              resumeAppliedRef.current = true;
-            }
-
-            if (isPopupWindow && popupShouldPlay === false) {
-              event.target.pauseVideo();
-              setIsPlaying(false);
-              lastKnownPlayingRef.current = false;
-            } else {
-              event.target.playVideo();
-            }
+            event.target.playVideo();
           },
           onApiChange: event => {
             if (isCancelled) return;
@@ -654,7 +597,7 @@ export default function WatchClient({ movieId = '', initialMovies = [], popupMod
         playerRef.current = null;
       }
     };
-  }, [isPopupWindow, movie, popupShouldPlay, popupStartTime, syncCaptionTracks]);
+  }, [movie, syncCaptionTracks]);
 
   useEffect(() => {
     const onFullscreenChange = () => {
@@ -945,151 +888,6 @@ export default function WatchClient({ movieId = '', initialMovies = [], popupMod
     return false;
   };
 
-  const closeDetachedPopupWindow = useCallback((restoredState = null) => {
-    popupWindowRef.current = null;
-    setIsDetachedPopupOpen(false);
-
-    if (popupPollTimerRef.current) {
-      window.clearInterval(popupPollTimerRef.current);
-      popupPollTimerRef.current = null;
-    }
-
-    const player = playerRef.current;
-    if (!player || !movie) return;
-
-    const fallbackState = popupRestoreStateRef.current;
-    const nextTime = Number.isFinite(restoredState?.time) ? restoredState.time : fallbackState.time;
-    const shouldPlay = typeof restoredState?.playing === 'boolean' ? restoredState.playing : fallbackState.playing;
-
-    if (Number.isFinite(nextTime) && nextTime >= 0) {
-      player.seekTo(nextTime, true);
-      setCurrentTime(nextTime);
-      lastKnownTimeRef.current = nextTime;
-    }
-
-    if (shouldPlay) {
-      player.playVideo();
-      setIsPlaying(true);
-      lastKnownPlayingRef.current = true;
-    } else {
-      player.pauseVideo();
-      setIsPlaying(false);
-      lastKnownPlayingRef.current = false;
-    }
-
-  }, [movie]);
-
-  const openDetachedPopupWindow = useCallback(() => {
-    if (!movie) return;
-
-    const existingPopup = popupWindowRef.current;
-    if (existingPopup && !existingPopup.closed) {
-      existingPopup.focus();
-      setIsDetachedPopupOpen(true);
-      return;
-    }
-
-    const player = playerRef.current;
-    const nextTime = Number(player?.getCurrentTime?.() || currentTime || lastKnownTimeRef.current || 0);
-    const nextPlaying = Boolean(player?.getPlayerState?.() === 1 || isPlaying);
-    const popupUrl = new URL(`/watch-popout/${movie.id}`, window.location.origin);
-    popupUrl.searchParams.set('t', String(Math.max(0, Math.floor(nextTime))));
-    popupUrl.searchParams.set('playing', nextPlaying ? '1' : '0');
-
-    popupRestoreStateRef.current = { time: nextTime, playing: nextPlaying };
-
-    const popupWindow = window.open(
-      popupUrl.toString(),
-      `hanhan-popup-${movie.id}`,
-      'popup=yes,width=1024,height=768,left=80,top=40',
-    );
-
-    if (!popupWindow) {
-      setPopupNotice('Trình duyệt đã chặn cửa sổ tách rời. Hãy cho phép popup để mở cửa sổ riêng.');
-      return;
-    }
-
-    setPopupNotice('');
-    popupWindowRef.current = popupWindow;
-    setIsDetachedPopupOpen(true);
-
-    if (player && typeof player.pauseVideo === 'function') {
-      player.pauseVideo();
-      setIsPlaying(false);
-      lastKnownPlayingRef.current = false;
-    }
-
-    if (popupPollTimerRef.current) {
-      window.clearInterval(popupPollTimerRef.current);
-    }
-
-    popupPollTimerRef.current = window.setInterval(() => {
-      if (!popupWindowRef.current || popupWindowRef.current.closed) {
-        closeDetachedPopupWindow();
-      }
-    }, 500);
-  }, [closeDetachedPopupWindow, currentTime, isPlaying, movie]);
-
-  useEffect(() => {
-    if (isPopupWindow) return undefined;
-
-    const handlePopupMessage = event => {
-      if (event.origin !== window.location.origin) return;
-      if (event.source !== popupWindowRef.current) return;
-
-      const data = event.data;
-      if (!data || data.type !== 'hanhan-watch-popup-state' || data.movieId !== movie?.id) return;
-
-      closeDetachedPopupWindow({
-        time: Number(data.time),
-        playing: Boolean(data.playing),
-      });
-    };
-
-    window.addEventListener('message', handlePopupMessage);
-    return () => window.removeEventListener('message', handlePopupMessage);
-  }, [closeDetachedPopupWindow, isPopupWindow, movie?.id]);
-
-  useEffect(() => {
-    if (!isPopupWindow) return undefined;
-
-    const postPopupState = () => {
-      if (!window.opener || !movie) return;
-
-      const player = playerRef.current;
-      const state = {
-        type: 'hanhan-watch-popup-state',
-        movieId: movie.id,
-        time: Number(player?.getCurrentTime?.() || lastKnownTimeRef.current || 0),
-        playing: Boolean(player?.getPlayerState?.() === 1 || lastKnownPlayingRef.current),
-      };
-
-      window.opener.postMessage(state, window.location.origin);
-    };
-
-    window.addEventListener('beforeunload', postPopupState);
-    window.addEventListener('pagehide', postPopupState);
-
-    return () => {
-      postPopupState();
-      window.removeEventListener('beforeunload', postPopupState);
-      window.removeEventListener('pagehide', postPopupState);
-    };
-  }, [isPopupWindow, movie]);
-
-  useEffect(() => {
-    return () => {
-      if (popupPollTimerRef.current) {
-        window.clearInterval(popupPollTimerRef.current);
-        popupPollTimerRef.current = null;
-      }
-
-      if (popupWindowRef.current && !popupWindowRef.current.closed) {
-        popupWindowRef.current.close();
-      }
-    };
-  }, []);
-
   const handleFullscreen = async () => {
     const hasNativeFullscreen = Boolean(getFullscreenElement());
 
@@ -1115,37 +913,6 @@ export default function WatchClient({ movieId = '', initialMovies = [], popupMod
       setIsControlsVisible(true);
       clearHideControlsTimer();
     }
-  };
-
-  const handleTogglePopup = () => {
-    setIsPseudoFullscreen(false);
-
-    if (isPopupWindow) {
-      if (typeof window !== 'undefined') {
-        window.close();
-      }
-      return;
-    }
-
-    if (popupWindowRef.current && !popupWindowRef.current.closed) {
-      popupWindowRef.current.close();
-      closeDetachedPopupWindow();
-      return;
-    }
-
-    openDetachedPopupWindow();
-  };
-
-  const handleTogglePopupPin = () => {
-    setIsPopupPinned(current => {
-      const nextPinned = !current;
-      setPopupNotice(nextPinned
-        ? (isPopupPinHelperSupported
-          ? `Windows topmost helper có thể ghim cửa sổ này. ${POPUP_HELPER_PIN_COMMAND}`
-          : `Trình duyệt không thể bảo đảm always-on-top; trạng thái ghim này chỉ là nhãn giao diện. ${POPUP_HELPER_PIN_COMMAND}`)
-        : `Đã bỏ ghim. ${POPUP_HELPER_UNPIN_COMMAND}`);
-      return nextPinned;
-    });
   };
 
   const handleVideoAreaClick = event => {
@@ -1212,54 +979,13 @@ export default function WatchClient({ movieId = '', initialMovies = [], popupMod
   }
 
   return (
-    <div className={`${styles.watchLayout} ${isPopupWindow ? styles.popupLayout : ''}`}>
+    <div className={styles.watchLayout}>
       <div className={styles.container}>
-        {isPopupWindow ? (
-          <div className={styles.popupHeader}>
-            <div className={styles.popupHeaderText}>
-              <strong>{movieDisplayTitle}</strong>
-              <span>Cửa sổ tách rời • {isPopupPinned ? 'Đã ghim' : 'Chưa ghim'}</span>
-              <p className={styles.popupHeaderHint}>
-                {isPopupPinHelperSupported
-                  ? 'Trên Windows, title cửa sổ này khớp helper topmost để giữ popup luôn nổi trên cùng.'
-                  : 'Web không thể ép always-on-top; nút ghim chỉ giữ trạng thái và nhắc bạn dùng helper ngoài trình duyệt.'}
-              </p>
-            </div>
-            <div className={styles.popupHeaderActions}>
-              <button
-                type="button"
-                className={`${styles.popupPinBtn} ${isPopupPinned ? styles.popupPinBtnActive : ''}`}
-                onClick={handleTogglePopupPin}
-                aria-pressed={isPopupPinned}
-                title={isPopupPinned ? 'Bỏ ghim cửa sổ' : 'Ghim cửa sổ'}
-              >
-                {isPopupPinned ? 'Unpin' : 'Pin'}
-              </button>
-              <button type="button" className={styles.popupCloseBtn} onClick={handleTogglePopup}>
-                Đóng
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button onClick={() => router.back()} className={styles.backBtn}>
+        <button onClick={() => router.back()} className={styles.backBtn}>
             ← Quay lại
           </button>
-        )}
 
-        {popupNotice && (
-          <p style={{
-            margin: '0 0 16px',
-            padding: '10px 12px',
-            borderRadius: 10,
-            background: 'rgba(247, 208, 56, 0.12)',
-            border: '1px solid rgba(247, 208, 56, 0.32)',
-            color: '#f7d038',
-            fontSize: '0.92rem',
-            fontWeight: 600,
-          }}>
-            {popupNotice}
-          </p>
-        )}
+        
 
         <div
           ref={playerSectionRef}
@@ -1412,7 +1138,7 @@ export default function WatchClient({ movieId = '', initialMovies = [], popupMod
           </div>
         </div>
 
-        {!isPopupWindow && (
+        (
           <div className={styles.infoSection}>
             <h1 className={styles.movieTitle}>{movieDisplayTitle}</h1>
             <div className={styles.meta}>
@@ -1425,9 +1151,8 @@ export default function WatchClient({ movieId = '', initialMovies = [], popupMod
               Nguồn phát: Đối tác tổng hợp
             </p>
           </div>
-        )}
 
-        {!isPopupWindow && shouldShowEpisodes && episodes.length > 1 && (
+        {shouldShowEpisodes && episodes.length > 1 && (
           <div className={styles.episodeSection}>
             <h3 className={styles.sectionTitle}>Chọn Tập Phim</h3>
             <div className={styles.episodeGrid}>
@@ -1445,7 +1170,7 @@ export default function WatchClient({ movieId = '', initialMovies = [], popupMod
           </div>
         )}
 
-        {!isPopupWindow && <AdSlot placement="watchAfterRelated" minHeight={250} />}
+        <AdSlot placement="watchAfterRelated" minHeight={250} />
       </div>
     </div>
   );

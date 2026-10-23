@@ -1,23 +1,28 @@
-"use client";
-import { useSyncExternalStore } from 'react';
-import { getCachedCatalog } from '@/lib/clientCatalog';
-import Link from 'next/link';
-import MovieCard from '@/components/MovieCard/MovieCard';
-import AdSlot from '@/components/Adsense/AdSlot';
-import styles from './Search.module.css';
+﻿"use client";
 
-function normalizeSearchText(value = '') {
+import { useSyncExternalStore, useMemo } from "react";
+import Link from "next/link";
+import MovieCard from "@/components/MovieCard/MovieCard";
+import AdSlot from "@/components/Adsense/AdSlot";
+import {
+  subscribeCatalog,
+  getCatalogMoviesSnapshot,
+  getServerCatalogSnapshot,
+} from "@/lib/clientCatalog";
+import styles from "./Search.module.css";
+
+function normalizeSearchText(value = "") {
   return value
     .toString()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/[^a-z0-9]+/g, " ")
     .trim();
 }
 
-function compactSearchText(value = '') {
-  return normalizeSearchText(value).replace(/\s+/g, '');
+function compactSearchText(value = "") {
+  return normalizeSearchText(value).replace(/\s+/g, "");
 }
 
 function getSearchFields(movie) {
@@ -31,7 +36,7 @@ function getSearchFields(movie) {
     movie?.episodes,
     movie?.episodeLabel,
   ]
-    .map(value => (value == null ? '' : String(value)))
+    .map((value) => (value == null ? "" : String(value)))
     .filter(Boolean);
 }
 
@@ -42,8 +47,9 @@ function getMatchScore(movie, normalizedQuery, compactQuery) {
     const normalizedField = normalizeSearchText(field);
     if (!normalizedField) continue;
 
-    const compactField = normalizedField.replace(/\s+/g, '');
-    const directMatch = normalizedField.includes(normalizedQuery) || compactField.includes(compactQuery);
+    const compactField = normalizedField.replace(/\s+/g, "");
+    const directMatch =
+      normalizedField.includes(normalizedQuery) || compactField.includes(compactQuery);
     if (!directMatch) continue;
 
     let score = 2;
@@ -61,48 +67,40 @@ function getMatchScore(movie, normalizedQuery, compactQuery) {
   return Number.isFinite(bestScore) ? bestScore : null;
 }
 
-function subscribeCatalog(callback) {
-  if (typeof window === 'undefined') return () => {};
-  window.addEventListener('storage', callback);
-  return () => window.removeEventListener('storage', callback);
-}
+export default function SearchContent({ query = "", movies = [] }) {
+  const cachedMovies = useSyncExternalStore(
+    subscribeCatalog,
+    getCatalogMoviesSnapshot,
+    getServerCatalogSnapshot
+  );
 
-function getCatalogSnapshot() {
-  const cached = getCachedCatalog();
-  return cached?.data?.movies || null;
-}
-
-function getServerSnapshot() {
-  return null;
-}
-
-export default function SearchContent({ query = '', movies = [] }) {
-  const cachedMovies = useSyncExternalStore(subscribeCatalog, getCatalogSnapshot, getServerSnapshot);
   const activeMovies = cachedMovies && cachedMovies.length > 0 ? cachedMovies : movies;
   const normalizedQuery = normalizeSearchText(query);
   const compactQuery = compactSearchText(query);
   const hasQuery = Boolean(normalizedQuery);
 
-  const results = hasQuery
-    ? movies
-        .map(movie => {
-          const matchScore = getMatchScore(movie, normalizedQuery, compactQuery);
-          return matchScore === null ? null : { movie, matchScore };
-        })
-        .filter(Boolean)
-        .sort((a, b) => {
-          if (a.matchScore !== b.matchScore) return a.matchScore - b.matchScore;
+  const results = useMemo(() => {
+    if (!hasQuery) return activeMovies;
 
-          const aTitle = normalizeSearchText(a.movie?.displayTitle || a.movie?.title || '');
-          const bTitle = normalizeSearchText(b.movie?.displayTitle || b.movie?.title || '');
-          const aStarts = aTitle.startsWith(normalizedQuery) ? 0 : 1;
-          const bStarts = bTitle.startsWith(normalizedQuery) ? 0 : 1;
-          if (aStarts !== bStarts) return aStarts - bStarts;
+    return activeMovies
+      .map((movie) => {
+        const matchScore = getMatchScore(movie, normalizedQuery, compactQuery);
+        return matchScore === null ? null : { movie, matchScore };
+      })
+      .filter(Boolean)
+      .sort((a, b) => {
+        if (a.matchScore !== b.matchScore) return a.matchScore - b.matchScore;
 
-          return aTitle.localeCompare(bTitle, 'vi');
-        })
-        .map(item => item.movie)
-    : movies;
+        const aTitle = normalizeSearchText(a.movie?.displayTitle || a.movie?.title || "");
+        const bTitle = normalizeSearchText(b.movie?.displayTitle || b.movie?.title || "");
+        const aStarts = aTitle.startsWith(normalizedQuery) ? 0 : 1;
+        const bStarts = bTitle.startsWith(normalizedQuery) ? 0 : 1;
+        if (aStarts !== bStarts) return aStarts - bStarts;
+
+        return aTitle.localeCompare(bTitle, "vi");
+      })
+      .map((item) => item.movie);
+  }, [activeMovies, hasQuery, normalizedQuery, compactQuery]);
 
   const adBreakIndex = results.length >= 10 ? 10 : results.length >= 8 ? 8 : -1;
   const firstResults = adBreakIndex > -1 ? results.slice(0, adBreakIndex) : results;
@@ -113,12 +111,18 @@ export default function SearchContent({ query = '', movies = [] }) {
   return (
     <main className={styles.page}>
       <h1 className={styles.heading}>
-        {query
-          ? <>Kết quả cho: <span className="comic-text-yellow">&quot;{query}&quot;</span></>
-          : 'Tìm phim'}
+        {query ? (
+          <>
+            Kết quả cho: <span className="comic-text-yellow">&quot;{query}&quot;</span>
+          </>
+        ) : (
+          "Tìm phim"
+        )}
       </h1>
       <p className={styles.count}>
-        {hasQuery ? `${results.length} bộ phim tìm được` : `${activeMovies.length} bộ phim sẵn có để duyệt`}
+        {hasQuery
+          ? `${results.length} bộ phim tìm được`
+          : `${activeMovies.length} bộ phim sẵn có để duyệt`}
       </p>
 
       {isBrowseState && (
@@ -129,8 +133,12 @@ export default function SearchContent({ query = '', movies = [] }) {
 
       {isEmptySearch ? (
         <div className={styles.empty}>
-          <p>Không tìm thấy phim nào cho &quot;<strong>{query}</strong>&quot;</p>
-          <p className={styles.emptyHint}>Đã thử khớp theo tiêu đề, tag, thể loại và các từ liên quan.</p>
+          <p>
+            Không tìm thấy phim nào cho &quot;<strong>{query}</strong>&quot;
+          </p>
+          <p className={styles.emptyHint}>
+            Đã thử khớp theo tiêu đề, tag, thể loại và các từ liên quan.
+          </p>
           <div className={styles.emptyActions}>
             <Link className="btn-secondary" href="/search">
               Xoá từ khoá
@@ -143,14 +151,14 @@ export default function SearchContent({ query = '', movies = [] }) {
       ) : results.length > 0 ? (
         <>
           <div className={styles.grid}>
-            {firstResults.map(movie => (
+            {firstResults.map((movie) => (
               <MovieCard key={movie.id} movie={movie} />
             ))}
           </div>
 
           {remainingResults.length > 0 && (
             <div className={styles.grid}>
-              {remainingResults.map(movie => (
+              {remainingResults.map((movie) => (
                 <MovieCard key={movie.id} movie={movie} />
               ))}
             </div>
@@ -159,7 +167,9 @@ export default function SearchContent({ query = '', movies = [] }) {
       ) : (
         <div className={styles.empty}>
           <p>Chưa có dữ liệu để hiển thị.</p>
-          <p className={styles.emptyHint}>Thử tải lại trang hoặc quay về trang chủ để duyệt nội dung.</p>
+          <p className={styles.emptyHint}>
+            Thử tải lại trang hoặc quay về trang chủ để duyệt nội dung.
+          </p>
           <Link className="btn-secondary" href="/">
             Về Trang Chủ
           </Link>

@@ -11,26 +11,28 @@
 }
 
 .backBtn {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: #e0e0e0;
-  font-size: 0.92rem;
-  font-weight: 600;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #f0f0f5;
+  font-size: 0.95rem;
+  font-weight: 700;
   cursor: pointer;
   margin-bottom: 24px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 18px;
-  border-radius: 20px;
-  transition: all 0.2s ease;
+  padding: 10px 20px;
+  border-radius: 999px;
+  backdrop-filter: blur(12px);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .backBtn:hover {
-  background: rgba(255, 222, 0, 0.15);
+  background: rgba(255, 222, 0, 0.18);
   border-color: var(--color-accent-yellow);
   color: var(--color-accent-yellow);
-  transform: translateX(-3px);
+  transform: translateX(-4px);
+  box-shadow: 0 4px 16px rgba(255, 222, 0, 0.2);
 }
 
 .playerSection {
@@ -38,54 +40,19 @@
   margin-bottom: 32px;
 }
 
-.popupLayout {
-  min-height: 100vh;
-  padding-top: 14px;
-  padding-bottom: 14px;
-  background: #080808;
-}
 
-.popupHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
-  padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 2px solid rgba(255, 255, 255, 0.16);
-  border-radius: 12px;
-  color: #fff;
-}
 
-.popupHeaderText {
-  display: grid;
-  gap: 4px;
-  min-width: 0;
-}
 
-.popupHeaderText strong {
-  font-size: 1rem;
-}
 
-.popupHeaderText span {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.8rem;
-}
 
-.popupHeaderHint {
-  margin: 0;
-  color: rgba(255, 255, 255, 0.64);
-  font-size: 0.74rem;
-  line-height: 1.35;
-}
 
-.popupHeaderActions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
+
+
+
+
+
+
+
 
 .playerSectionPseudoFullscreen {
   position: fixed;
@@ -120,33 +87,11 @@
   border: 4px solid #000;
 }
 
-.popupCloseBtn {
-  border: 0;
-  background: rgba(247, 208, 56, 0.96);
-  color: #000;
-  border-radius: 6px;
-  padding: 5px 8px;
-  cursor: pointer;
-  font-size: 0.74rem;
-  font-weight: 800;
-}
 
-.popupPinBtn {
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
-  border-radius: 6px;
-  padding: 5px 10px;
-  cursor: pointer;
-  font-size: 0.74rem;
-  font-weight: 800;
-}
 
-.popupPinBtnActive {
-  background: rgba(247, 208, 56, 0.18);
-  border-color: rgba(247, 208, 56, 0.5);
-  color: #f7d038;
-}
+
+
+
 
 .playerSectionPseudoFullscreen .videoContainer {
   width: 100vw;
