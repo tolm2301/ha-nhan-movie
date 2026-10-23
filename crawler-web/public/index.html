@@ -44,11 +44,7 @@
           <div id="statDbMovies" class="stat-value">0</div>
           <div class="stat-sub">Bản ghi trong cơ sở dữ liệu</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-label">Phim Snapshot (movies.json)</div>
-          <div id="statSnapshotMovies" class="stat-value">0</div>
-          <div id="statSnapshotTime" class="stat-sub">Thời điểm sinh: -</div>
-        </div>
+
         <div class="stat-card">
           <div class="stat-label">Kênh Đối Tác Hoạt Động</div>
           <div id="statChannels" class="stat-value">0</div>
@@ -61,9 +57,7 @@
           <button id="btnRunCrawl" class="btn btn-primary" onclick="startCrawl()">
             ▶ Bắt Đầu Cào Dữ Liệu
           </button>
-          <button id="btnSyncSnapshot" class="btn btn-secondary" onclick="syncSnapshot()">
-            🔄 Đồng Bộ Snapshot từ DB
-          </button>
+
           <button class="btn btn-secondary" onclick="loadStatus(); loadChannels(true);">
             ↻ Làm Mới
           </button>
@@ -74,10 +68,7 @@
             <input type="checkbox" id="chkDryRun">
             Thử nghiệm (Dry-Run: không lưu DB)
           </label>
-          <label>
-            <input type="checkbox" id="chkSyncSnapshot" checked>
-            Tự động sinh snapshot sau cào
-          </label>
+
           <label>
             <input type="checkbox" id="chkStrictMode" checked>
             Lọc nghiêm ngặt (Strict Mode)

@@ -1,4 +1,4 @@
-import { ensureFreshMovieSnapshot, hasDatabaseConfig, loadPersistedMovies } from './movieStore.server.js';
+import { hasDatabaseConfig, loadPersistedMovies } from './movieStore.server.js';
 import { buildCategoryBuckets, normalizeMovieCategory } from './movieCategories.js';
 import { getRenderableThumbnail, hasRenderableThumbnail } from './thumbnailFilters.js';
 
@@ -233,7 +233,7 @@ export function buildMovieCatalog(movies = [], snapshotMeta = {}) {
 let catalogCache = null;
 let lastLoadedAt = 0;
 let catalogLoadPromise = null;
-const CATALOG_CACHE_TTL_MS = 15000;
+const CATALOG_CACHE_TTL_MS = 300000; // 5 phút bộ đệm RAM
 
 async function fetchFreshCatalog() {
   if (hasDatabaseConfig()) {
@@ -244,12 +244,12 @@ async function fetchFreshCatalog() {
         generatedAt: new Date().toISOString(),
       });
     } catch (err) {
-      console.warn('[Data] Loi ket noi DB, dung snapshot du phong:', err.message);
+      console.warn('[Data] Lỗi kết nối PostgreSQL:', err.message);
     }
   }
 
-  const snapshot = await ensureFreshMovieSnapshot();
-  return buildMovieCatalog(snapshot.movies, snapshot);
+  if (catalogCache) return catalogCache;
+  return buildMovieCatalog([], { source: 'empty', generatedAt: new Date().toISOString() });
 }
 
 export async function getMovieCatalog() {

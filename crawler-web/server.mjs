@@ -26,10 +26,7 @@ const {
   loadChannelSuggestions,
   deletePersistedMovies,
 } = await import('../src/lib/movieStore.server.js');
-const {
-  readMovieSnapshot,
-  writeMovieSnapshot,
-} = await import('../src/lib/movieSnapshot.server.js');
+// Đã loại bỏ snapshot tệp movies.json
 
 const PORT = Number(process.env.CRAWLER_PORT) || 4000;
 const logEmitter = new EventEmitter();
@@ -161,9 +158,9 @@ async function flushDeletionQueue() {
   saveDeletionQueueToDisk();
 
   try {
-    pushLog('info', `[Bộ đệm xoá 1 phút] Bắt đầu đồng bộ ${batchIds.length} phim rác lên PostgreSQL & Snapshot...`);
+    pushLog('info', `[Bộ đệm xoá 1 phút] Bắt đầu đồng bộ ${batchIds.length} phim rác lên PostgreSQL...`);
     const result = await deletePersistedMovies(batchIds);
-    pushLog('info', `[Bộ đệm xoá 1 phút] Đã xoá sạch ${result.count} phim rác khỏi PostgreSQL và movies.json!`);
+    pushLog('info', `[Bộ đệm xoá 1 phút] Đã xoá sạch ${result.count} phim rác khỏi PostgreSQL!`);
   } catch (err) {
     // Nếu có lỗi, đưa lại vào queue để thử lại ở chu kỳ 1 phút tiếp theo
     batchIds.forEach(id => deletionQueue.add(id));
@@ -191,21 +188,7 @@ async function getSystemStatus() {
     }
   }
 
-  let snapshotMeta = null;
-  let snapshotCount = cachedMovies ? cachedMovies.length : 0;
-  try {
-    const snapshot = await readMovieSnapshot();
-    snapshotCount = snapshot.movies.length;
-    snapshotMeta = {
-      generatedAt: snapshot.generatedAt,
-      source: snapshot.source,
-      stale: snapshot.stale,
-    };
-  } catch (err) {
-    snapshotMeta = { error: err.message };
-  }
-
-  const channels = await getCachedChannels();
+  const channels = await getCachedChannels().catch(() => []);
   const channelsCount = channels ? channels.length : 0;
 
   return {
@@ -213,10 +196,8 @@ async function getSystemStatus() {
     lastCrawlResult,
     hasDatabase: hasDatabaseConfig(),
     dbTarget,
-    dbMoviesCount: dbMoviesCount ?? snapshotCount,
+    dbMoviesCount: dbMoviesCount ?? 0,
     dbError,
-    snapshotCount,
-    snapshotMeta,
     channelsCount,
     deletionQueueCount: deletionQueue.size,
   };
@@ -335,7 +316,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   // REST API: Đẩy phim vào hàng đợi xoá (Phản hồi < 1ms, không nghẽn màn hình)
-  if (pathname === '/api/movies/queue-delete' && req.method === 'POST') {
+  if ((pathname === '/api/movies/queue-delete' || pathname === '/api/movies/delete') && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => { body += chunk; });
     req.on('end', () => {
@@ -531,23 +512,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // REST API: Đồng bộ Snapshot thủ công
-  if (pathname === '/api/snapshot/sync' && req.method === 'POST') {
-    try {
-      pushLog('info', '[Snapshot] Bắt đầu đồng bộ tệp snapshot movies.json từ Postgres...');
-      const movies = await loadPersistedMovies({ allowJsonFallback: false });
-      const result = await writeMovieSnapshot(movies, { source: 'db-manual-sync' });
-      cachedMovies = movies;
-      pushLog('info', `[Snapshot] Đồng bộ thành công ${movies.length} phim vào tệp movies.json!`);
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ ok: true, total: movies.length, result }));
-    } catch (error) {
-      pushLog('error', `[Snapshot] Lỗi đồng bộ: ${error.message}`);
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: error.message }));
-    }
-    return;
-  }
+
 
   // Phục vụ tệp tĩnh
   const publicDir = path.resolve(process.cwd(), 'crawler-web/public');

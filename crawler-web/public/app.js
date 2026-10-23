@@ -93,23 +93,17 @@ async function loadStatus() {
       dbStatus.style.color = 'var(--accent-green)';
       dbHost.textContent = data.dbTarget?.host || 'Supabase Direct';
     } else {
-      dbStatus.textContent = 'Chế độ Snapshot';
+      dbStatus.textContent = 'Mất kết nối DB';
       dbStatus.style.color = 'var(--accent-red)';
-      dbHost.textContent = data.dbError || 'Tệp tĩnh JSON';
+      dbHost.textContent = data.dbError || 'Chưa kết nối PostgreSQL';
     }
 
-    const localCount = bufferMovies.length > 0 ? bufferMovies.length : (data.dbMoviesCount || data.snapshotCount);
+    const localCount = bufferMovies.length > 0 ? bufferMovies.length : (data.dbMoviesCount || 0);
     document.getElementById('statDbMovies').textContent = (data.dbMoviesCount != null ? data.dbMoviesCount : 0).toLocaleString('vi-VN');
-    document.getElementById('statSnapshotMovies').textContent = (data.snapshotCount || 0).toLocaleString('vi-VN');
     document.getElementById('statChannels').textContent = data.channelsCount || 0;
     document.getElementById('tabMovieCount').textContent = localCount.toLocaleString('vi-VN');
     document.getElementById('tabChannelCount').textContent = data.channelsCount || 0;
     if (typeof data.deletionQueueCount === 'number') updateQueueBadge(data.deletionQueueCount);
-
-    if (data.snapshotMeta?.generatedAt) {
-      const dt = new Date(data.snapshotMeta.generatedAt);
-      document.getElementById('statSnapshotTime').textContent = 'Lần sinh: ' + dt.toLocaleTimeString('vi-VN') + ' ' + dt.toLocaleDateString('vi-VN');
-    }
   } catch (err) {
     console.error('Lỗi loadStatus:', err);
   }
@@ -363,6 +357,17 @@ function removeMoviesBuffer(ids) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ ids }),
   })
+    .then(res => {
+      if (!res.ok) {
+        // Fallback to legacy delete endpoint if needed
+        return fetch("/api/movies/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids }),
+        });
+      }
+      return res;
+    })
     .then(res => res.json())
     .then(data => {
       if (data && typeof data.totalInQueue === "number") {
@@ -537,14 +542,13 @@ async function toggleChannel(slug, enable) {
 
 async function startCrawl() {
   const dryRun = document.getElementById('chkDryRun').checked;
-  const syncSnapshot = document.getElementById('chkSyncSnapshot').checked;
   const strictMode = document.getElementById('chkStrictMode').checked;
 
   try {
     const res = await fetch('/api/crawl/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dryRun, syncSnapshot, strictMode })
+      body: JSON.stringify({ dryRun, strictMode })
     });
     const data = await res.json();
     if (!res.ok) {
@@ -554,23 +558,6 @@ async function startCrawl() {
     }
   } catch (err) {
     alert('Lỗi gửi lệnh crawl: ' + err.message);
-  }
-}
-
-async function syncSnapshot() {
-  if (!confirm('Bạn có muốn đồng bộ lại tệp snapshot movies.json từ dữ liệu mới nhất trong Postgres không?')) return;
-  try {
-    const res = await fetch('/api/snapshot/sync', { method: 'POST' });
-    const data = await res.json();
-    if (res.ok) {
-      alert('Đồng bộ thành công! Đã ghi ' + data.total + ' phim vào movies.json.');
-      loadStatus();
-      if (currentTab === 'movies') initMovies(true);
-    } else {
-      alert('Đồng bộ thất bại: ' + (data.error || 'Lỗi không xác định'));
-    }
-  } catch (err) {
-    alert('Lỗi đồng bộ snapshot: ' + err.message);
   }
 }
 

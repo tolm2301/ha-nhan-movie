@@ -1,7 +1,7 @@
 import { load as loadCheerio } from 'cheerio';
 import { buildChannelQualityUpdate, loadChannelRegistry, loadPersistedMovies, recordChannelSuggestion, replacePersistedMovies, updateChannelRegistryEntry } from './movieStore.server.js';
 import { CATEGORY_TAXONOMY, getCategoryDefinitionBySlug, normalizeMovieCategory, normalizeText, resolveMovieCategory } from './movieCategories.js';
-import { cleanSnapshotMovies } from './movieSnapshot.server.js';
+// Đã loại bỏ snapshot
 import { hasRenderableThumbnail } from './thumbnailFilters.js';
 import { explainWatchPageAvailability, extractWatchPagePlayerResponse } from './watchPageAvailability.server.js';
 
@@ -522,6 +522,18 @@ async function resolveChannelIdentity(channel) {
   return resolved;
 }
 
+function buildChannelVideosScrapeUrl(channelUrl = "") {
+  let url = String(channelUrl || "").trim().replace(/\/+$/, "");
+  if (!url) return "";
+  try {
+    url = decodeURI(url);
+  } catch {}
+  if (!url.endsWith("/videos")) {
+    url += "/videos";
+  }
+  return encodeURI(url);
+}
+
 function parseYoutubeDurationToSeconds(text) {
   if (!text) return null;
   const parts = String(text).trim().split(':').map(Number);
@@ -652,9 +664,9 @@ function extractYoutubeVideosFromChannelHtml(html, channel) {
 async function fetchChannelCandidates(channel, context = {}) {
   // Ưu tiên 1: Cào trực tiếp từ HTML tab videos của kênh (1 request duy nhất, lấy trọn 30 video có sẵn duration & views)
   if (channel.channelUrl) {
-    const videosUrl = `${channel.channelUrl.replace(/\/+$/, '')}/videos`;
+    const videosUrl = buildChannelVideosScrapeUrl(channel.channelUrl);
     try {
-      const htmlResult = await fetchTextWithRetry(encodeURI(videosUrl), {
+      const htmlResult = await fetchTextWithRetry(videosUrl, {
         ...context,
         phase: 'channel-html-scrape',
         videosUrl,
@@ -1715,7 +1727,7 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true, strictMode
     .slice(0, MAX_STORED_VIDEOS)
     .map(video => normalizeMovieCategory(video));
 
-  const cleanedFinalData = await cleanSnapshotMovies(finalData);
+  const cleanedFinalData = finalData;
   const snapshotCleanupRemoved = finalData.length - cleanedFinalData.length;
 
   const runSummary = {

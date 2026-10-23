@@ -1297,20 +1297,7 @@ export async function deletePersistedMovies(movieIds = []) {
     });
   }
 
-  try {
-    const snapshot = await readMovieSnapshot();
-    const idSet = new Set(ids);
-    const filteredMovies = snapshot.movies.filter(m => !idSet.has(m.id));
-    if (filteredMovies.length !== snapshot.movies.length) {
-      await writeMovieSnapshot(filteredMovies, {
-        source: hasDatabaseConfig() ? 'db' : 'json',
-        generatedAt: new Date().toISOString(),
-        forceRewrite: true,
-      });
-    }
-  } catch (err) {
-    console.warn('[deletePersistedMovies] Lỗi cập nhật tệp snapshot:', err.message);
-  }
+
 
   return {
     success: true,
