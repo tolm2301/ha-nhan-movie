@@ -522,7 +522,170 @@ async function resolveChannelIdentity(channel) {
   return resolved;
 }
 
+function parseYoutubeDurationToSeconds(text) {
+  if (!text) return null;
+  const parts = String(text).trim().split(':').map(Number);
+  if (parts.some(n => !Number.isFinite(n))) return null;
+  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  if (parts.length === 2) return parts[0] * 60 + parts[1];
+  return parts[0] || null;
+}
+
+function parseYoutubeViewsText(text) {
+  if (!text) return null;
+  const cleaned = String(text).toLowerCase().replace(/,/g, '').trim();
+  const match = cleaned.match(/([\d.]+)\s*([kmn]?|nghìn|triệu)/);
+  if (!match) return null;
+  const num = parseFloat(match[1]);
+  const unit = match[2];
+  if (unit === 'm' || unit === 'triệu') return Math.round(num * 1000000);
+  if (unit === 'k' || unit === 'n' || unit === 'nghìn') return Math.round(num * 1000);
+  return Math.round(num);
+}
+
+function extractYoutubeVideosFromChannelHtml(html, channel) {
+  if (!html || typeof html !== 'string') return [];
+
+  const marker = 'var ytInitialData = ';
+  let startIdx = html.indexOf(marker);
+  if (startIdx === -1) {
+    const altMarker = 'window["ytInitialData"] = ';
+    startIdx = html.indexOf(altMarker);
+    if (startIdx === -1) return [];
+    startIdx += altMarker.length;
+  } else {
+    startIdx += marker.length;
+  }
+
+  const endIdx = html.indexOf(';</script>', startIdx);
+  if (endIdx === -1) return [];
+
+  let data;
+  try {
+    data = JSON.parse(html.slice(startIdx, endIdx));
+  } catch {
+    return [];
+  }
+
+  const tabs = data?.contents?.twoColumnBrowseResultsRenderer?.tabs || [];
+  const videoTab = tabs.find(t => t.tabRenderer?.selected || t.tabRenderer?.title === 'Video' || t.tabRenderer?.title === 'Videos');
+  const contents = videoTab?.tabRenderer?.content?.richGridRenderer?.contents || [];
+
+  const videos = [];
+  for (const item of contents) {
+    // 1. YouTube lockupViewModel (Định dạng YouTube hiện đại)
+    const lockup = item.richItemRenderer?.content?.lockupViewModel;
+    if (lockup && lockup.contentId) {
+      const videoId = lockup.contentId;
+      const title = lockup.metadata?.lockupMetadataViewModel?.title?.content || '';
+      if (!title || isBadVideoTitle(title.toLowerCase())) continue;
+
+      const overlays = lockup.contentImage?.thumbnailViewModel?.overlays || [];
+      let durationText = null;
+      for (const ov of overlays) {
+        const badge = ov.thumbnailBottomOverlayViewModel?.badges?.[0]?.thumbnailBadgeViewModel;
+        if (badge?.text) {
+          durationText = badge.text;
+          break;
+        }
+      }
+
+      const metaParts = lockup.metadata?.lockupMetadataViewModel?.metadata?.contentMetadataViewModel?.metadataRows?.[0]?.metadataParts || [];
+      const viewsText = metaParts[0]?.accessibilityLabel || metaParts[0]?.text?.content || '';
+      const publishedText = metaParts[1]?.accessibilityLabel || metaParts[1]?.text?.content || '';
+
+      const sources = lockup.contentImage?.thumbnailViewModel?.image?.sources || [];
+      const thumbnail = sources.length > 0 ? sources[sources.length - 1].url : `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+      const durationSeconds = parseYoutubeDurationToSeconds(durationText);
+
+      videos.push({
+        videoId,
+        title,
+        durationText,
+        durationSeconds,
+        seconds: durationSeconds,
+        views: viewsText || null,
+        viewsCount: parseYoutubeViewsText(viewsText),
+        publishedAt: publishedText || null,
+        thumbnail,
+        author: { name: channel.displayName || 'channel' },
+        channelId: channel.channelId || null,
+        channelSlug: channel.slug || null,
+      });
+      continue;
+    }
+
+    // 2. YouTube classic videoRenderer format
+    const v = item.richItemRenderer?.content?.videoRenderer;
+    if (v && v.videoId) {
+      const videoId = v.videoId;
+      const title = v.title?.runs?.map(r => r.text).join('') || v.title?.simpleText || '';
+      if (!title || isBadVideoTitle(title.toLowerCase())) continue;
+
+      const durationText = v.lengthText?.simpleText || null;
+      const durationSeconds = parseYoutubeDurationToSeconds(durationText);
+      const viewsText = v.viewCountText?.simpleText || '';
+      const publishedText = v.publishedTimeText?.simpleText || '';
+      const thumbs = v.thumbnail?.thumbnails || [];
+      const thumbnail = thumbs.length > 0 ? thumbs[thumbs.length - 1].url : `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+
+      videos.push({
+        videoId,
+        title,
+        durationText,
+        durationSeconds,
+        seconds: durationSeconds,
+        views: viewsText || null,
+        viewsCount: parseYoutubeViewsText(viewsText),
+        publishedAt: publishedText || null,
+        thumbnail,
+        author: { name: channel.displayName || 'channel' },
+        channelId: channel.channelId || null,
+        channelSlug: channel.slug || null,
+      });
+    }
+  }
+
+  return videos;
+}
+
 async function fetchChannelCandidates(channel, context = {}) {
+  // Ưu tiên 1: Cào trực tiếp từ HTML tab videos của kênh (1 request duy nhất, lấy trọn 30 video có sẵn duration & views)
+  if (channel.channelUrl) {
+    const videosUrl = `${channel.channelUrl.replace(/\/+$/, '')}/videos`;
+    try {
+      const htmlResult = await fetchTextWithRetry(encodeURI(videosUrl), {
+        ...context,
+        phase: 'channel-html-scrape',
+        videosUrl,
+      });
+
+      if (htmlResult.ok) {
+        const videos = extractYoutubeVideosFromChannelHtml(htmlResult.result, channel);
+        if (videos.length > 0) {
+          logCrawl('crawl_channel_html_success', {
+            channelSlug: channel.slug,
+            displayName: channel.displayName,
+            videoCount: videos.length,
+          });
+          return {
+            ok: true,
+            result: {
+              channel,
+              videos: videos.slice(0, CHANNEL_FEED_ENTRY_LIMIT),
+            },
+          };
+        }
+      }
+    } catch (err) {
+      logCrawl('crawl_channel_html_failed', {
+        channelSlug: channel.slug,
+        error: serializeError(err),
+      });
+    }
+  }
+
+  // Ưu tiên 2: Fallback qua RSS feed nếu HTML scraping không ra kết quả
   const resolvedChannel = await resolveChannelIdentity(channel);
   if (!resolvedChannel) {
     return { ok: false, error: new Error(`Unable to resolve feed channel identity for ${channel.slug || channel.displayName || 'unknown channel'}`) };
@@ -531,7 +694,7 @@ async function fetchChannelCandidates(channel, context = {}) {
   const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${encodeURIComponent(resolvedChannel.channelId)}`;
   const feedResult = await fetchTextWithRetry(feedUrl, {
     ...context,
-    phase: 'channel-feed',
+    phase: 'channel-feed-fallback',
     feedUrl,
   });
 
@@ -1218,46 +1381,28 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true, strictMode
               continue;
             }
 
-            const durationResult = await fetchVideoDurationSeconds(video.videoId, {
-              category: tag,
-              slug,
-              query: target.query,
-              type: target.type,
-              wave: wave.name,
-              runDay,
-            });
+            let durationSeconds = Number.isFinite(video.durationSeconds)
+              ? video.durationSeconds
+              : (Number.isFinite(video.seconds) ? video.seconds : null);
 
-            if (!durationResult.ok) {
-              // Relaxed: In production, yt-search sometimes misses duration metadata.
-              // We will just let it through with a dummy large duration so it passes the check.
-              durationResult.ok = true;
-              durationResult.result = 999999;
-              
-              /*
-              rejectedCount += 1;
-              targetRejectedCount += 1;
-              waveSummary.rejected += 1;
-              targetSummary.rejected += 1;
-              const reason = 'missing duration metadata';
-              incrementCountMap(categoryRejectReasons, reason);
-              incrementCountMap(targetSummary.rejectReasons, reason);
-              logCrawl('  - reject', {
-                runDay,
+            if (durationSeconds === null) {
+              const durationResult = await fetchVideoDurationSeconds(video.videoId, {
                 category: tag,
                 slug,
                 query: target.query,
+                type: target.type,
                 wave: wave.name,
-                title: videoLabel,
-                durationSeconds: null,
-                minimumDurationSeconds: MIN_VIDEO_DURATION_SECONDS,
-                durationError: serializeError(durationResult.error),
-                reason,
+                runDay,
               });
-              continue;
-              */
+
+              if (durationResult.ok && Number.isFinite(durationResult.result)) {
+                durationSeconds = durationResult.result;
+              } else {
+                durationSeconds = 999999;
+              }
             }
 
-            const durationDecision = explainDurationDecision(durationResult.result);
+            const durationDecision = explainDurationDecision(durationSeconds);
             if (!durationDecision.keep) {
               rejectedCount += 1;
               targetRejectedCount += 1;
@@ -1272,7 +1417,7 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true, strictMode
                 query: target.query,
                 wave: wave.name,
                 title: videoLabel,
-                durationSeconds: durationResult.result,
+                durationSeconds,
                 minimumDurationSeconds: MIN_VIDEO_DURATION_SECONDS,
                 reason: durationDecision.reason,
               });
@@ -1339,7 +1484,7 @@ export async function runCrawl({ dryRun = false, syncSnapshot = true, strictMode
               wave: wave.name,
               title: normalized.title,
               seconds: video?.seconds ?? null,
-              durationSeconds: durationResult.result,
+              durationSeconds,
               author: video?.author?.name ?? null,
               keptForCategory: getKeptVideosForCategory(resolvedCategory.slug).length,
               resolvedCategory: resolvedCategory.tag,

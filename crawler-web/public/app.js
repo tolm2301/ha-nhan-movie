@@ -8,26 +8,11 @@ const selectedMovieIds = new Set();
 // BỘ ĐỆM LOCALSTORAGE CHO PHIM (BUFFER ZONE)
 // ==========================================
 const KEY_BUFFER_MOVIES = 'hanhan_buffer_movies';
-const KEY_PENDING_DELETES = 'hanhan_pending_deletes';
 const KEY_SYNCED_AT = 'hanhan_movies_synced_at';
 
 let bufferMovies = [];
-let pendingDeleteIds = new Set();
-let countdownSec = 10;
-let countdownInterval = null;
 
-// Khởi tạo hàng đợi xoá từ LocalStorage nếu có phiên trước dở dang
-try {
-  const savedPending = localStorage.getItem(KEY_PENDING_DELETES);
-  if (savedPending) {
-    const parsed = JSON.parse(savedPending);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      pendingDeleteIds = new Set(parsed);
-    }
-  }
-} catch {
-  pendingDeleteIds = new Set();
-}
+
 
 function switchTab(tabName) {
   currentTab = tabName;
@@ -119,6 +104,7 @@ async function loadStatus() {
     document.getElementById('statChannels').textContent = data.channelsCount || 0;
     document.getElementById('tabMovieCount').textContent = localCount.toLocaleString('vi-VN');
     document.getElementById('tabChannelCount').textContent = data.channelsCount || 0;
+    if (typeof data.deletionQueueCount === 'number') updateQueueBadge(data.deletionQueueCount);
 
     if (data.snapshotMeta?.generatedAt) {
       const dt = new Date(data.snapshotMeta.generatedAt);
@@ -130,47 +116,81 @@ async function loadStatus() {
 }
 
 // ==========================================
-// QUẢN LÝ PHIM VỚI LOCALSTORAGE (0MS DELAY)
+// QUẢN LÝ PHIM VỚI LOCALSTORAGE & HÀNG ĐỢI XOÁ 1 PHÚT
+// Màn hình phản hồi tức thì 0ms, Server tự gom mẻ 1 phút xoá DB
 // ==========================================
-async function initMovies(forceFetch = false) {
-  const grid = document.getElementById('movieGrid');
+let serverQueueCount = 0;
 
-  // 1. Kiểm tra bộ đệm LocalStorage
+function updateQueueBadge(count) {
+  serverQueueCount = count;
+  const pill = document.getElementById("queueStatusPill");
+  const badge = document.getElementById("queueCountBadge");
+  if (pill && badge) {
+    if (count > 0) {
+      badge.textContent = count;
+      pill.style.display = "flex";
+    } else {
+      pill.style.display = "none";
+    }
+  }
+}
+
+async function flushQueueNow() {
+  const btn = document.getElementById("btnFlushQueueNow");
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Đang đồng bộ...";
+  }
+  try {
+    const res = await fetch("/api/movies/flush-queue", { method: "POST" });
+    const data = await res.json();
+    if (res.ok) {
+      updateQueueBadge(data.remaining || 0);
+      loadStatus();
+    }
+  } catch (err) {
+    console.warn("Lỗi flush queue:", err);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "Đồng bộ DB ngay";
+    }
+  }
+}
+
+async function initMovies(forceFetch = false) {
+  const grid = document.getElementById("movieGrid");
+
+  // 1. Kiểm tra bộ đệm LocalStorage (0ms)
   if (!forceFetch) {
     try {
       const cached = localStorage.getItem(KEY_BUFFER_MOVIES);
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          bufferMovies = parsed.filter(m => !pendingDeleteIds.has(m.id));
+          bufferMovies = parsed;
           renderMoviesFromBuffer();
-          if (pendingDeleteIds.size > 0) {
-            scheduleSync();
-          }
           return;
         }
       }
     } catch {
-      // LocalStorage hỏng hoặc rỗng -> tải mới
+      // LocalStorage rỗng hoặc lỗi -> nạp mới
     }
   }
 
   // 2. Tải toàn bộ phim từ Server về LocalStorage
-  grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--accent-yellow); font-size:1.1rem;">⚡ Đang nạp toàn bộ danh sách phim từ Database vào bộ đệm LocalStorage...</div>';
+  grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--accent-yellow); font-size:1.1rem;">⚡ Đang nạp danh sách phim vào bộ đệm LocalStorage...</div>';
 
   try {
-    const res = await fetch('/api/movies/all' + (forceFetch ? '?refresh=1' : ''));
+    const res = await fetch("/api/movies/all" + (forceFetch ? "?refresh=1" : ""));
     const data = await res.json();
     const rawMovies = data.movies || [];
 
-    bufferMovies = rawMovies.filter(m => !pendingDeleteIds.has(m.id));
+    bufferMovies = rawMovies;
     localStorage.setItem(KEY_BUFFER_MOVIES, JSON.stringify(bufferMovies));
     localStorage.setItem(KEY_SYNCED_AT, new Date().toISOString());
 
     renderMoviesFromBuffer();
-    if (pendingDeleteIds.size > 0) {
-      scheduleSync();
-    }
   } catch (err) {
     grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--accent-red);">Lỗi kết nối tải phim: ' + err.message + '</div>';
   }
@@ -181,22 +201,22 @@ function loadMovies(force = false) {
 }
 
 function renderMoviesFromBuffer() {
-  const grid = document.getElementById('movieGrid');
-  const search = document.getElementById('movieSearchInput').value.trim().toLowerCase();
-  const category = document.getElementById('movieCategorySelect').value.toLowerCase();
+  const grid = document.getElementById("movieGrid");
+  const search = document.getElementById("movieSearchInput").value.trim().toLowerCase();
+  const category = document.getElementById("movieCategorySelect").value.toLowerCase();
 
   // Lọc tức thì trong RAM (0ms)
   let filtered = bufferMovies;
-  if (category && category !== 'all') {
+  if (category && category !== "all") {
     filtered = filtered.filter(m => {
-      const mCat = String(m.categorySlug || m.tags || '').toLowerCase();
+      const mCat = String(m.categorySlug || m.tags || "").toLowerCase();
       return mCat.includes(category);
     });
   }
 
   if (search) {
     filtered = filtered.filter(m => {
-      const text = `${m.title || ''} ${m.displayTitle || ''} ${m.id || ''} ${m.tags || ''}`.toLowerCase();
+      const text = `${m.title || ""} ${m.displayTitle || ""} ${m.id || ""} ${m.tags || ""}`.toLowerCase();
       return text.includes(search);
     });
   }
@@ -209,11 +229,29 @@ function renderMoviesFromBuffer() {
   const startIndex = (currentMoviePage - 1) * moviePageLimit;
   const pageMovies = filtered.slice(startIndex, startIndex + moviePageLimit);
 
-  document.getElementById('tabMovieCount').textContent = bufferMovies.length.toLocaleString('vi-VN');
-  document.getElementById('pageInfoText').textContent = 'Trang ' + currentMoviePage + ' / ' + totalPages + ' (' + total.toLocaleString('vi-VN') + ' phim)';
+  const pageText = "Trang " + currentMoviePage + " / " + totalPages + " (" + total.toLocaleString("vi-VN") + " phim)";
 
-  document.getElementById('btnPrevPage').disabled = currentMoviePage <= 1;
-  document.getElementById('btnNextPage').disabled = currentMoviePage >= totalPages;
+  const tabCount = document.getElementById("tabMovieCount");
+  if (tabCount) tabCount.textContent = bufferMovies.length.toLocaleString("vi-VN");
+
+  const pageInfoBottom = document.getElementById("pageInfoText");
+  if (pageInfoBottom) pageInfoBottom.textContent = pageText;
+
+  const pageInfoTop = document.getElementById("pageInfoTextTop");
+  if (pageInfoTop) pageInfoTop.textContent = pageText;
+
+  const prevDisabled = currentMoviePage <= 1;
+  const nextDisabled = currentMoviePage >= totalPages;
+
+  const btnPrev = document.getElementById("btnPrevPage");
+  if (btnPrev) btnPrev.disabled = prevDisabled;
+  const btnPrevTop = document.getElementById("btnPrevPageTop");
+  if (btnPrevTop) btnPrevTop.disabled = prevDisabled;
+
+  const btnNext = document.getElementById("btnNextPage");
+  if (btnNext) btnNext.disabled = nextDisabled;
+  const btnNextTop = document.getElementById("btnNextPageTop");
+  if (btnNextTop) btnNextTop.disabled = nextDisabled;
 
   selectedMovieIds.clear();
   updateSelectedUI();
@@ -225,29 +263,29 @@ function renderMoviesFromBuffer() {
 
   grid.innerHTML = pageMovies.map(movie => {
     const isChecked = selectedMovieIds.has(movie.id);
-    const thumb = movie.thumbnail || ('/api/movie-thumbnail?title=' + encodeURIComponent(movie.title || '') + '&tag=' + encodeURIComponent(movie.tags || 'Phim'));
+    const thumb = movie.thumbnail || ("/api/movie-thumbnail?title=" + encodeURIComponent(movie.title || "") + "&tag=" + encodeURIComponent(movie.tags || "Phim"));
 
     return '<div class="movie-card" id="card-' + movie.id + '">' +
       '<div class="movie-thumb-wrap">' +
-        '<input type="checkbox" class="movie-select-chk" value="' + movie.id + '" ' + (isChecked ? 'checked' : '') + ' onchange="toggleSelectMovie(\'' + movie.id + '\', this.checked)">' +
+        '<input type="checkbox" class="movie-select-chk" value="' + movie.id + '" ' + (isChecked ? "checked" : "") + ' onchange="toggleSelectMovie(\'' + movie.id + '\', this.checked)">' +
         '<img src="' + escapeHtml(thumb) + '" alt="' + escapeHtml(movie.title) + '" class="movie-thumb" loading="lazy" onerror="this.src=\'/api/movie-thumbnail?title=Video&tag=Phim\'">' +
-        '<span class="movie-ep-tag">' + escapeHtml(movie.episodes || 'Full') + '</span>' +
+        '<span class="movie-ep-tag">' + escapeHtml(movie.episodes || "Full") + '</span>' +
       '</div>' +
       '<div class="movie-body">' +
         '<div>' +
           '<h4 class="movie-title" title="' + escapeHtml(movie.title) + '">' + escapeHtml(movie.displayTitle || movie.title) + '</h4>' +
           '<div class="movie-meta-row">' +
-            '<span class="movie-category-tag">' + escapeHtml(movie.tags || 'Khác') + '</span>' +
-            '<span>👁 ' + escapeHtml(movie.views || '0') + '</span>' +
+            '<span class="movie-category-tag">' + escapeHtml(movie.tags || "Khác") + '</span>' +
+            '<span>👁 ' + escapeHtml(movie.views || "0") + '</span>' +
           '</div>' +
         '</div>' +
         '<div class="movie-actions">' +
           '<a href="https://www.youtube.com/watch?v=' + movie.id + '" target="_blank" rel="noreferrer" class="btn-action btn-preview" title="Xem trên YouTube">▶ Xem Thử</a>' +
-          '<button class="btn-action btn-delete" onclick="deleteSingleMovie(\'' + movie.id + '\', \'' + escapeHtml(movie.title).replace(/'/g, "\\'") + '\')" title="Xoá phim này vào bộ đệm">🗑️ Xoá</button>' +
+          '<button class="btn-action btn-delete" onclick="deleteSingleMovie(\'" + movie.id + "\')" title="Xoá phim này ngay (0ms)">🗑️ Xoá</button>' +
         '</div>' +
       '</div>' +
     '</div>';
-  }).join('');
+  }).join("");
 }
 
 function searchMovies() {
@@ -256,8 +294,8 @@ function searchMovies() {
 }
 
 function resetMovieFilter() {
-  document.getElementById('movieSearchInput').value = '';
-  document.getElementById('movieCategorySelect').value = 'all';
+  document.getElementById("movieSearchInput").value = "";
+  document.getElementById("movieCategorySelect").value = "all";
   currentMoviePage = 1;
   renderMoviesFromBuffer();
 }
@@ -265,6 +303,10 @@ function resetMovieFilter() {
 function changeMoviePage(delta) {
   currentMoviePage += delta;
   renderMoviesFromBuffer();
+  const el = document.getElementById("movieGrid");
+  if (el) {
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 }
 
 function toggleSelectMovie(id, checked) {
@@ -277,7 +319,7 @@ function toggleSelectMovie(id, checked) {
 }
 
 function toggleSelectAllMovies(checked) {
-  const chks = document.querySelectorAll('.movie-select-chk');
+  const chks = document.querySelectorAll(".movie-select-chk");
   chks.forEach(chk => {
     chk.checked = checked;
     if (checked) {
@@ -291,174 +333,63 @@ function toggleSelectAllMovies(checked) {
 
 function updateSelectedUI() {
   const count = selectedMovieIds.size;
-  const btn = document.getElementById('btnDeleteSelected');
-  const countSpan = document.getElementById('selectedMoviesCount');
+  const btn = document.getElementById("btnDeleteSelected");
+  const countSpan = document.getElementById("selectedMoviesCount");
   if (count > 0) {
-    btn.style.display = 'inline-flex';
+    btn.style.display = "inline-flex";
     countSpan.textContent = count;
   } else {
-    btn.style.display = 'none';
-    const allChk = document.getElementById('chkSelectAllMovies');
+    btn.style.display = "none";
+    const allChk = document.getElementById("chkSelectAllMovies");
     if (allChk) allChk.checked = false;
   }
 }
 
-// Xoá 1 phim (Cập nhật LocalStorage ngay 0ms + Bắt đầu đếm 10 giây đồng bộ)
-function deleteSingleMovie(id, title) {
-  if (!confirm('Bạn có chắc chắn muốn xoá phim rác này không?\n\n"' + title + '" (ID: ' + id + ')')) {
-    return;
-  }
+// Xoá độc lập trên màn hình (0ms delay), server tự động gom mẻ 1 phút xoá DB
+function removeMoviesBuffer(ids) {
+  if (!ids || !ids.length) return;
+  const deleteSet = new Set(ids);
+
+  // 1. Xoá khỏi RAM buffer và LocalStorage ngay lập tức (0ms)
+  bufferMovies = bufferMovies.filter(m => !deleteSet.has(m.id));
+  localStorage.setItem(KEY_BUFFER_MOVIES, JSON.stringify(bufferMovies));
+
+  // 2. Render lại giao diện ngay tức thì: phim tiếp theo tự động đẩy lên lấp đầy trang
+  renderMoviesFromBuffer();
+
+  // 3. Đẩy ngầm vào hàng đợi xoá server (fire-and-forget, không chặn màn hình)
+  fetch("/api/movies/queue-delete", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids }),
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data && typeof data.totalInQueue === "number") {
+        updateQueueBadge(data.totalInQueue);
+      }
+    })
+    .catch(err => {
+      console.warn("Lỗi gửi hàng đợi xoá:", err);
+    });
+}
+
+function deleteSingleMovie(id) {
   removeMoviesBuffer([id]);
 }
 
-// Xoá hàng loạt phim đã chọn
 function deleteSelectedMovies() {
   const ids = Array.from(selectedMovieIds);
   if (!ids.length) return;
-
-  if (!confirm('Xoá ' + ids.length + ' bộ phim rác đã chọn vào bộ đệm LocalStorage? (Sẽ đồng bộ lên Database sau 10s)')) {
-    return;
-  }
-
   removeMoviesBuffer(ids);
   selectedMovieIds.clear();
   updateSelectedUI();
 }
 
-// Hàm cốt lõi gỡ phim khỏi LocalStorage và hiển thị banner đếm ngược 10s
-function removeMoviesBuffer(ids) {
-  // 1. Biến mất khỏi DOM ngay tức thì (0ms)
-  ids.forEach(id => {
-    const card = document.getElementById('card-' + id);
-    if (card) {
-      card.style.transition = 'all 0.2s';
-      card.style.transform = 'scale(0.8)';
-      card.style.opacity = '0';
-      setTimeout(() => card.remove(), 200);
-    }
-    pendingDeleteIds.add(id);
-  });
-
-  // 2. Lưu vào LocalStorage
-  const deleteSet = new Set(ids);
-  bufferMovies = bufferMovies.filter(m => !deleteSet.has(m.id));
-  localStorage.setItem(KEY_BUFFER_MOVIES, JSON.stringify(bufferMovies));
-  localStorage.setItem(KEY_PENDING_DELETES, JSON.stringify(Array.from(pendingDeleteIds)));
-
-  // 3. Cập nhật số lượng trên giao diện
-  document.getElementById('tabMovieCount').textContent = bufferMovies.length.toLocaleString('vi-VN');
-
-  // 4. Kích hoạt đếm ngược 10 giây để đồng bộ lên DB
-  scheduleSync();
-}
-
-// ==========================================
-// CƠ CHẾ ĐỒNG BỘ DEBOUNCE 10 GIÂY LÊN DATABASE
-// ==========================================
-function scheduleSync() {
-  if (countdownInterval) {
-    clearInterval(countdownInterval);
-  }
-
-  countdownSec = 10;
-  updateSyncBanner();
-
-  countdownInterval = setInterval(() => {
-    countdownSec--;
-    updateSyncBanner();
-
-    if (countdownSec <= 0) {
-      clearInterval(countdownInterval);
-      countdownInterval = null;
-      flushPendingDeletesNow();
-    }
-  }, 1000);
-}
-
-function updateSyncBanner() {
-  const banner = document.getElementById('syncBanner');
-  const icon = document.getElementById('syncBannerIcon');
-  const text = document.getElementById('syncBannerText');
-  const badge = document.getElementById('syncCountdownBadge');
-
-  if (pendingDeleteIds.size === 0) {
-    banner.classList.add('hidden');
-    return;
-  }
-
-  banner.className = 'sync-banner';
-  icon.textContent = '⏳';
-  text.textContent = 'Đã xoá ' + pendingDeleteIds.size + ' phim vào bộ đệm LocalStorage (Tự đồng bộ lên DB sau)';
-  badge.textContent = countdownSec + 's';
-  badge.style.display = 'inline-block';
-}
-
-async function flushPendingDeletesNow() {
-  if (countdownInterval) {
-    clearInterval(countdownInterval);
-    countdownInterval = null;
-  }
-
-  const ids = Array.from(pendingDeleteIds);
-  if (!ids.length) {
-    document.getElementById('syncBanner').classList.add('hidden');
-    return;
-  }
-
-  const banner = document.getElementById('syncBanner');
-  const icon = document.getElementById('syncBannerIcon');
-  const text = document.getElementById('syncBannerText');
-  const badge = document.getElementById('syncCountdownBadge');
-
-  banner.className = 'sync-banner syncing';
-  icon.textContent = '🔄';
-  text.textContent = 'Đang đồng bộ ' + ids.length + ' phim rác lên PostgreSQL & Snapshot...';
-  badge.textContent = 'Đang gửi...';
-
-  try {
-    const res = await fetch('/api/movies/delete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids })
-    });
-    const data = await res.json();
-
-    if (res.ok) {
-      pendingDeleteIds.clear();
-      localStorage.removeItem(KEY_PENDING_DELETES);
-
-      banner.className = 'sync-banner synced';
-      icon.textContent = '✓';
-      text.textContent = 'Đã đồng bộ sạch ' + data.count + ' phim rác lên Database thành công!';
-      badge.style.display = 'none';
-
-      loadStatus();
-      setTimeout(() => {
-        banner.classList.add('hidden');
-      }, 3000);
-    } else {
-      banner.className = 'sync-banner';
-      icon.textContent = '⚠️';
-      text.textContent = 'Lỗi đồng bộ DB: ' + (data.error || 'Thử lại');
-      badge.textContent = 'Lỗi';
-    }
-  } catch (err) {
-    banner.className = 'sync-banner';
-    icon.textContent = '⚠️';
-    text.textContent = 'Mất kết nối mạng khi đồng bộ: ' + err.message;
-    badge.textContent = 'Thử lại';
-  }
-}
-
-// Đảm bảo dữ liệu được gửi khi người dùng đóng trang
-window.addEventListener('beforeunload', () => {
-  if (pendingDeleteIds.size > 0) {
-    const payload = JSON.stringify({ ids: Array.from(pendingDeleteIds) });
-    if (navigator.sendBeacon) {
-      navigator.sendBeacon('/api/movies/delete', payload);
-    }
-  }
+window.addEventListener("beforeunload", () => {
+  // Trình duyệt đóng -> server đã giữ queue trên RAM và đĩa nên an toàn 100%
 });
+
 
 // ==========================================
 // QUẢN LÝ KÊNH ĐỐI TÁC (TAB 3)

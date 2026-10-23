@@ -1327,26 +1327,33 @@ export default function WatchClient({ movieId = '', initialMovies = [], popupMod
                     <div className={styles.leftControls}>
                       <button
                         type="button"
-                        className={`${styles.controlBtn} ${styles.skipBtn}`}
+                        className={`${styles.controlBtn} ${styles.seekStepBtn}`}
                         onClick={() => handleSeekByOffset(-SEEK_STEP_SECONDS)}
                         disabled={!isReady}
                         aria-label={`Lùi ${SEEK_STEP_SECONDS} giây`}
                         title={`Lùi ${SEEK_STEP_SECONDS} giây`}
                       >
-                        ⏪
+                        ↺ 10s
                       </button>
                       <button
                         type="button"
-                        className={`${styles.controlBtn} ${styles.skipBtn}`}
+                        className={`${styles.controlBtn} ${styles.seekStepBtn}`}
                         onClick={() => handleSeekByOffset(SEEK_STEP_SECONDS)}
                         disabled={!isReady}
                         aria-label={`Tiến ${SEEK_STEP_SECONDS} giây`}
                         title={`Tiến ${SEEK_STEP_SECONDS} giây`}
                       >
-                        ⏩
+                        ↻ 10s
                       </button>
-                      <button className={styles.controlBtn} onClick={handleTogglePlay} disabled={!isReady}>
-                        {isPlaying ? '⏸' : '▶'}
+                      <button
+                        type="button"
+                        className={`${styles.controlBtn} ${styles.playBtn}`}
+                        onClick={handleTogglePlay}
+                        disabled={!isReady}
+                        aria-label={isPlaying ? "Tạm dừng" : "Phát"}
+                        title={isPlaying ? "Tạm dừng (Phím Space)" : "Phát (Phím Space)"}
+                      >
+                        {isPlaying ? "⏸" : "▶"}
                       </button>
                       <button className={styles.controlBtn} onClick={handleToggleMute} disabled={!isReady}>
                         {isMuted || volume === 0 ? '🔇' : '🔊'}
@@ -1393,15 +1400,7 @@ export default function WatchClient({ movieId = '', initialMovies = [], popupMod
                           ))}
                         </select>
                       )}
-                      <button
-                        type="button"
-                        className={`${styles.controlBtn} ${styles.skipBtn}`}
-                        onClick={handleTogglePopup}
-                        aria-pressed={isPopupWindow || isDetachedPopupOpen}
-                        title={isPopupWindow || isDetachedPopupOpen ? 'Đóng cửa sổ tách rời' : 'Mở cửa sổ tách rời'}
-                      >
-                        {isPopupWindow || isDetachedPopupOpen ? 'Đóng cửa sổ' : 'Cửa sổ tách rời'}
-                      </button>
+                      
                       <button className={styles.controlBtn} onClick={handleFullscreen}>
                         {isFullscreen || isPseudoFullscreen ? '🡽' : '⛶'}
                       </button>

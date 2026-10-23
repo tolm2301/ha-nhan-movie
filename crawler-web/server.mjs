@@ -80,7 +80,7 @@ let isCrawlRunning = false;
 let lastCrawlResult = null;
 
 // ==========================================
-// BỘ NHỚ ĐỆM SERVER (SERVER-SIDE MEMORY CACHE)
+// BỘ NHỚ ĐỆM SERVER (SERVER RAM CACHE)
 // ==========================================
 let cachedMovies = null;
 let cachedMoviesTime = 0;
@@ -91,14 +91,15 @@ const CACHE_TTL_MS = 60000;
 async function getCachedMovies(force = false) {
   const now = Date.now();
   if (!force && cachedMovies && now - cachedMoviesTime < CACHE_TTL_MS) {
-    return cachedMovies;
+    return deletionQueue.size > 0 ? cachedMovies.filter(m => !deletionQueue.has(m.id)) : cachedMovies;
   }
   try {
-    cachedMovies = await loadPersistedMovies({ allowJsonFallback: true });
+    const loaded = await loadPersistedMovies({ allowJsonFallback: true });
+    cachedMovies = loaded;
     cachedMoviesTime = Date.now();
-    return cachedMovies;
+    return deletionQueue.size > 0 ? cachedMovies.filter(m => !deletionQueue.has(m.id)) : cachedMovies;
   } catch (err) {
-    if (cachedMovies) return cachedMovies;
+    if (cachedMovies) return deletionQueue.size > 0 ? cachedMovies.filter(m => !deletionQueue.has(m.id)) : cachedMovies;
     throw err;
   }
 }
@@ -117,6 +118,64 @@ async function getCachedChannels(force = false) {
     throw err;
   }
 }
+
+// ==========================================
+// HÀNG ĐỢI XOÁ PHIM TÁCH BIỆT (1-MINUTE BUFFER QUEUE)
+// Màn hình cứ xoá trong 0ms, Server cứ 1 phút quét hàng đợi để xoá DB
+// ==========================================
+const DELETION_QUEUE_FILE = path.join(process.cwd(), 'crawler-web', '.deletion-queue.json');
+const deletionQueue = new Set();
+let isFlushingDeletionQueue = false;
+
+function saveDeletionQueueToDisk() {
+  try {
+    fs.writeFileSync(DELETION_QUEUE_FILE, JSON.stringify(Array.from(deletionQueue)), 'utf8');
+  } catch (err) {}
+}
+
+function loadDeletionQueueFromDisk() {
+  try {
+    if (fs.existsSync(DELETION_QUEUE_FILE)) {
+      const content = fs.readFileSync(DELETION_QUEUE_FILE, 'utf8');
+      const ids = JSON.parse(content || '[]');
+      if (Array.isArray(ids)) {
+        ids.forEach(id => deletionQueue.add(String(id)));
+      }
+      if (deletionQueue.size > 0) {
+        pushLog('info', `[Khởi động] Nạp lại ${deletionQueue.size} phim rác đang chờ xoá từ hàng đợi`);
+      }
+    }
+  } catch (err) {}
+}
+
+loadDeletionQueueFromDisk();
+
+async function flushDeletionQueue() {
+  if (deletionQueue.size === 0 || isFlushingDeletionQueue) {
+    return;
+  }
+
+  isFlushingDeletionQueue = true;
+  const batchIds = Array.from(deletionQueue);
+  deletionQueue.clear();
+  saveDeletionQueueToDisk();
+
+  try {
+    pushLog('info', `[Bộ đệm xoá 1 phút] Bắt đầu đồng bộ ${batchIds.length} phim rác lên PostgreSQL & Snapshot...`);
+    const result = await deletePersistedMovies(batchIds);
+    pushLog('info', `[Bộ đệm xoá 1 phút] Đã xoá sạch ${result.count} phim rác khỏi PostgreSQL và movies.json!`);
+  } catch (err) {
+    // Nếu có lỗi, đưa lại vào queue để thử lại ở chu kỳ 1 phút tiếp theo
+    batchIds.forEach(id => deletionQueue.add(id));
+    saveDeletionQueueToDisk();
+    pushLog('error', `[Bộ đệm xoá 1 phút] Lỗi đồng bộ DB: ${err.message}. Đã lưu lại hàng đợi để thử lại.`);
+  } finally {
+    isFlushingDeletionQueue = false;
+  }
+}
+
+// Tự động quét hàng đợi mỗi 60 giây (1 phút)
+setInterval(flushDeletionQueue, 60000);
 
 async function getSystemStatus() {
   const dbTarget = describeDatabaseTarget();
@@ -159,6 +218,7 @@ async function getSystemStatus() {
     snapshotCount,
     snapshotMeta,
     channelsCount,
+    deletionQueueCount: deletionQueue.size,
   };
 }
 
@@ -198,7 +258,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // REST API: Trạng thái hệ thống (< 5ms)
+  // REST API: Trạng thái hệ thống (< 2ms)
   if (pathname === '/api/status' && req.method === 'GET') {
     try {
       const status = await getSystemStatus();
@@ -274,38 +334,55 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // REST API: Đồng bộ xoá hàng loạt phim rác từ hàng đợi LocalStorage (10s sync)
-  if (pathname === '/api/movies/delete' && req.method === 'POST') {
+  // REST API: Đẩy phim vào hàng đợi xoá (Phản hồi < 1ms, không nghẽn màn hình)
+  if (pathname === '/api/movies/queue-delete' && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => { body += chunk; });
-    req.on('end', async () => {
+    req.on('end', () => {
       try {
         const payload = JSON.parse(body || '{}');
         const ids = payload.ids || (payload.id ? [payload.id] : []);
         if (!ids.length) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Thiếu danh sách ID phim cần xoá' }));
+          res.end(JSON.stringify({ error: 'Thiếu ID phim cần xoá' }));
           return;
         }
 
-        // Cập nhật RAM server tức thì
+        // 1. Đưa vào hàng đợi xoá DB
+        ids.forEach(id => deletionQueue.add(String(id)));
+        saveDeletionQueueToDisk();
+
+        // 2. Cập nhật RAM server tức thì
         if (cachedMovies) {
           const deleteSet = new Set(ids);
           cachedMovies = cachedMovies.filter(m => !deleteSet.has(m.id));
         }
 
-        // Thực thi xoá trong PostgreSQL & Snapshot
-        const result = await deletePersistedMovies(ids);
-        pushLog('info', `[Đồng bộ DB] Đã xoá sạch ${result.count} phim rác khỏi PostgreSQL và tệp snapshot`);
-
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ ok: true, count: result.count, deletedIds: result.deletedIds }));
-      } catch (error) {
-        pushLog('error', `[Đồng bộ DB] Lỗi xoá: ${error.message}`);
+        res.end(JSON.stringify({
+          ok: true,
+          queued: ids.length,
+          totalInQueue: deletionQueue.size,
+        }));
+      } catch (err) {
         res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: error.message }));
+        res.end(JSON.stringify({ error: err.message }));
       }
     });
+    return;
+  }
+
+  // REST API: Xả hàng đợi xoá ngay lập tức (thủ công)
+  if (pathname === '/api/movies/flush-queue' && req.method === 'POST') {
+    flushDeletionQueue()
+      .then(() => {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, remaining: deletionQueue.size }));
+      })
+      .catch(err => {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      });
     return;
   }
 
@@ -510,5 +587,6 @@ server.listen(PORT, () => {
   console.log(`  BỘ ĐIỀU KHIỂN CÀO & QUẢN LÝ CỤC BỘ (LOCAL CONTROL)`);
   console.log(`  Bảng điều khiển: http://localhost:${PORT}`);
   console.log(`  Trạng thái DB:   ${hasDatabaseConfig() ? 'Đã kết nối' : 'Chưa có cấu hình (chế độ JSON)'}`);
+  console.log(`  Bộ đệm xoá DB:   Tự động gom mẻ & xoá DB mỗi 1 phút`);
   console.log(`======================================================\n`);
 });

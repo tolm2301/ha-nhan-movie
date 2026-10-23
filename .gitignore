@@ -49,3 +49,6 @@ next-env.d.ts
 # local workplace
 workplace/
 
+
+# Local crawler deletion queue
+crawler-web/.deletion-queue.json

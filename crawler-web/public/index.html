@@ -152,12 +152,16 @@
         </div>
       </div>
 
-      <!-- Thanh phân trang nhanh phía trên -->
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 14px; padding: 4px 2px;">
-        <span id="pageInfoTextTop" class="page-info" style="font-weight:600; color:var(--text-main);">Trang 1 / 1 (0 phim)</span>
-        <div style="display:flex; gap:8px;">
-          <button id="btnPrevPageTop" class="btn btn-secondary" style="padding:6px 14px; font-size:0.85rem;" onclick="changeMoviePage(-1)">‹ Trang Trước</button>
-          <button id="btnNextPageTop" class="btn btn-secondary" style="padding:6px 14px; font-size:0.85rem;" onclick="changeMoviePage(1)">Trang Sau ›</button>
+      <!-- Thanh công cụ phụ: Hàng đợi xoá 1 phút & Phân trang trên -->
+      <div class="movie-toolbar-secondary">
+        <div id="queueStatusPill" class="queue-status-pill" style="display:none;">
+          <span>⏳ Đang chờ xoá DB: <b id="queueCountBadge">0</b> phim (chu kỳ 1 phút)</span>
+          <button id="btnFlushQueueNow" class="btn-flush-inline" onclick="flushQueueNow()" title="Gom mẻ và xoá khỏi DB ngay lập tức">Đồng bộ DB ngay</button>
+        </div>
+        <div class="pagination-inline">
+          <button id="btnPrevPageTop" class="btn btn-secondary btn-sm" onclick="changeMoviePage(-1)">‹ Trang Trước</button>
+          <span id="pageInfoTextTop" class="page-info-sm">Trang 1 / 1 (0 phim)</span>
+          <button id="btnNextPageTop" class="btn btn-secondary btn-sm" onclick="changeMoviePage(1)">Trang Sau ›</button>
         </div>
       </div>
 
@@ -235,13 +239,7 @@
     </div>
   </div>
 
-  <!-- Floating Sync Banner (Bộ đệm LocalStorage -> DB sau 10s) -->
-  <div id="syncBanner" class="sync-banner hidden">
-    <span id="syncBannerIcon">⏳</span>
-    <span id="syncBannerText">Đã xoá phim vào bộ đệm LocalStorage</span>
-    <span id="syncCountdownBadge" class="sync-countdown-badge">10s</span>
-    <button id="btnSyncNow" class="btn-sync-now" onclick="flushPendingDeletesNow()">Đồng Bộ Ngay</button>
-  </div>
+
 
   <script src="/app.js"></script>
 </body>

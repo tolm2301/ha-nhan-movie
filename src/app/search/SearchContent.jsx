@@ -1,3 +1,6 @@
+"use client";
+import { useSyncExternalStore } from 'react';
+import { getCachedCatalog } from '@/lib/clientCatalog';
 import Link from 'next/link';
 import MovieCard from '@/components/MovieCard/MovieCard';
 import AdSlot from '@/components/Adsense/AdSlot';
@@ -58,7 +61,24 @@ function getMatchScore(movie, normalizedQuery, compactQuery) {
   return Number.isFinite(bestScore) ? bestScore : null;
 }
 
+function subscribeCatalog(callback) {
+  if (typeof window === 'undefined') return () => {};
+  window.addEventListener('storage', callback);
+  return () => window.removeEventListener('storage', callback);
+}
+
+function getCatalogSnapshot() {
+  const cached = getCachedCatalog();
+  return cached?.data?.movies || null;
+}
+
+function getServerSnapshot() {
+  return null;
+}
+
 export default function SearchContent({ query = '', movies = [] }) {
+  const cachedMovies = useSyncExternalStore(subscribeCatalog, getCatalogSnapshot, getServerSnapshot);
+  const activeMovies = cachedMovies && cachedMovies.length > 0 ? cachedMovies : movies;
   const normalizedQuery = normalizeSearchText(query);
   const compactQuery = compactSearchText(query);
   const hasQuery = Boolean(normalizedQuery);
@@ -98,7 +118,7 @@ export default function SearchContent({ query = '', movies = [] }) {
           : 'Tìm phim'}
       </h1>
       <p className={styles.count}>
-        {hasQuery ? `${results.length} bộ phim tìm được` : `${movies.length} bộ phim sẵn có để duyệt`}
+        {hasQuery ? `${results.length} bộ phim tìm được` : `${activeMovies.length} bộ phim sẵn có để duyệt`}
       </p>
 
       {isBrowseState && (
