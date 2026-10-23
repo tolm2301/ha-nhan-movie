@@ -835,7 +835,7 @@ export async function loadPersistedMovies({ allowJsonFallback = true } = {}) {
         rating,
         sort_order AS "sortOrder"
       FROM movies
-      ORDER BY sort_order ASC, created_at DESC, id ASC;
+      ORDER BY created_at DESC, updated_at DESC, sort_order ASC, id ASC;
     `);
 
     return result.rows.map((movie, index) => normalizeMovieRecord(movie, index));
@@ -1219,7 +1219,7 @@ export async function replacePersistedMovies(movies = [], runMeta = {}) {
           rating,
           sort_order AS "sortOrder"
         FROM movies
-        ORDER BY sort_order ASC, created_at DESC, id ASC;
+        ORDER BY created_at DESC, updated_at DESC, sort_order ASC, id ASC;
       `);
 
       const persistedMovies = persistedMoviesResult.rows.map((movie, index) => normalizeMovieRecord(movie, index));
