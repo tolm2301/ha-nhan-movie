@@ -9,7 +9,7 @@ export const metadata = {
   },
 };
 
-export const revalidate = 1800;
+export const revalidate = 30;
 
 export default async function SearchPage({ searchParams }) {
   const resolvedSearchParams = await searchParams;
@@ -20,3 +20,4 @@ export default async function SearchPage({ searchParams }) {
     <SearchContent query={query} movies={catalog.allMovies} />
   );
 }
+

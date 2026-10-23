@@ -22,6 +22,8 @@ const {
   loadChannelRegistry,
   updateChannelRegistryEntry,
   loadChannelSuggestions,
+  deletePersistedMovies,
+  deletePersistedMovie,
 } = await import('../src/lib/movieStore.server.js');
 const {
   readMovieSnapshot,
@@ -172,6 +174,78 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: error.message }));
     }
+    return;
+  }
+
+  // REST API: Lấy danh sách phim kèm tìm kiếm, lọc thể loại & phân trang
+  if (pathname === '/api/movies' && req.method === 'GET') {
+    try {
+      const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
+      const limit = Math.max(1, Math.min(100, parseInt(url.searchParams.get('limit') || '24', 10)));
+      const search = (url.searchParams.get('search') || '').trim().toLowerCase();
+      const category = (url.searchParams.get('category') || '').trim().toLowerCase();
+
+      let movies = await loadPersistedMovies({ allowJsonFallback: true });
+
+      if (category && category !== 'all') {
+        movies = movies.filter(m => {
+          const mCat = String(m.categorySlug || m.tags || '').toLowerCase();
+          return mCat.includes(category);
+        });
+      }
+
+      if (search) {
+        movies = movies.filter(m => {
+          const text = `${m.title || ''} ${m.displayTitle || ''} ${m.id || ''} ${m.tags || ''}`.toLowerCase();
+          return text.includes(search);
+        });
+      }
+
+      const total = movies.length;
+      const totalPages = Math.max(1, Math.ceil(total / limit));
+      const startIndex = (page - 1) * limit;
+      const paginatedMovies = movies.slice(startIndex, startIndex + limit);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        movies: paginatedMovies,
+        total,
+        page,
+        limit,
+        totalPages,
+      }));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return;
+  }
+
+  // REST API: Xoá một hoặc nhiều phim
+  if (pathname === '/api/movies/delete' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', async () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        const ids = payload.ids || (payload.id ? [payload.id] : []);
+        if (!ids.length) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Thiếu ID phim cần xoá' }));
+          return;
+        }
+
+        const result = await deletePersistedMovies(ids);
+        pushLog('info', `[Xoá phim] Đã xoá ${result.count} phim (IDs: ${ids.join(', ')}) khỏi cơ sở dữ liệu và snapshot`);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, count: result.count, deletedIds: result.deletedIds }));
+      } catch (error) {
+        pushLog('error', `[Xoá phim] Thất bại: ${error.message}`);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: error.message }));
+      }
+    });
     return;
   }
 

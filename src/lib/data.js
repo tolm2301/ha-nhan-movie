@@ -1,4 +1,4 @@
-import { ensureFreshMovieSnapshot } from './movieStore.server.js';
+import { ensureFreshMovieSnapshot, hasDatabaseConfig, loadPersistedMovies } from './movieStore.server.js';
 import { buildCategoryBuckets, normalizeMovieCategory } from './movieCategories.js';
 import { getRenderableThumbnail, hasRenderableThumbnail } from './thumbnailFilters.js';
 
@@ -230,18 +230,44 @@ export function buildMovieCatalog(movies = [], snapshotMeta = {}) {
   };
 }
 
+let catalogCache = null;
+let lastLoadedAt = 0;
 let catalogLoadPromise = null;
+const CATALOG_CACHE_TTL_MS = 15000;
 
-async function loadMovieCatalog() {
+async function fetchFreshCatalog() {
+  if (hasDatabaseConfig()) {
+    try {
+      const persisted = await loadPersistedMovies({ allowJsonFallback: false });
+      return buildMovieCatalog(persisted, {
+        source: 'db',
+        generatedAt: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.warn('[Data] Loi ket noi DB, dung snapshot du phong:', err.message);
+    }
+  }
+
   const snapshot = await ensureFreshMovieSnapshot();
   return buildMovieCatalog(snapshot.movies, snapshot);
 }
 
 export async function getMovieCatalog() {
+  const now = Date.now();
+  if (catalogCache && now - lastLoadedAt < CATALOG_CACHE_TTL_MS) {
+    return catalogCache;
+  }
+
   if (!catalogLoadPromise) {
-    catalogLoadPromise = loadMovieCatalog().finally(() => {
-      catalogLoadPromise = null;
-    });
+    catalogLoadPromise = fetchFreshCatalog()
+      .then(catalog => {
+        catalogCache = catalog;
+        lastLoadedAt = Date.now();
+        return catalog;
+      })
+      .finally(() => {
+        catalogLoadPromise = null;
+      });
   }
 
   return catalogLoadPromise;
@@ -270,3 +296,4 @@ export async function getCategoryBySlug(slug = '') {
 export async function getMovieById(movieId = '') {
   return (await getMovieCatalog()).getMovieById(movieId);
 }
+

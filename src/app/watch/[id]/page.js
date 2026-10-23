@@ -4,7 +4,7 @@ import { getRenderableThumbnail } from '@/lib/thumbnailFilters';
 import { buildAbsoluteUrl, buildBreadcrumbJsonLd, buildMetadata, buildVideoJsonLd, toJsonLd } from '@/lib/seo';
 import WatchClient from './WatchClient';
 
-export const revalidate = 1800;
+export const revalidate = 30;
 
 export async function generateStaticParams() {
   const catalog = await getMovieCatalog();
@@ -59,3 +59,4 @@ export default async function WatchPage({ params }) {
     </>
   );
 }
+

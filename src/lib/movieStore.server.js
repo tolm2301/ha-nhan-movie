@@ -1278,3 +1278,53 @@ export async function seedMoviesFromJson({ dryRun = false } = {}) {
     metadata: { mode: 'backfill' },
   });
 }
+
+export async function deletePersistedMovies(movieIds = []) {
+  const ids = (Array.isArray(movieIds) ? movieIds : [movieIds]).map(id => String(id || '').trim()).filter(Boolean);
+  if (ids.length === 0) {
+    return { success: true, count: 0, deletedIds: [] };
+  }
+
+  let deletedRows = [];
+  if (hasDatabaseConfig()) {
+    deletedRows = await withClient(async client => {
+      const placeholders = ids.map((_, index) => `$${index + 1}`).join(', ');
+      const res = await client.query(
+        `DELETE FROM movies WHERE id IN (${placeholders}) RETURNING id, title;`,
+        ids,
+      );
+      return res.rows || [];
+    });
+  }
+
+  try {
+    const snapshot = await readMovieSnapshot();
+    const idSet = new Set(ids);
+    const filteredMovies = snapshot.movies.filter(m => !idSet.has(m.id));
+    if (filteredMovies.length !== snapshot.movies.length) {
+      await writeMovieSnapshot(filteredMovies, {
+        source: hasDatabaseConfig() ? 'db' : 'json',
+        generatedAt: new Date().toISOString(),
+        forceRewrite: true,
+      });
+    }
+  } catch (err) {
+    console.warn('[deletePersistedMovies] Lỗi cập nhật tệp snapshot:', err.message);
+  }
+
+  return {
+    success: true,
+    count: deletedRows.length || ids.length,
+    deletedMovies: deletedRows,
+    deletedIds: ids,
+  };
+}
+
+export async function deletePersistedMovie(movieId) {
+  const result = await deletePersistedMovies([movieId]);
+  return {
+    success: result.success,
+    deletedId: movieId,
+    deletedMovie: result.deletedMovies?.[0] || null,
+  };
+}

@@ -7,7 +7,7 @@ import AdSlot from '@/components/Adsense/AdSlot';
 import styles from './Category.module.css';
 import { buildBreadcrumbJsonLd, buildItemListJsonLd, buildMetadata, buildAbsoluteUrl, toJsonLd } from '@/lib/seo';
 
-export const revalidate = 1800;
+export const revalidate = 30;
 
 const PAGE_SIZE = 24;
 
@@ -124,3 +124,4 @@ export default async function CategoryPage({ params, searchParams }) {
     </main>
   );
 }
+
