@@ -1,77 +1,29 @@
 'use client';
 
-import { useState } from 'react';
+import Link from 'next/link';
 
 export default function AdminTriggerPage() {
-  const [secret, setSecret] = useState('');
-  const [dryRun, setDryRun] = useState(false);
-  const [status, setStatus] = useState('');
-
-  const handleTrigger = async () => {
-    if (!secret) {
-      setStatus('Please enter the secret.');
-      return;
-    }
-    
-    setStatus('Triggering crawl... Note: Vercel may return a 504 timeout error after 10-60s, but the process might still be running in the background. Check crawl logs.');
-    
-    try {
-      const res = await fetch(`/api/cron/crawl?secret=${encodeURIComponent(secret)}${dryRun ? '&dryRun=1' : ''}`, {
-        method: 'POST'
-      });
-      
-      const data = await res.json();
-      
-      if (res.ok) {
-        setStatus(`Success: ${JSON.stringify(data, null, 2)}`);
-      } else {
-        setStatus(`Error: ${JSON.stringify(data, null, 2)}`);
-      }
-    } catch (err) {
-      setStatus(`Fetch failed: ${err.message}. (If 504 Timeout, crawl might still be running)`);
-    }
-  };
-
   return (
-    <div style={{ padding: '2rem', maxWidth: '600px', margin: '0 auto' }}>
-      <h1>System Trigger</h1>
-      <p style={{ color: 'red' }}><strong>Warning:</strong> Manual trigger can hit Vercel Serverless execution timeouts.</p>
+    <div style={{ padding: '2rem', maxWidth: '700px', margin: '40px auto', background: '#14141e', color: '#f1f2f6', borderRadius: '12px', border: '1px solid #262638' }}>
+      <h1 style={{ color: '#FFDE00', marginBottom: '1rem', fontSize: '1.8rem' }}>Bộ Điều Khiển Cào Dữ Liệu Đã Chuyển Về Local</h1>
       
-      <div style={{ marginTop: '1rem' }}>
-        <label>
-          Cron Secret:
-          <input 
-            type="password" 
-            value={secret} 
-            onChange={e => setSecret(e.target.value)}
-            style={{ marginLeft: '1rem', padding: '0.25rem', color: 'black' }}
-          />
-        </label>
+      <div style={{ padding: '1rem', background: 'rgba(255, 222, 0, 0.1)', borderLeft: '4px solid #FFDE00', marginBottom: '1.5rem', borderRadius: '4px' }}>
+        <p><strong>Lưu ý kiến trúc:</strong> Toàn bộ quy trình cào dữ liệu phim từ YouTube đã được tách rời khỏi máy chủ Serverless để tránh việc IP Datacenter bị chặn và lỗi quá thời gian thực thi (504 Timeout).</p>
       </div>
 
-      <div style={{ marginTop: '1rem' }}>
-        <label>
-          <input 
-            type="checkbox" 
-            checked={dryRun} 
-            onChange={e => setDryRun(e.target.checked)}
-            style={{ marginRight: '0.5rem' }}
-          />
-          Dry Run (do not save to DB)
-        </label>
-      </div>
+      <h3 style={{ marginBottom: '0.5rem', color: '#fff' }}>Hướng Dẫn Sử Dụng Bảng Điều Khiển Cục Bộ:</h3>
+      <ol style={{ paddingLeft: '1.5rem', lineHeight: '1.8', color: '#ccc' }}>
+        <li>Mở terminal trên máy cá nhân tại thư mục dự án.</li>
+        <li>Chạy lệnh: <code style={{ background: '#000', padding: '2px 8px', borderRadius: '4px', color: '#2ed573' }}>npm run crawler:web</code></li>
+        <li>Truy cập giao diện quản trị tại: <a href="http://localhost:4000" target="_blank" rel="noreferrer" style={{ color: '#1e90ff' }}>http://localhost:4000</a></li>
+        <li>Nhấn nút <strong>&quot;Bắt Đầu Cào Dữ Liệu&quot;</strong> để quét phim qua mạng dân dụng (Residential IP).</li>
+        <li>Nhấn <strong>&quot;Đồng Bộ Snapshot từ DB&quot;</strong> để cập nhật dữ liệu phim tức thì cho web chính.</li>
+      </ol>
 
-      <div style={{ marginTop: '1rem' }}>
-        <button 
-          onClick={handleTrigger}
-          style={{ padding: '0.5rem 1rem', background: '#e50914', color: 'white', border: 'none', cursor: 'pointer' }}
-        >
-          Run Crawl
-        </button>
-      </div>
-
-      <div style={{ marginTop: '2rem', padding: '1rem', background: '#333', color: '#fff', borderRadius: '4px', whiteSpace: 'pre-wrap' }}>
-        {status || 'Waiting for action...'}
+      <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+        <Link href="/" style={{ display: 'inline-block', padding: '10px 24px', background: '#262638', color: '#fff', textDecoration: 'none', borderRadius: '6px', fontWeight: 'bold' }}>
+          Quay Về Trang Chủ Hanhan Movie
+        </Link>
       </div>
     </div>
   );

@@ -1,63 +1,25 @@
-# Hanhan Movie
+# HƯỚNG DẪN DỰ ÁN HANHAN MOVIE
 
-## Mission
-Build and maintain a modern Next.js movie product with deliberate UI quality, clean architecture, and predictable delivery.
+## 1. TỔNG QUAN HỆ THỐNG
+Dự án Hanhan Movie là nền tảng xem video, hoạt hình và phim chuyển thể tối ưu trải nghiệm người dùng với Next.js App Router, tự động thu thập dữ liệu đa nguồn từ YouTube, lưu trữ Postgres và cơ chế snapshot fallback độc lập.
 
-## Tech and Coding Rules
-- Use Next.js App Router with modern JavaScript.
-- Prefer Vanilla CSS, CSS Modules, and CSS variables over new styling frameworks.
-- Keep React components small and split server/client boundaries intentionally.
-- Favor clean, functional code and async/await.
-- Prefer explicit, readable code over clever abstractions.
+## 2. QUY CHUẨN KỸ THUẬT VÀ PHÁT TRIỂN
+- Framework: Next.js App Router, React 19, JavaScript hiện đại (ES Modules).
+- Styling: Vanilla CSS, CSS Modules, CSS Variables. Không sử dụng thêm UI framework bên ngoài.
+- Thành phần React: Tách biệt rõ ràng Server Component (SSR / Static params / SEO) và Client Component (Player tương tác, localStorage, UI state).
+- Mã nguồn: Rõ ràng, tường minh, hàm thuần túy và async/await chuẩn xác.
+- Bảo mật: Tuyệt đối không hardcode credentials trong code; toàn bộ kết nối cơ sở dữ liệu và API secrets quản lý qua biến môi trường.
 
-## Team Model
-- `project-manager`: fixed primary orchestrator, plans work, delegates execution, and owns final delivery quality.
-- `techlead`: architecture fit, review, and technical guidance.
-- `designer`: owns UI direction, UX flow, and visual consistency.
-- `creator`: owns production readiness, automation, and delivery ergonomics.
-- `developer`: owns implementation, bug fixes, and self-verification.
-- `tester`: verifies UI behavior and acceptance criteria with evidence.
-- `analyzer`: read-only investigation and codebase mapping.
+## 3. QUẢN LÝ TÀI LIỆU VÀ TRI THỨC KIẾN TRÚC
+Toàn bộ tài liệu phân tích, kiến trúc và kế hoạch phát triển được lưu tập trung trong thư mục `workplace/`:
+- `workplace/PROJECT_BLUEPRINT.md`: Bản đồ vĩ mô (Kiến trúc phân tầng, domain model, quy ước chung, ADR).
+- `workplace/codebase-md/`: Sơ đồ vi mô giải phẫu từng module (Call Graph, Execution Flow, API Contracts).
+- `workplace/plans/`: Kế hoạch và lộ trình phát triển theo route.
 
-Verification is owned by `tester` or `developer` and reviewed by `techlead` or `project-manager`.
+Thư mục `workplace/` đã được cấu hình trong `.gitignore` để giữ lịch sử Git của dự án luôn sạch sẽ.
 
-## Primary Orchestration Policy
-- `project-manager` is the fixed primary role for this repository.
-- All multi-step feature and bug requests must be triaged by `project-manager` before role assignment.
-- `techlead`, `designer`, `developer`, `tester`, and `analyzer` operate as execution roles through workplace handoffs.
-- Only `project-manager` can mark a task Done on the board after verification evidence is explicit.
-
-## Working Agreements
-- Start substantial work with a short plan and explicit acceptance criteria.
-- For feature and bug workflows, track progress in workplace files under `.opencode/workplace/`.
-- Every handoff must include scope, changed files, verification status, risks, and next owner.
-- Before final handoff, confirm: behavior works, no obvious regressions, and output matches request.
-- Enforce standardized execution rules in `.opencode/workplace/WORKING_RULES.md`.
-- `techlead` owns orchestration/closeout; execution is delegated to `designer`/`developer`/`creator`.
-
-## Quality Gates
-- `designer` gate: UX clarity, responsive behavior, visual hierarchy, interaction polish.
-- `developer` gate: correctness, boundary handling, self-check, no hydration/runtime issues.
-- `creator` gate: metadata, asset handling, docs/readme updates, workflow efficiency.
-- `techlead` gate: architecture fit, consistency with repo conventions, release readiness.
-
-## OpenCode Layout
-- `.opencode/agents/` contains specialized agent prompts.
-- `.opencode/commands/` contains reusable slash-command workflows.
-- `.opencode/skills/` contains skill definitions loaded via the skill tool.
-- `.opencode/workplace/` contains team-operating artifacts for task tracking and handoffs.
-
-## Workplace Files
-- `.opencode/workplace/BOARD.md`: source of truth for task status and owner.
-- `.opencode/workplace/HANDOFFS.md`: inter-role handoff log.
-- `.opencode/workplace/PROGRESS.md`: timeline of implementation and verification evidence.
-- `.opencode/workplace/INBOX/*.md`: role-based queue for incoming tasks.
-
-Lifecycle: intake -> assign -> execute -> verify -> close.
-
-## Preferred Commands
-- `/delivery-flow <task>`: run full feature delivery workflow.
-- `/bugfix-flow <bug>`: run triage -> fix -> verify workflow.
-- `/review-flow <scope>`: run structured quality review.
-- `/teamwork <task>`: orchestrate multi-role execution and workplace updates.
-- `/daily-meeting`: produce concise daily status report from workplace files.
+## 4. QUY TẮC NGÔN NGỮ VÀ TRÌNH BÀY
+- Giữ sạch sẽ ngôn ngữ domain: Sử dụng đúng 100% bản chất nghiệp vụ (phim, danh mục, kênh, crawler, snapshot, player).
+- Tuyệt đối không đưa ghi chú kỹ thuật thừa thãi, meta-tags hoặc thông tin triển khai vào tên tính năng và API.
+- Không rò rỉ codename hoặc tên dự án ngoại lai.
+- Trình bày ngắn gọn, máy móc, đúng nghiệp vụ, không thêm thắt.

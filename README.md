@@ -1,66 +1,57 @@
 # Hanhan Movie
 
-Next.js movie site with automated YouTube crawling, build-time snapshot generation, and Vercel Git-based deployment.
+Nền tảng xem phim với kiến trúc Next.js App Router, quản lý dữ liệu linh hoạt qua PostgreSQL (Supabase) và tệp snapshot đệm `src/lib/movies.json`.
 
-## Snapshot lifecycle
+---
 
-- Runtime reads `src/lib/movies.json`.
-- Build/deploy runs `prebuild` first, so `npm run build` always refreshes the snapshot via `npm run snapshot:movies` before Next.js builds.
+## 1. Kiến Trúc Thu Thập & Đồng Bộ Dữ Liệu (Local Crawler Architecture)
 
-## Postgres data
+Toàn bộ quy trình cào dữ liệu từ YouTube được thực thi hoàn toàn tại **máy cục bộ (Local Residential IP)** qua ứng dụng Web điều khiển riêng biệt, không chạy trên Cloud Actions/Serverless để triệt tiêu lỗi giới hạn IP và timeout:
 
-Runtime movie data now lives in Postgres (Supabase-compatible). Set the direct Supabase URL in `POSTGRES_URL_NON_POOLING` on Vercel (preferred) or `DATABASE_URL` if that is your server-only direct URL.
+1. **Bộ Điều Khiển Cào Cục Bộ (`crawler-web/`)**:
+   - Chạy trên cổng `4000` qua lệnh `npm run crawler:web`.
+   - Cung cấp giao diện trực quan: Bắt đầu cào, theo dõi log thời gian thực qua Server-Sent Events (SSE), quản lý bật/tắt kênh và đồng bộ snapshot.
+   - Quét video qua mạng dân dụng cá nhân, tự động lọc nội dung chuẩn (thời lượng > 600s, loại bỏ rác/shorts/recap), sau đó lưu trực tiếp vào PostgreSQL.
+2. **Web Xem Phim Hanhan (`src/app/`)**:
+   - Chạy trên cổng `3000` qua lệnh `npm run dev` hoặc triển khai trên Vercel.
+   - Thuần túy đọc dữ liệu từ PostgreSQL hoặc tệp snapshot dự phòng `src/lib/movies.json`.
+   - Hoạt động độc lập 100%, không phụ thuộc vào bất kỳ cron job cloud nào.
 
-The crawl registry also lives in Postgres as a `channels` table. When that table is empty, the app bootstraps it from `src/lib/channel-seeds.json` so crawl discovery has a repo-backed recovery path.
+---
 
-## Local development
+## 2. Cấu Hình Môi Trường Cục Bộ (.env.local)
 
-```bash
-npm ci
-npm run dev
+Tạo hoặc cập nhật tệp `.env.local` với cấu hình kết nối trực tiếp cơ sở dữ liệu:
+
+```env
+# Chuỗi kết nối PostgreSQL Supabase Direct (Non-pooling)
+POSTGRES_URL_NON_POOLING="postgresql://postgres:[PASSWORD]@[HOST]:5432/postgres?sslmode=require"
+DATABASE_URL="postgresql://postgres:[PASSWORD]@[HOST]:5432/postgres?sslmode=require"
 ```
 
-### Local env for DB-backed testing
+*Lưu ý: Nếu không có cấu hình cơ sở dữ liệu, toàn bộ hệ thống sẽ tự động fallback đọc từ tệp tĩnh `src/lib/movies.json`.*
 
-- Copy or edit `.env.local` for local-only settings.
-- Set `POSTGRES_URL_NON_POOLING` (preferred on Vercel) or `DATABASE_URL` to a direct Postgres or Supabase connection string to exercise the DB-backed crawl/runtime path.
-- Use the direct/non-pooled Supabase URL for SSR on Vercel; pooled URLs are kept as a legacy fallback and are not the primary runtime path.
-- If the DB connection fails, the app logs the failure and falls back to `src/lib/movies.json` for runtime reads; the crawl can still run in `--dry-run` mode.
-- The crawl and migration scripts also load `.env.local`, so the same file can drive `npm run crawl` and `npm run migrate:movies` locally.
-- Keep real credentials out of git; `.env.local` is ignored by default.
+---
 
-Useful scripts:
+## 3. Các Lệnh Thực Thi Chính (Scripts)
 
-- `npm run crawl`: run data crawler and upsert the refreshed dataset into Postgres so older movie rows stay retained
-- `npm run crawl:dry`: run the crawler without writing to Postgres
-- `npm run migrate:movies`: backfill `src/lib/movies.json` into Postgres
-- `npm run dev:fresh`: crawl first, then run dev server
-- `npm run build`: standard Next.js production build; `prebuild` refreshes `src/lib/movies.json` first
-- `npm run build:fresh`: crawl first, then build
-- `npm run lint`: run ESLint
+| Lệnh | Chức Năng |
+| :--- | :--- |
+| `npm run crawler:web` | **Khởi chạy Bảng Điều Khiển Cào Cục Bộ** tại `http://localhost:4000` |
+| `npm run dev` | Khởi chạy máy chủ phát triển web xem phim tại `http://localhost:3000` |
+| `npm run snapshot:movies`| Tạo/làm mới tệp đệm `src/lib/movies.json` từ PostgreSQL |
+| `npm run migrate:movies` | Nạp dữ liệu ban đầu từ `movies.json` vào bảng PostgreSQL |
+| `npm run crawl` | Chạy cào dữ liệu từ dòng lệnh (CLI) |
+| `npm run crawl:dry` | Chạy thử nghiệm cào dữ liệu không lưu DB |
+| `npm run build` | Build ứng dụng Next.js cho production (tự động chạy `prebuild` snapshot) |
+| `npm run lint` | Kiểm tra cú pháp và quy chuẩn mã nguồn |
 
-## Deploy via GitLab CI/CD to Vercel
+---
 
-1. Configure the following required CI/CD variables in your GitLab project settings:
-   - `VERCEL_TOKEN`: Your Vercel personal access token
-   - `VERCEL_ORG_ID`: Your Vercel organization ID
-   - `VERCEL_PROJECT_ID`: Your Vercel project ID
-   - `POSTGRES_URL_NON_POOLING`: Your database connection URL
-   - `GITLAB_ACCESS_TOKEN`: A project or personal access token with repository write access (needed for hourly snapshots)
+## 4. Triển Khai Lên Vercel (Production)
 
-2. Create scheduled pipelines in GitLab:
-   - For `daily_crawl`: Create a schedule, add variable `SCHEDULE_TARGET = crawl`
-   - For `hourly_snapshot`: Create a schedule, add variable `SCHEDULE_TARGET = snapshot`
-
-3. The pipeline runs automatically on pushes to the `main` branch.
-
-Because build/deploy regenerates the runtime snapshot first, Vercel deployments stay snapshot-driven without tying freshness to crawl runs.
-
-## Recommended Vercel project setup
-
-- Framework preset: `Next.js`
-- Install command: `npm ci`
-- Build command: `npm run build`
-- Output directory: default (`.next`)
-
-This keeps crawling in the dedicated daily batch flow and snapshot refresh in the separate hourly sync, instead of tying either one to Vercel deployment hooks.
+- **Framework Preset**: `Next.js`
+- **Install Command**: `npm ci`
+- **Build Command**: `npm run build`
+- **Environment Variables**:
+  - `POSTGRES_URL_NON_POOLING`: Chuỗi kết nối Supabase Direct URL.
