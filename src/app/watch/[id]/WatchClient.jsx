@@ -140,53 +140,28 @@ function buildQualityLevels(levels = []) {
   return unique.length > 0 ? unique : ['auto'];
 }
 
-function getCaptionTrackValue(track = {}) {
-  const languageCode = String(track?.languageCode || track?.language_code || track?.language || '').trim().toLowerCase();
-  const kind = String(track?.kind || track?.trackKind || '').trim().toLowerCase();
-  const name = String(track?.name || track?.displayName || track?.label || track?.languageName?.simpleText || '').trim().toLowerCase();
-
-  return [languageCode, kind, name].filter(Boolean).join('|');
-}
-
-function isVietnameseCaptionTrack(track = {}) {
-  const languageCode = String(track?.languageCode || track?.language_code || track?.language || '').trim().toLowerCase();
-  const label = String(track?.name || track?.displayName || track?.label || track?.languageName?.simpleText || '').trim().toLowerCase();
-
-  return languageCode === 'vi' || languageCode.startsWith('vi-') || /vietsub|tiếng việt|tieng viet|vietnamese|vietnam/i.test(label);
-}
-
-function getCaptionTrackLabel(track = {}) {
-  const rawLabel = String(track?.name || track?.displayName || track?.label || track?.languageName?.simpleText || track?.languageCode || track?.language_code || 'Phụ đề').trim();
-  const languageCode = String(track?.languageCode || track?.language_code || track?.language || '').trim();
-
-  if (isVietnameseCaptionTrack(track)) {
-    return rawLabel ? `Vietsub${languageCode ? ` (${languageCode})` : ''}` : 'Vietsub';
+function forceDisableYouTubeCaptions(player) {
+  if (!player) return;
+  try {
+    player.unloadModule?.('captions');
+  } catch {
+    // Bỏ qua nếu module chưa nạp
   }
-
-  return rawLabel || 'Phụ đề';
-}
-
-function buildCaptionTrackOptions(tracklist = []) {
-  const seen = new Set();
-
-  return tracklist
-    .filter(Boolean)
-    .map(track => ({
-      track,
-      value: getCaptionTrackValue(track),
-      label: getCaptionTrackLabel(track),
-      preferred: isVietnameseCaptionTrack(track),
-    }))
-    .filter(option => {
-      if (!option.value) return false;
-      if (seen.has(option.value)) return false;
-      seen.add(option.value);
-      return true;
-    })
-    .sort((a, b) => {
-      if (a.preferred !== b.preferred) return a.preferred ? -1 : 1;
-      return a.label.localeCompare(b.label, 'vi');
-    });
+  try {
+    player.unloadModule?.('cc');
+  } catch {
+    // Bỏ qua nếu module chưa nạp
+  }
+  try {
+    player.setOption?.('captions', 'track', {});
+  } catch {
+    // Bỏ qua lỗi
+  }
+  try {
+    player.setOption?.('cc', 'track', {});
+  } catch {
+    // Bỏ qua lỗi
+  }
 }
 
 function getFullscreenElement() {
@@ -222,7 +197,6 @@ export default function WatchClient({ movieId = '', initialMovies = [], initialR
   const selectedQualityRef = useRef('auto');
   const qualityEnforceUntilRef = useRef(0);
   const qualityReloadAttemptedRef = useRef(false);
-  const selectedCaptionRef = useRef('off');
   const playableMarkedRef = useRef(false);
   const lastKnownTimeRef = useRef(0);
   const lastKnownPlayingRef = useRef(true);
@@ -237,9 +211,6 @@ export default function WatchClient({ movieId = '', initialMovies = [], initialR
   const [qualityLevels, setQualityLevels] = useState(['auto']);
   const [currentQuality, setCurrentQuality] = useState('auto');
   const [selectedQuality, setSelectedQuality] = useState('auto');
-  const [captionOptions, setCaptionOptions] = useState([]);
-  const [selectedCaption, setSelectedCaption] = useState('off');
-  const [isCaptionModuleAvailable, setIsCaptionModuleAvailable] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isNativePlayerFullscreen, setIsNativePlayerFullscreen] = useState(false);
   const [isPseudoFullscreen, setIsPseudoFullscreen] = useState(false);
@@ -381,52 +352,6 @@ export default function WatchClient({ movieId = '', initialMovies = [], initialR
     armControlsAutoHide();
   }, [armControlsAutoHide, isReady]);
 
-  const syncCaptionTracks = useCallback(player => {
-    if (!player?.getOptions || !player?.getOption) return;
-
-    let moduleOptions = [];
-    try {
-      moduleOptions = player.getOptions('captions') || [];
-    } catch {
-      moduleOptions = [];
-    }
-
-    const moduleAvailable = Array.isArray(moduleOptions) && moduleOptions.length > 0;
-    setIsCaptionModuleAvailable(moduleAvailable);
-
-    if (!moduleAvailable) {
-      setCaptionOptions([]);
-      setSelectedCaption('off');
-      selectedCaptionRef.current = 'off';
-      return;
-    }
-
-    let rawTracklist = [];
-    try {
-      rawTracklist = player.getOption('captions', 'tracklist') || [];
-    } catch {
-      rawTracklist = [];
-    }
-
-    const nextOptions = buildCaptionTrackOptions(Array.isArray(rawTracklist) ? rawTracklist : []);
-    setCaptionOptions(nextOptions);
-
-    let currentTrackValue = '';
-    try {
-      currentTrackValue = getCaptionTrackValue(player.getOption('captions', 'track'));
-    } catch {
-      currentTrackValue = '';
-    }
-
-    const persistedSelection = nextOptions.some(option => option.value === selectedCaptionRef.current) ? selectedCaptionRef.current : '';
-    const nextSelected = nextOptions.some(option => option.value === currentTrackValue)
-      ? currentTrackValue
-      : persistedSelection || 'off';
-
-    setSelectedCaption(nextSelected);
-    selectedCaptionRef.current = nextSelected;
-  }, []);
-
   useEffect(() => {
     if (!movie) return;
     pushWatchedMovie(movie);
@@ -442,10 +367,6 @@ export default function WatchClient({ movieId = '', initialMovies = [], initialR
     setIsReady(false);
     setIsPlayable(false);
     setPlayerLoadError('');
-    setCaptionOptions([]);
-    setSelectedCaption('off');
-    setIsCaptionModuleAvailable(false);
-    selectedCaptionRef.current = 'off';
     playableMarkedRef.current = false;
     resumeAppliedRef.current = false;
 
@@ -490,6 +411,7 @@ export default function WatchClient({ movieId = '', initialMovies = [], initialR
           rel: 0,
           modestbranding: 1,
           iv_load_policy: 3,
+          cc_load_policy: 0,
           playsinline: 1,
           disablekb: 1,
           origin: window.location.origin,
@@ -521,7 +443,7 @@ export default function WatchClient({ movieId = '', initialMovies = [], initialR
             setCurrentQuality(normalizeQualityValue(event.target.getPlaybackQuality?.()));
             setSelectedQuality('auto');
             selectedQualityRef.current = 'auto';
-            syncCaptionTracks(event.target);
+            forceDisableYouTubeCaptions(event.target);
 
             const progress = getWatchProgress(movie.id);
             const resumePoint = Number(progress?.positionSec || 0);
@@ -538,7 +460,7 @@ export default function WatchClient({ movieId = '', initialMovies = [], initialR
             if (isCancelled) return;
             const levels = event.target.getAvailableQualityLevels?.() || [];
             setQualityLevels(buildQualityLevels(levels));
-            syncCaptionTracks(event.target);
+            forceDisableYouTubeCaptions(event.target);
           },
           onPlaybackQualityChange: event => {
             if (isCancelled) return;
@@ -546,6 +468,7 @@ export default function WatchClient({ movieId = '', initialMovies = [], initialR
           },
           onStateChange: event => {
             if (isCancelled) return;
+            forceDisableYouTubeCaptions(event.target);
             const playing = event.data === window.YT.PlayerState.PLAYING;
             setIsPlaying(playing);
             lastKnownPlayingRef.current = playing;
@@ -571,6 +494,7 @@ export default function WatchClient({ movieId = '', initialMovies = [], initialR
         const player = playerRef.current;
         if (!player || typeof player.getCurrentTime !== 'function') return;
 
+        forceDisableYouTubeCaptions(player);
         const now = Number(player.getCurrentTime() || 0);
         setCurrentTime(now);
         lastKnownTimeRef.current = now;
@@ -633,7 +557,7 @@ export default function WatchClient({ movieId = '', initialMovies = [], initialR
         playerRef.current = null;
       }
     };
-  }, [movie, syncCaptionTracks]);
+  }, [movie]);
 
   useEffect(() => {
     const onFullscreenChange = () => {
@@ -855,29 +779,6 @@ export default function WatchClient({ movieId = '', initialMovies = [], initialR
     }
 
     setCurrentQuality(normalizeQualityValue(player.getPlaybackQuality?.()));
-  };
-
-  const handleCaptionChange = value => {
-    const player = playerRef.current;
-    if (!player || !isReady) return;
-
-    setSelectedCaption(value);
-    selectedCaptionRef.current = value;
-
-    try {
-      if (value === 'off') {
-        player.setOption('captions', 'track', {});
-        return;
-      }
-
-      const option = captionOptions.find(item => item.value === value);
-      if (!option) return;
-
-      player.setOption('captions', 'track', option.track);
-      player.setOption('captions', 'reload', true);
-    } catch {
-      // Ignore caption API failures so playback keeps working.
-    }
   };
 
   const requestElementFullscreen = async element => {
@@ -1145,24 +1046,6 @@ export default function WatchClient({ movieId = '', initialMovies = [], initialR
                           </option>
                         ))}
                       </select>
-                      {isCaptionModuleAvailable && (
-                        <select
-                          className={`${styles.qualitySelect} ${styles.captionSelect}`}
-                          value={selectedCaption}
-                          onChange={event => handleCaptionChange(event.target.value)}
-                          disabled={captionOptions.length === 0}
-                          aria-label="Chọn phụ đề"
-                          title={captionOptions.length === 0 ? 'Video này không có phụ đề' : 'Chọn phụ đề/caption'}
-                        >
-                          <option value="off">{captionOptions.length === 0 ? 'Không có sub' : 'Tắt sub'}</option>
-                          {captionOptions.map(option => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                      
                       <button className={styles.controlBtn} onClick={handleFullscreen}>
                         {isFullscreen || isPseudoFullscreen ? '🡽' : '⛶'}
                       </button>
