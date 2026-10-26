@@ -6,6 +6,7 @@ const BROKEN_THUMBNAIL_URLS = new Set([
 ]);
 
 const BROKEN_THUMBNAIL_IDS = new Set([
+  '57hnpFpBEVs',
   'ESTeyBsZt68',
   'jygfwGrRvtw',
   'cT4f_09O5NE',

@@ -1005,9 +1005,9 @@ function normalizeVideoData(video, category) {
     episodeNumber,
     type,
     seriesKey: type === 'series' ? normalizeSeriesKey(video.title) : '',
-    views: video.views
-      ? (video.views > 1000000 ? `${(video.views / 1000000).toFixed(1)}M views` : `${Math.floor(video.views / 1000)}K views`)
-      : '?? views',
+    views: typeof video.viewsCount === 'number' && Number.isFinite(video.viewsCount)
+      ? (video.viewsCount >= 1000000 ? `${(video.viewsCount / 1000000).toFixed(1)}M views` : `${Math.floor(video.viewsCount / 1000)}K views`)
+      : (typeof video.views === 'string' && video.views.trim() && !video.views.includes('NaN') ? video.views : 'Mới cập nhật'),
     thumbnail: video.thumbnail,
     tags: category?.tag || 'Kh\u00e1c',
     categorySlug: category?.slug || 'khac',

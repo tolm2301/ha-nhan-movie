@@ -7,10 +7,22 @@ import styles from './Hero.module.css';
 
 export default function Hero({ featuredMovie }) {
   const [isBookmarked, setIsBookmarked] = useState(false);
-  const [featuredThumbnail, setFeaturedThumbnail] = useState(() => getRenderableThumbnail(featuredMovie));
-  const router = useRouter();
   const featuredTitle = featuredMovie?.displayTitle || featuredMovie?.title;
   const fallbackThumbnail = buildFallbackThumbnailUrl(featuredMovie);
+
+  const [prevMovieId, setPrevMovieId] = useState(featuredMovie?.id);
+  const [hasError, setHasError] = useState(false);
+
+  if (featuredMovie?.id !== prevMovieId) {
+    setPrevMovieId(featuredMovie?.id);
+    setHasError(false);
+  }
+
+  const router = useRouter();
+
+  const featuredThumbnail = hasError
+    ? fallbackThumbnail
+    : getRenderableThumbnail(featuredMovie);
 
   const handleWatch = () => {
     if (featuredMovie) {
@@ -20,6 +32,17 @@ export default function Hero({ featuredMovie }) {
 
   const handleBookmark = () => {
     setIsBookmarked(!isBookmarked);
+  };
+
+  const handleImageError = () => {
+    setHasError(true);
+  };
+
+  const handleImageLoad = (event) => {
+    // YouTube's unavailable / broken placeholder image has dimensions 120x90
+    if (event.currentTarget.naturalWidth <= 120) {
+      setHasError(true);
+    }
   };
 
   return (
@@ -33,7 +56,8 @@ export default function Hero({ featuredMovie }) {
             loading="eager"
             fetchPriority="high"
             decoding="async"
-            onError={() => setFeaturedThumbnail(current => (current === fallbackThumbnail ? current : fallbackThumbnail))}
+            onError={handleImageError}
+            onLoad={handleImageLoad}
           />
           <div className={styles.overlay}></div>
         </div>
