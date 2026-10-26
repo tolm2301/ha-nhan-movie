@@ -1,7 +1,7 @@
 "use client";
 import React, { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import MovieCard from '@/components/MovieCard/MovieCard';
-import { subscribeCatalog, getCatalogMoviesSnapshot, getServerCatalogSnapshot } from '@/lib/clientCatalog';
+import { subscribeCatalog, getCatalogMoviesSnapshot, getServerCatalogSnapshot, refreshClientCatalog } from '@/lib/clientCatalog';
 import { useRouter } from 'next/navigation';
 import { getWatchProgress, pushWatchedMovie, setWatchProgress } from '@/lib/watchHistory';
 import AdSlot from '@/components/Adsense/AdSlot';
@@ -252,6 +252,12 @@ export default function WatchClient({ movieId = '', initialMovies = [], initialR
     getCatalogMoviesSnapshot,
     getServerCatalogSnapshot
   );
+
+  useEffect(() => {
+    if (!cachedAllMovies || cachedAllMovies.length === 0) {
+      refreshClientCatalog().catch(() => {});
+    }
+  }, [cachedAllMovies]);
 
   const movie = movies.find(m => m.id === movieId) || movies[0] || null;
   const movieDisplayTitle = movie?.displayTitle || movie?.title;
@@ -1168,18 +1174,12 @@ export default function WatchClient({ movieId = '', initialMovies = [], initialR
           </div>
         </div>
 
-        (
-          <div className={styles.infoSection}>
+        <div className={styles.infoSection}>
             <h1 className={styles.movieTitle}>{movieDisplayTitle}</h1>
-            <div className={styles.meta}>
-              <span className={styles.stat}>👁 {movie.views}</span>
-              <span className={styles.stat}>★ LƯỢT ĐÁNH GIÁ: {movie.rating || 'N/A'}</span>
-              <span className={styles.tag}>Full HD</span>
-              <span className={styles.tag}>{getEpisodeLabel(movie)}</span>
+            <div className={styles.categoryBadgeWrap}>
+              {movie?.tags && <span className={styles.categoryBadge}>{movie.tags}</span>}
+              <span className={styles.categoryBadge}>{getEpisodeLabel(movie)}</span>
             </div>
-            <p className={styles.desc}>
-              Nguồn phát: Đối tác tổng hợp
-            </p>
           </div>
 
         {shouldShowEpisodes && episodes.length > 1 && (
@@ -1198,6 +1198,32 @@ export default function WatchClient({ movieId = '', initialMovies = [], initialR
               ))}
             </div>
           </div>
+        )}
+
+        {relatedMovies && relatedMovies.length > 0 && (
+          <section className={styles.relatedSection} aria-label="Phim đề xuất">
+            <div className={styles.relatedHeader}>
+              <h2 className={styles.relatedTitle}>
+                <span>🎬</span> Có Thể Bạn Thích Xem
+              </h2>
+            </div>
+            <div className={styles.relatedGrid}>
+              {relatedMovies.slice(0, visibleCount).map(relMovie => (
+                <MovieCard key={relMovie.id} movie={relMovie} />
+              ))}
+            </div>
+            {visibleCount < relatedMovies.length && (
+              <div className={styles.loadMoreWrap}>
+                <button
+                  type="button"
+                  className={styles.loadMoreBtn}
+                  onClick={() => setVisibleCount(relatedMovies.length)}
+                >
+                  Xem thêm phim khác ▾
+                </button>
+              </div>
+            )}
+          </section>
         )}
 
         <AdSlot placement="watchAfterRelated" minHeight={250} />

@@ -14,19 +14,6 @@ function isChannelSignature(segment = '') {
   const normalized = normalizeText(segment).replace(/[^a-z0-9\s#@._-]/g, ' ').replace(/\s+/g, ' ').trim();
   if (!normalized) return false;
 
-  const channelKeywords = [
-    'ha nhan',
-    'hanhan',
-    'cartoon',
-    'review',
-    'official',
-    'channel',
-    'youtube',
-    'vietsub',
-    'tv',
-    'sub',
-  ];
-
   const contentKeywords = [
     'tap',
     'episode',
@@ -48,7 +35,30 @@ function isChannelSignature(segment = '') {
   }
 
   const words = normalized.split(' ').filter(Boolean);
-  const hasChannelKeyword = channelKeywords.some(keyword => normalized.includes(keyword));
+  // Chữ ký kênh chỉ là cụm từ ngắn (<= 4 từ), không nhận diện nguyên câu tên phim
+  if (words.length > 4) {
+    return false;
+  }
+
+  const channelKeywords = [
+    'ha nhan',
+    'hanhan',
+    'cartoon',
+    'review',
+    'official',
+    'channel',
+    'youtube',
+    'vietsub',
+    'tv',
+    'sub',
+  ];
+
+  const hasChannelKeyword = channelKeywords.some(keyword => {
+    if (keyword.length <= 3) {
+      return words.includes(keyword);
+    }
+    return normalized.includes(keyword);
+  });
   const compact = normalized.replace(/\s+/g, '');
   const looksLikeHandle = /^@?[a-z0-9_.-]{3,32}$/i.test(compact);
 
@@ -65,6 +75,11 @@ function cleanMovieTitle(title = '') {
 
   cleaned = cleaned.replace(/\s*[\[(]([^\])]{1,60})[\])]\s*$/i, (match, inside) => (
     isChannelSignature(inside) ? '' : match
+  )).trim();
+
+  // Loại bỏ hậu tố kênh dạng - Channel (ví dụ: - Amy Sub, - Hà Nhân Official)
+  cleaned = cleaned.replace(/\s*-\s*([^|-]{2,40})$/, (match, tail) => (
+    isChannelSignature(tail) ? '' : match
   )).trim();
 
   const separators = ['||', '|', '•'];
@@ -87,7 +102,7 @@ function cleanMovieTitle(title = '') {
     }
   }
 
-  return cleaned || original;
+  return cleaned.replace(/\s*!+\s*$/, '').trim() || original;
 }
 
 function findHiddenMovieTitleMarker(title = '') {

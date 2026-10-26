@@ -3,108 +3,64 @@
 import { useEffect, useState } from "react";
 import styles from "./AdOrchestrator.module.css";
 
-const STORAGE_KEY = "hanhan_ad_cycle_v1";
-const CYCLE_MS = 6 * 60 * 60 * 1000; // 6 tiếng
-const POPUNDER_DELAY_MS = 10 * 60 * 1000; // 10 phút
-const BANNER_DELAY_MS = 20 * 60 * 1000; // 20 phút (10 phút sau popunder)
+const STORAGE_KEY = "hanhan_ad_last_time_v2";
+const LEGACY_STORAGE_KEY = "hanhan_ad_cycle_v1";
+const COOKIE_NAME = "hanhan_ad_seen";
+const COOLDOWN_MS = 6 * 60 * 60 * 1000; // 6 tiếng chuẩn
 
 const DIRECT_LINK_URL = "https://uplcm.com/4/11026171";
-const POPUNDER_ZONE = "11026098";
-const POPUNDER_SRC = "https://al5sm.com/tag.min.js";
-const VIGNETTE_ZONE = "11026819";
-const VIGNETTE_SRC = "https://n6wxm.com/vignette.min.js";
 
-function getCycleState() {
-  if (typeof window === "undefined") return null;
+function isWithinCooldown() {
+  if (typeof window === "undefined") return true;
+
+  // 1. Kiểm tra cookie 6 tiếng
+  if (document.cookie.includes(`${COOKIE_NAME}=`)) {
+    return true;
+  }
+
+  // 2. Kiểm tra LocalStorage
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const data = JSON.parse(raw);
-    if (data && typeof data.cycleStart === "number") {
-      if (Date.now() - data.cycleStart >= CYCLE_MS) {
-        localStorage.removeItem(STORAGE_KEY);
-        return null;
+    if (raw) {
+      const time = Number(raw);
+      if (Number.isFinite(time) && Date.now() - time < COOLDOWN_MS) {
+        return true;
       }
-      return data;
+    }
+
+    // Kế thừa mốc thời gian từ phiên bản cũ nếu còn trong 6 tiếng
+    const legacyRaw = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (legacyRaw) {
+      const legacyData = JSON.parse(legacyRaw);
+      if (legacyData && typeof legacyData.cycleStart === "number") {
+        if (Date.now() - legacyData.cycleStart < COOLDOWN_MS) {
+          localStorage.setItem(STORAGE_KEY, String(legacyData.cycleStart));
+          return true;
+        }
+      }
     }
   } catch {
     // Bỏ qua lỗi truy cập storage
   }
-  return null;
+
+  return false;
 }
 
-function saveCycleState(data) {
+function markAdShown() {
   if (typeof window === "undefined") return;
+  const now = Date.now();
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    localStorage.setItem(STORAGE_KEY, String(now));
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
   } catch {
-    // Bỏ qua lỗi
+    // Bỏ qua lỗi storage
   }
-}
-
-function activateBanner() {
-  if (typeof window === "undefined") return;
-  const currentState = getCycleState();
-  if (!currentState || currentState.bannerDone) return;
-
-  const existing = document.querySelector(`script[data-zone="${VIGNETTE_ZONE}"]`);
-  if (existing) return;
 
   try {
-    const s = document.createElement("script");
-    s.dataset.zone = VIGNETTE_ZONE;
-    s.src = VIGNETTE_SRC;
-    s.async = true;
-    s.setAttribute("data-cfasync", "false");
-    document.body.appendChild(s);
-
-    setTimeout(() => {
-      const sUpdated = getCycleState() || currentState;
-      sUpdated.bannerDone = true;
-      saveCycleState(sUpdated);
-    }, 4000);
-  } catch (err) {
-    console.warn("[AdOrchestrator] Banner error:", err);
-  }
-}
-
-function activatePopunder() {
-  if (typeof window === "undefined") return;
-  const currentState = getCycleState();
-  if (!currentState || currentState.popunderDone) return;
-
-  const existing = document.querySelector(`script[data-zone="${POPUNDER_ZONE}"]`);
-  if (existing) return;
-
-  try {
-    const s = document.createElement("script");
-    s.dataset.zone = POPUNDER_ZONE;
-    s.src = POPUNDER_SRC;
-    s.async = true;
-    s.setAttribute("data-cfasync", "false");
-    document.body.appendChild(s);
-
-    const onFirstInteraction = () => {
-      setTimeout(() => {
-        const sUpdated = getCycleState() || currentState;
-        sUpdated.popunderDone = true;
-        saveCycleState(sUpdated);
-
-        const injected = document.querySelector(`script[data-zone="${POPUNDER_ZONE}"]`);
-        if (injected) injected.remove();
-
-        window.removeEventListener("click", onFirstInteraction, true);
-
-        // Lên lịch cho giai đoạn tiếp theo: Banner sau 10 phút nữa
-        setTimeout(() => {
-          activateBanner();
-        }, 10 * 60 * 1000);
-      }, 800);
-    };
-
-    window.addEventListener("click", onFirstInteraction, true);
-  } catch (err) {
-    console.warn("[AdOrchestrator] Popunder error:", err);
+    // Cookie sống 21600 giây (6 tiếng)
+    document.cookie = `${COOKIE_NAME}=1; max-age=21600; path=/; SameSite=Lax`;
+  } catch {
+    // Bỏ qua lỗi cookie
   }
 }
 
@@ -112,74 +68,25 @@ export default function AdOrchestrator() {
   const [showOverlay, setShowOverlay] = useState(false);
 
   useEffect(() => {
-    const state = getCycleState();
-
-    // 1. GIAI ĐOẠN 1: Nếu chưa có chu kỳ (hoặc đã quá 6 tiếng) -> Kích hoạt Overlay Direct Link
-    if (!state || !state.directDone) {
+    // Kiểm tra cooldown: Nếu chưa hết 6 tiếng -> Tuyệt đối không hiện quảng cáo
+    if (!isWithinCooldown()) {
       const frame = window.requestAnimationFrame(() => {
         setShowOverlay(true);
       });
       return () => window.cancelAnimationFrame(frame);
     }
-
-    // 2. GIAI ĐOẠN 2 & 3: Kiểm tra tiến độ theo thời gian đã trôi qua
-    const now = Date.now();
-    const elapsed = now - state.cycleStart;
-
-    // A. Lên lịch Popunder (sau 10 phút)
-    if (!state.popunderDone) {
-      const popunderWait = Math.max(0, POPUNDER_DELAY_MS - elapsed);
-      const popunderTimer = setTimeout(() => {
-        activatePopunder();
-      }, popunderWait);
-
-      return () => clearTimeout(popunderTimer);
-    }
-
-    // B. Lên lịch Banner/Vignette (sau 20 phút)
-    if (state.popunderDone && !state.bannerDone) {
-      const bannerWait = Math.max(0, BANNER_DELAY_MS - elapsed);
-      const bannerTimer = setTimeout(() => {
-        activateBanner();
-      }, bannerWait);
-
-      return () => clearTimeout(bannerTimer);
-    }
-
-    // C. Khi cả 3 đã hoàn tất: Toàn bộ quảng cáo ngủ đông đến hết 6 tiếng
-    const remainingCycle = Math.max(0, CYCLE_MS - elapsed);
-    const resetTimer = setTimeout(() => {
-      try {
-        localStorage.removeItem(STORAGE_KEY);
-      } catch {
-        // Bỏ qua lỗi
-      }
-      setShowOverlay(true);
-    }, remainingCycle);
-
-    return () => clearTimeout(resetTimer);
   }, []);
 
   const handleOverlayClick = () => {
+    // Đánh dấu đã xem ngay lập tức để khóa chặt mọi quảng cáo trong 6 tiếng tiếp theo
+    markAdShown();
+    setShowOverlay(false);
+
     try {
       window.open(DIRECT_LINK_URL, "_blank", "noopener,noreferrer");
     } catch {
       // Fallback
     }
-
-    setShowOverlay(false);
-
-    const newState = {
-      cycleStart: Date.now(),
-      directDone: true,
-      popunderDone: false,
-      bannerDone: false,
-    };
-    saveCycleState(newState);
-
-    setTimeout(() => {
-      activatePopunder();
-    }, POPUNDER_DELAY_MS);
   };
 
   if (!showOverlay) {
