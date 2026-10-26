@@ -1,5 +1,7 @@
 "use client";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import MovieCard from '@/components/MovieCard/MovieCard';
+import { subscribeCatalog, getCatalogMoviesSnapshot, getServerCatalogSnapshot } from '@/lib/clientCatalog';
 import { useRouter } from 'next/navigation';
 import { getWatchProgress, pushWatchedMovie, setWatchProgress } from '@/lib/watchHistory';
 import AdSlot from '@/components/Adsense/AdSlot';
@@ -206,7 +208,7 @@ function isInteractiveKeyboardTarget(target) {
   );
 }
 
-export default function WatchClient({ movieId = '', initialMovies = [] }) {
+export default function WatchClient({ movieId = '', initialMovies = [], initialRelatedMovies = [] }) {
   const router = useRouter();
   const [movies, setMovies] = useState(() => initialMovies);
   const [isCatalogLoaded, setIsCatalogLoaded] = useState(() => Array.isArray(initialMovies) && initialMovies.length > 0);
@@ -243,6 +245,13 @@ export default function WatchClient({ movieId = '', initialMovies = [] }) {
   const [isPseudoFullscreen, setIsPseudoFullscreen] = useState(false);
   const [isControlsVisible, setIsControlsVisible] = useState(true);
   const [playerLoadError, setPlayerLoadError] = useState('');
+  const [visibleCount, setVisibleCount] = useState(10);
+
+  const cachedAllMovies = useSyncExternalStore(
+    subscribeCatalog,
+    getCatalogMoviesSnapshot,
+    getServerCatalogSnapshot
+  );
 
   const movie = movies.find(m => m.id === movieId) || movies[0] || null;
   const movieDisplayTitle = movie?.displayTitle || movie?.title;
@@ -293,6 +302,27 @@ export default function WatchClient({ movieId = '', initialMovies = [] }) {
       window.clearTimeout(fetchTimer);
     };
   }, [movieId, shouldShowEpisodes]);
+
+  const relatedMovies = useMemo(() => {
+    const pool = cachedAllMovies && Array.isArray(cachedAllMovies) && cachedAllMovies.length > 0
+      ? cachedAllMovies
+      : null;
+
+    if (!pool) return initialRelatedMovies;
+
+    const sameCategory = pool.filter(m => {
+      if (m.id === movie?.id) return false;
+      const sameSlug = movie?.categorySlug && m.categorySlug === movie?.categorySlug;
+      const sameTag = movie?.tags && m.tags && m.tags === movie?.tags;
+      return sameSlug || sameTag;
+    });
+
+    const candidateIds = new Set(sameCategory.map(m => m.id));
+    if (movie?.id) candidateIds.add(movie.id);
+
+    const filler = pool.filter(m => !candidateIds.has(m.id));
+    return [...sameCategory, ...filler].slice(0, 20);
+  }, [cachedAllMovies, initialRelatedMovies, movie]);
 
   const episodes = useMemo(() => {
     if (!movie || !shouldShowEpisodes) return [];

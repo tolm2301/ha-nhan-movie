@@ -44,6 +44,21 @@ export default async function WatchPage({ params }) {
     notFound();
   }
 
+  // Lọc 20 phim tương tự có cùng thể loại / tag, bù thêm phim nổi bật nếu thiếu
+  const allMovies = catalog.allMovies || [];
+  const sameCategoryMovies = allMovies.filter(m => {
+    if (m.id === movie.id) return false;
+    const sameSlug = movie.categorySlug && m.categorySlug === movie.categorySlug;
+    const sameTag = movie.tags && m.tags && m.tags === movie.tags;
+    return sameSlug || sameTag;
+  });
+
+  const candidateIds = new Set(sameCategoryMovies.map(m => m.id));
+  candidateIds.add(movie.id);
+
+  const fillMovies = allMovies.filter(m => !candidateIds.has(m.id));
+  const initialRelatedMovies = [...sameCategoryMovies, ...fillMovies].slice(0, 20);
+
   const breadcrumbJsonLd = buildBreadcrumbJsonLd([
     { name: 'Trang chủ', url: buildAbsoluteUrl('/') },
     { name: movie.tags || 'Phim', url: buildAbsoluteUrl(`/category/${movie.categorySlug || 'khac'}`) },
@@ -55,8 +70,12 @@ export default async function WatchPage({ params }) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toJsonLd(breadcrumbJsonLd) }} />
       {videoJsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toJsonLd(videoJsonLd) }} />}
-      <WatchClient key={movie.id} movieId={movie.id} initialMovies={[movie]} />
+      <WatchClient
+        key={movie.id}
+        movieId={movie.id}
+        initialMovies={[movie]}
+        initialRelatedMovies={initialRelatedMovies}
+      />
     </>
   );
 }
-

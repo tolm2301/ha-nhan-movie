@@ -1,9 +1,23 @@
 {
   "snapshotVersion": 1,
   "source": "db",
-  "generatedAt": "2026-10-23T07:51:44.813Z",
+  "generatedAt": "2026-10-26T03:35:33.017Z",
   "fallbackReason": null,
   "movies": [
+    {
+      "id": "pSFbA37Cxik",
+      "title": "Full P1 |  Xuyên Game Hệ Thống Bắt Tôi Tán Đổ Đại Ma Đầu ! - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/pSFbA37Cxik/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDDK_Dbx7-0QR5tcc1tVJCh_KQH0Q",
+      "tags": "Hệ Thống",
+      "rating": "N/A",
+      "sortOrder": 0
+    },
     {
       "id": "Y4wgVkXQozQ",
       "title": "Hà Nhân Xuyên Không | Hà Nhân Giả Điên, Trở Thành Thần Tài Của Hoàng Đế | Full Version | Hà Nhân Sub",
@@ -185,6 +199,20 @@
       "tags": "Hà Nhân",
       "rating": "N/A",
       "sortOrder": 0
+    },
+    {
+      "id": "xm15ZRmuQnI",
+      "title": "Full P1 |  Xuyên Thành Pháo Hôi Mạt Thế, Tôi Được Nam Chính Vỗ Béo ! - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/xm15ZRmuQnI/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLB5mTygqKGDrIRQIaeJJ4C0oVfwCg",
+      "tags": "Xuyên Không",
+      "rating": "N/A",
+      "sortOrder": 1
     },
     {
       "id": "8B8lvhx-9Ag",
@@ -409,6 +437,20 @@
       "tags": "Hà Nhân",
       "rating": "N/A",
       "sortOrder": 1
+    },
+    {
+      "id": "_HJ6goOZssk",
+      "title": "Full P1 |  Trọng Sinh Tôi Gói Gém A Phụ Gả Cho Nữ Thủ Lĩnh Tộc Hổ ! - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/_HJ6goOZssk/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBkyUgI1Uy6wIMGS2c3wWH55AqJBw",
+      "tags": "Trọng Sinh",
+      "rating": "N/A",
+      "sortOrder": 2
     },
     {
       "id": "VKdsQoAZ3oI",
@@ -649,6 +691,20 @@
       "sortOrder": 2
     },
     {
+      "id": "XRmDZ07bfYk",
+      "title": "Full P1 | Tôi Chỉ Muốn Nhận Lương, Nam Chính Lại Đòi Cưới Tôi ! - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/XRmDZ07bfYk/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLA8RmjEQSE0htTGJusWqsgU_yb1PA",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 3
+    },
+    {
       "id": "aO5X1GZQ-jE",
       "title": "Full End | Giả Làm Phản Tặc, Hà Nhân Nắm Quyền Vạn Quân | Hà Nhân Xuyên Không | Hà Nhân Sub",
       "episodes": "Full",
@@ -873,6 +929,20 @@
       "sortOrder": 3
     },
     {
+      "id": "npBnEVDT6I0",
+      "title": "Full P1 | Mạt Thế: Ta Dựa Vào Nằm Mơ Để Cày Max Thần Kỹ ! - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/npBnEVDT6I0/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDklwyZKZ9zXLcL1vlklGJMe7E41Q",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 4
+    },
+    {
       "id": "9-A1kc-4kV4",
       "title": "Full End | Hà Nhân Càng Giả Ngốc Càng Được Trọng Dụng | Hà Nhân Xuyên Không | Hà Nhân Sub",
       "episodes": "Full",
@@ -1083,6 +1153,20 @@
       "sortOrder": 4
     },
     {
+      "id": "96kByJjREyQ",
+      "title": "Full Bộ | Sau Khi Chia Tay, Tổng Tài Vẫn Đứng Đợi Tôi ! - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/96kByJjREyQ/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAGfJ4D0csLhOyUdGd7SbXn9PoXCQ",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 5
+    },
+    {
       "id": "g8IpTIcpDlc",
       "title": "Full Version | Hệ Thống Triệu Hồi Danh Tướng, Hà Nhân Xưng Đế Đại Tần | Hà Nhân Xuyên Không",
       "episodes": "Full",
@@ -1235,6 +1319,20 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 5
+    },
+    {
+      "id": "gUBKYi5hQJE",
+      "title": "Full P2 | Phi Vụ \"Bẻ Thẳng\" Bạn Thân Của Anh Trai , Ai Ngờ Trêu Nhầm Cáo Già Ngàn Năm! - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/gUBKYi5hQJE/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAHXPEOr32AN9h3Gn8NF9WkWifPFQ",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 6
     },
     {
       "id": "evVBXS9gSJA",
@@ -1447,6 +1545,20 @@
       "sortOrder": 6
     },
     {
+      "id": "5dBMOvYOYio",
+      "title": "Full Bộ | Góa Phụ Quán Hoành Thánh Nhập Bẫy Tình Của Trúc Quân Tử ! - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/5dBMOvYOYio/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCfTYm7WF7fKxNAzGE0T2sOZHBi6A",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 7
+    },
+    {
       "id": "Yi5bw4CscgI",
       "title": "Full End | Hà Nhân Đấu Trí Với Thế Gia Đại Đường | Hà Nhân Xuyên Không | Hà Nhân Sub",
       "episodes": "Full",
@@ -1599,6 +1711,20 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 7
+    },
+    {
+      "id": "xmQ6PwWrp_Q",
+      "title": "Full - P1 | Vượt Qua Gai Góc Để Ôm Lấy Em! - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/xmQ6PwWrp_Q/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLB9brJ_wzUT5RcH2ld1fmZNUMX_8Q",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 8
     },
     {
       "id": "MTbPKMPoDG0",
@@ -1811,6 +1937,20 @@
       "sortOrder": 8
     },
     {
+      "id": "C40W2l0en40",
+      "title": "Full Bộ | Khổng Tước Vương Và Cô Vợ Heo Rừng ! - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/C40W2l0en40/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDr5XNkwdD4GK8lhfVgOlWF21huyA",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 9
+    },
+    {
       "id": "pKaxKUk5o1Y",
       "title": "Full End | Hà Nhân Làm Giàu Chấn Động Thiên Hạ, Đại Phá Quân Tây Lương | Hà Nhân Xuyên Không",
       "episodes": "Full",
@@ -1965,6 +2105,20 @@
       "sortOrder": 9
     },
     {
+      "id": "xUBVlCPhW6U",
+      "title": "Full Bộ | Hợp Đồng Săn Thỏ Của Bác Thiếu ! - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/xUBVlCPhW6U/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBULuTh2Pj4lWzOFoPA0jjb4YJzXw",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 10
+    },
+    {
       "id": "skDxL1Cj4Ps",
       "title": "Full End | Hà Nhân Dùng Luật Đại Minh Đấu Tham Quan | Hà Nhân Xuyên Không | Hà Nhân Sub",
       "episodes": "Full",
@@ -2089,6 +2243,20 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 10
+    },
+    {
+      "id": "fLegj8uINBE",
+      "title": "Full - P1 | Bỏ Công Lược Nam Chính, Tôi Mang Theo NPC Nhặt Rác Xưng Vương! - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/fLegj8uINBE/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDWLF7ByAFPcgWkhJ0xAWbOysbhkw",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 11
     },
     {
       "id": "bMzT2swF6vs",
@@ -2245,6 +2413,20 @@
       "sortOrder": 11
     },
     {
+      "id": "uhJmUzW6wsU",
+      "title": "Full Bộ | Kịch Bản Lệch Quỹ Đạo: Trúc Mã Chỉ Yêu Thanh Mai ! - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/uhJmUzW6wsU/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLA63uoYm9EsG5Zg94dd1RrfWa8JRg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 12
+    },
+    {
       "id": "vQvwCVYW5jo",
       "title": "Full End | Hà Nhân Cứu Đại Tần Khỏi Vận Mệnh Diệt Vong | Hà Nhân Xuyên Không | hà Nhân Sub",
       "episodes": "Full",
@@ -2383,6 +2565,20 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 12
+    },
+    {
+      "id": "OwbGLLPRzBM",
+      "title": "Full Bộ | Xuyên Game Thú Thế: Ta Bị \"Ác Bá Xà Vương\" Quấn Lấy ! - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/OwbGLLPRzBM/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCzUoUYLkzUJolVjdiGecd_C3p6oA",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 13
     },
     {
       "id": "toxh2Vl0hGo",
@@ -2525,6 +2721,20 @@
       "sortOrder": 13
     },
     {
+      "id": "CG5gZuYQo6M",
+      "title": "Full P2 | Tỏ Tình Học Thần Bị Phũ, Tôi Kích Hoạt Luôn Thuật Đọc Tâm - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/CG5gZuYQo6M/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDvemD5WphxYLlOyrWa1Z-D8zOW9w",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 14
+    },
+    {
       "id": "o7qwxHTwiTc",
       "title": "Full End | Hà Nhân Xây Dựng Thế Lực Hùng Mạnh | Hà Nhân Xuyên Không | Hà Nhân Sub",
       "episodes": "Full",
@@ -2635,6 +2845,20 @@
       "tags": "Khác",
       "rating": "N/A",
       "sortOrder": 14
+    },
+    {
+      "id": "DBbvJiyeoyA",
+      "title": "Full Bộ | Cha Thiếu Soái, Con Tìm Thấy Mẹ Rồi ! - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/DBbvJiyeoyA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDzMKpznOddElCeYMYWd0RvQtVgQQ",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 15
     },
     {
       "id": "tIe2pL8mjSI",
@@ -2749,6 +2973,20 @@
       "sortOrder": 15
     },
     {
+      "id": "Ofr1m5Nna90",
+      "title": "Full - P1 | Trò Chơi Săn Mồi Của Kẻ Bị Ruồng Bỏ - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/Ofr1m5Nna90/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLA8I_BsA3RIbsTRdha2NU0Snsvm6A",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 16
+    },
+    {
       "id": "SqDclW-Ftkc",
       "title": "Full End | Trí Tuệ Của Hà Nhân Cứu Cả Đại Đường | Hà Nhân Xuyên Không | Hà Nhân Sub",
       "episodes": "Full",
@@ -2861,6 +3099,20 @@
       "sortOrder": 16
     },
     {
+      "id": "LtHnyI8FCCM",
+      "title": "Full Bộ | Từ Nữ Sinh Nghèo Thành Chủ Nợ Của Tứ Đại Tài Phiệt - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/LtHnyI8FCCM/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC2T6_l_VFu3U24Axe9Ad5YlJBxLg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 17
+    },
+    {
       "id": "ix5bVMyVcRs",
       "title": "Full End | Hà Nhân Dùng Trí Tuệ Khuấy Đảo Kinh Châu | Hà Nhân Xuyên Không | Hà Nhân Sub",
       "episodes": "Full",
@@ -2929,6 +3181,20 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 17
+    },
+    {
+      "id": "ck4xZEYP2zI",
+      "title": "Full - P1 | Nhật Ký Lách Luật Của Thiên Kim Giả - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/ck4xZEYP2zI/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLD4p8qtEMRA45mWJasHUk-w99l31A",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 18
     },
     {
       "id": "kuPtqZ4Xw8Q",
@@ -3015,6 +3281,20 @@
       "sortOrder": 18
     },
     {
+      "id": "qGlWMf1Tngo",
+      "title": "Full P2 | Dựa Vào Thể Chất May Mắn, Tôi Biến Vali Thành Vũ Khí Hủy Diệt Phó Bản! - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/qGlWMf1Tngo/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCYS1AG4lxNkgmflnPO-c8dbx-yOQ",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 19
+    },
+    {
       "id": "gb79aoT5D7Q",
       "title": "Full End | Kẻ Ăn Xin Hà Nhân Kế Vị Đại Minh | Hà Nhân Xuyên Không | Hà Nhân Sub",
       "episodes": "Full",
@@ -3099,6 +3379,20 @@
       "sortOrder": 19
     },
     {
+      "id": "9KhorxvJ_pc",
+      "title": "Full - P1 | Toàn Cầu Sinh Tồn: Người Ta Chạy Trốn, Ta Đuổi Quái Vật Vào Nồi  - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/9KhorxvJ_pc/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCy3i72lTu2vpTb66yYtJZTMPR8xw",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 20
+    },
+    {
       "id": "7egigjRq8M8",
       "title": "Full End | Xuyên Không Tam Quốc, Hà Nhân Trở Thành Đệ Nhất Thần Tướng | Hà Nhân Xuyên Không",
       "episodes": "Full",
@@ -3153,6 +3447,20 @@
       "tags": "Liễu Như Yên",
       "rating": "N/A",
       "sortOrder": 20
+    },
+    {
+      "id": "_RoLpngj1AU",
+      "title": "Full - P1 | Nữ Vương Trở Lại: Át Chủ Bài Giới Sát Thủ!  - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/_RoLpngj1AU/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDuzKTIDSBJ9ug_5Y1LQIOzehzIWw",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 21
     },
     {
       "id": "PliZGA2ouZo",
@@ -3225,6 +3533,20 @@
       "sortOrder": 21
     },
     {
+      "id": "DWnje4vjSiI",
+      "title": "Full - P1 | Thiên Kim Thật Bật Chế Độ '' Bất Cần '' Tôi Mới Là Quy Củ!  - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/DWnje4vjSiI/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBxCpaHTwJd4-UHShKdTKExw5qN9A",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 22
+    },
+    {
       "id": "KCLU8sxo1Cs",
       "title": "Full End | Huyện Lệnh Hà Nhân Cứu Vạn Dân | Hà Nhân Xuyên Không | Hà Nhân Sub",
       "episodes": "Full",
@@ -3295,6 +3617,20 @@
       "sortOrder": 22
     },
     {
+      "id": "oMwqizYZPUk",
+      "title": "Full - P1 | Xuyên Vào Phó Bản Quỷ Dị : Tôi Dắt Chồng Yêu Đi Vượt Ải  - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/oMwqizYZPUk/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC9AUJ-O_tx1SsYkQossuTlSBoJew",
+      "tags": "Xuyên Không",
+      "rating": "N/A",
+      "sortOrder": 23
+    },
+    {
       "id": "jrcdsMfGUuA",
       "title": "Full End | Thiên Tài Hà Nhân Luyện Binh Dẹp Loạn Hà Nhân Xuyên Không | Hà Nhân Sub",
       "episodes": "Full",
@@ -3363,6 +3699,20 @@
       "tags": "Liễu Như Yên",
       "rating": "N/A",
       "sortOrder": 23
+    },
+    {
+      "id": "tSlE71b4to4",
+      "title": "Full Bộ | Phu Nhân Trùng Sinh Không Dễ Chọc - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/tSlE71b4to4/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAQMyH844ViWuKaTQ1LajRSn339LQ",
+      "tags": "Trọng Sinh",
+      "rating": "N/A",
+      "sortOrder": 24
     },
     {
       "id": "NTU5eaqf4BA",
@@ -3449,6 +3799,20 @@
       "sortOrder": 24
     },
     {
+      "id": "NB3ujVbos4w",
+      "title": "Full - P1 | Nội Gián Si Tình: Công Lược Trùm Phản Diện  - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/NB3ujVbos4w/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDv1qR9doRu3vLgGxc8bGg5FUCLZA",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 25
+    },
+    {
       "id": "kS1WCmHX6z0",
       "title": "Full End | Lục Hoàng Tử Hà Nhân Thay Đổi Vận Mệnh Đại Minh | Hà Nhân Xuyên Không | Hà Nhân Sub",
       "episodes": "Full",
@@ -3517,6 +3881,20 @@
       "tags": "Liễu Như Yên",
       "rating": "N/A",
       "sortOrder": 25
+    },
+    {
+      "id": "DYi1nXL51vY",
+      "title": "Full - P1 | Xuyên Thành Tang Thi: Đập Tan Hào Quang Nam Nữ Chính  - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/DYi1nXL51vY/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC_Q-LaXUJkPXU-6Z6DaDuoUDtDHw",
+      "tags": "Xuyên Không",
+      "rating": "N/A",
+      "sortOrder": 26
     },
     {
       "id": "GladGihmNFY",
@@ -3589,6 +3967,20 @@
       "sortOrder": 26
     },
     {
+      "id": "OX8ZPeHOrKY",
+      "title": "Full Bộ | Tình Địch Của Chồng Lại Là... Anh Ấy Năm 18 Tuổi - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/OX8ZPeHOrKY/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAJoYudR89o3hYgtQbbeVXwxtEtrQ",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 27
+    },
+    {
       "id": "Ewx50tWi5i4",
       "title": "Full End | Hà Nhân Bị Gia Tộc Ruồng Bỏ Nhưng Lại Thành Thiên Tài Khoa Cử | Hà Nhân Xuyên Không",
       "episodes": "Full",
@@ -3631,6 +4023,20 @@
       "sortOrder": 27
     },
     {
+      "id": "lGt3ddQiAPQ",
+      "title": "Full P4 | Tôi Làm Thây Ma Mua Vui Cho Đại Phản Diện - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/lGt3ddQiAPQ/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCp9Z0sSriZe66KapRuKzvPg0tqOA",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 28
+    },
+    {
       "id": "nIYN0XKVLSQ",
       "title": "Full End | Hoàng Trưởng Tôn Hà Nhân, Vạch Trần Âm Mưu Tranh Đoạt Ngôi Vị | Hà Nhân Xuyên Không",
       "episodes": "Full",
@@ -3671,6 +4077,20 @@
       "tags": "Liễu Như Yên",
       "rating": "N/A",
       "sortOrder": 28
+    },
+    {
+      "id": "3dqZTt2oItk",
+      "title": "Full Bộ | Khắc Tinh Ngọt Ngào Của Lãnh Diện Vương - Amy Sub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/3dqZTt2oItk/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDTay1R9eE6ls4MW1dDD-PObyTWZA",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 29
     },
     {
       "id": "jlqgDvvGPjs",
@@ -3729,6 +4149,20 @@
       "sortOrder": 29
     },
     {
+      "id": "wr67IMgoRAQ",
+      "title": "(Full) Hệ Thống Ép Giả Làm Con Trai Ai Ngờ Lại Là Nam Thần Top 1! | TTD Vietsub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/wr67IMgoRAQ/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDT1dDd3b5TpxJahyasxWm2b2_oDQ",
+      "tags": "Hệ Thống",
+      "rating": "N/A",
+      "sortOrder": 30
+    },
+    {
       "id": "VkX5ZQe0kCw",
       "title": "( FULL VERSION) Phong Vân Bá Nghiệp | Hà Nhân Cartoon",
       "episodes": "Full",
@@ -3785,6 +4219,20 @@
       "sortOrder": 30
     },
     {
+      "id": "hf6fqz-DSv8",
+      "title": "(Full) Vợ Muốn Làm Bồ Nhí Của Sếp, Tôi Đi \"AN ỦI\" Vợ Chủ Tịch! | TTD Vietsub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/hf6fqz-DSv8/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLD2uLNihTwz9KUUg0V6YSfoTt2YFA",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 31
+    },
+    {
       "id": "JzgyNr2YLmU",
       "title": "( FULL VERSION) Đại Hán Thất Hoàng Tử | Hà Nhân Cartoon",
       "episodes": "Full",
@@ -3825,6 +4273,20 @@
       "tags": "Khác",
       "rating": "N/A",
       "sortOrder": 31
+    },
+    {
+      "id": "eTVVsw0i_zM",
+      "title": "(Full) Giải Thoát Cho Cuộc Tình Đôi Ta | TTD Vietsub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/eTVVsw0i_zM/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDNULDYo4I8QEki_uUUv9tIyyf0pg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 32
     },
     {
       "id": "dvHfrpd4WCM",
@@ -3897,6 +4359,20 @@
       "sortOrder": 32
     },
     {
+      "id": "PGaVyH1-P9k",
+      "title": "(Full) Kiếp Này Tôi Húp Chị Gái Của Em! | TTD Vietsub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/PGaVyH1-P9k/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLD3uyYOq2qRWGVhmjRpjY4miaPOvA",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 33
+    },
+    {
       "id": "D735btCukxU",
       "title": "( FULL VERSION) Đại Hạ Đế Vương | Hà Nhân Cartoon",
       "episodes": "Full",
@@ -3951,6 +4427,20 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 33
+    },
+    {
+      "id": "STJhppm3NzA",
+      "title": "(Full) Tôi Là Thế Thân Của 2 Tiểu Thư Yandere! | TTD Vietsub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/STJhppm3NzA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBtndbrQNnTyBQ8MMnXj05Pask9yw",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 34
     },
     {
       "id": "ZhuYV__gntE",
@@ -4009,6 +4499,20 @@
       "sortOrder": 34
     },
     {
+      "id": "9IkJV-duIAk",
+      "title": "(Full) Nhặt Được Hoa Khôi Trong Đêm Mưa! Tôi Đưa Cô Ấy Về Nhà... | TTD Vietsub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/9IkJV-duIAk/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCYtS1PDNYhwFW2Sqpx8f0MxPxf1g",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 35
+    },
+    {
       "id": "GyVSNajki4A",
       "title": "( FULL VERSION ) Đại Minh Đệ Nhất Tham Quan | Hà Nhân Xuyên Không | Hà Nhân Cartoon",
       "episodes": "Full",
@@ -4049,6 +4553,20 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 35
+    },
+    {
+      "id": "oQwZONTMYCo",
+      "title": "(Full 1-15) Trong Đầu Cô Nàng Hoa Khôi Lạnh Lùng Có Gì? | TTD Vietsub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/oQwZONTMYCo/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDe0KiHGYafdEQzmf-zrowHKwUQRg",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 36
     },
     {
       "id": "ULP99cSzuOk",
@@ -4107,6 +4625,20 @@
       "sortOrder": 36
     },
     {
+      "id": "liOm2OYaELc",
+      "title": "(Full) Tôi Nhặt Tiểu Thư Yandere Về Làm Vợ Cưng Chiều! | TTD Vietsub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/liOm2OYaELc/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDx2bKbOlU_kBIG5GtmBY7XqJFYrA",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 37
+    },
+    {
       "id": "Ri5wbIq8ZzU",
       "title": "( FULL VERSION) Đại Đường Hà Quốc Công | Hà Nhân Cartoon",
       "episodes": "Full",
@@ -4147,6 +4679,20 @@
       "tags": "Trọng Sinh",
       "rating": "N/A",
       "sortOrder": 37
+    },
+    {
+      "id": "UzHqcWjwZnA",
+      "title": "(Full) Nhật Kí Của Kẻ Phản Bội Em! | TTD Vietsub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/UzHqcWjwZnA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDRMJVt0_hxAlEVLiMHBDOixid8-Q",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 38
     },
     {
       "id": "Y3v8Vi0JTkk",
@@ -4219,6 +4765,20 @@
       "sortOrder": 38
     },
     {
+      "id": "K4Ay76OynVw",
+      "title": "(Full) Em Gái Tôi Là Đệ Nhất Tiểu Thư Kinh Thành! | TTD Vietsub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/K4Ay76OynVw/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAa4Fbs7VdHZOqevf0IfyiMEk98zw",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 39
+    },
+    {
       "id": "5rRAUuoDWGQ",
       "title": "( FULL VERSION) Hà Nhân Tiểu Thần Y | Hà Nhân Cartoon",
       "episodes": "Full",
@@ -4273,6 +4833,20 @@
       "tags": "Khác",
       "rating": "N/A",
       "sortOrder": 39
+    },
+    {
+      "id": "22Cv1k4Lymw",
+      "title": "(Full) Kẻ Huấn Luyện \"CHÓ Con\"! | TTD Vietsub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/22Cv1k4Lymw/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBtjrbmoHtxyBsGcma-q15tg2wEqQ",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 40
     },
     {
       "id": "0o6NSvE1WkE",
@@ -4345,6 +4919,20 @@
       "sortOrder": 40
     },
     {
+      "id": "8vHZfWdcPxw",
+      "title": "(Full 1-15) Tôi Lười! Không Yêu Cô Nữa | TTD Vietsub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/8vHZfWdcPxw/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAw8hnkLs2SLq1TaObkPm7gwzAwdA",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 41
+    },
+    {
       "id": "SpM2EtuSvPo",
       "title": "Mặc kệ đối thủ hãm hại, bé con mang theo phúc khí dẫn cả làng đi lên làm giàu",
       "episodes": "Full",
@@ -4399,6 +4987,20 @@
       "tags": "Liễu Như Yên",
       "rating": "N/A",
       "sortOrder": 41
+    },
+    {
+      "id": "qwnxrppkrOc",
+      "title": "(Full 1-121) Hoa Khôi Bàn Bên Vẫn Luôn Thầm Yêu Tôi! | TTD Vietsub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/qwnxrppkrOc/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLA3DdDKqEmXStNLYJVs14kGuzVrog",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 42
     },
     {
       "id": "-VNSlq_kc1w",
@@ -4457,6 +5059,20 @@
       "sortOrder": 42
     },
     {
+      "id": "Hlk_pxBSYfg",
+      "title": "(Full) Giả Vờ Mệt Quá, \"CHAN\" Nhau Luôn Đi! | TTD Vietsub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/Hlk_pxBSYfg/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLB4YhwEy4IIA0KqXuTDAeda46_FlA",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 43
+    },
+    {
       "id": "0cnb_SnFBio",
       "title": "Bé gái nhờ nghe hiểu tiếng muôn thú mà dẫn cả làng đổi đời trở nên giàu có sung túc",
       "episodes": "Full",
@@ -4511,6 +5127,20 @@
       "tags": "Xuyên Không",
       "rating": "N/A",
       "sortOrder": 43
+    },
+    {
+      "id": "qQb54F03hls",
+      "title": "(Full) Tôi BỖng Nhặt Được Hoa Khôi Lạnh Lùng! | TTD Vietsub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/qQb54F03hls/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDWsBEceCOfnGQU4ez7Voif0Q0eoA",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 44
     },
     {
       "id": "Q1RUIwyt6WE",
@@ -4569,6 +5199,20 @@
       "sortOrder": 44
     },
     {
+      "id": "z44kIF_Z1OA",
+      "title": "(Full) Đố Anh Chạy Thoát Khỏi Tay Em! Yandere Vó Tu | TTD Vietsub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/z44kIF_Z1OA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLA1t88wjDoh6uL6nhPx-ZgzUPvdog",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 45
+    },
+    {
       "id": "JE6rEyimk-4",
       "title": "Cô tiểu thư đi xem mắt nhầm bàn lại vô tình trúng bàn tổng tài giàu có cưng chiều vợ",
       "episodes": "Full",
@@ -4623,6 +5267,20 @@
       "tags": "Liễu Như Yên",
       "rating": "N/A",
       "sortOrder": 45
+    },
+    {
+      "id": "cFzHvUjU3fc",
+      "title": "(Full 1-130) Tôi Lỡ Yêu Nhầm Bà Trùm Xã Hội Đen! | TTD Vietsub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/cFzHvUjU3fc/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLADjB_QUjIYkEozecr_zbMMUR0-oA",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 46
     },
     {
       "id": "FKUD-bbjveg",
@@ -4681,6 +5339,20 @@
       "sortOrder": 46
     },
     {
+      "id": "URxcgr0FOY4",
+      "title": "(Full 1-5) Ở Trường Em Là Hoa Khôi, Về Nhà Em Là Yandere! | TTD Vietsub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/URxcgr0FOY4/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLD_dB83nNgZ5Jj8bcEP0zUXXJiZZw",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 47
+    },
+    {
       "id": "b6DhR_V_DLs",
       "title": "Tiểu sư muội cầm kiếm xuống tìm kiếm 5 vị sư huynh đã mất tích 700 năm khiến cả tông môn kinh ngạc",
       "episodes": "Full",
@@ -4735,6 +5407,20 @@
       "tags": "Liễu Như Yên",
       "rating": "N/A",
       "sortOrder": 47
+    },
+    {
+      "id": "sX8Y4caxBeI",
+      "title": "(Full) Cốt Cũ Bỗng Hoá Gái Xinh Rồi Ép Tôi Cưới!! | TTD Vietsub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/sX8Y4caxBeI/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBLwUxITQ_jxdSfHmfO101O6-8JNA",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 48
     },
     {
       "id": "KakBy3ptll0",
@@ -4793,6 +5479,20 @@
       "sortOrder": 48
     },
     {
+      "id": "ah7C33NWM_E",
+      "title": "(Full) Đang Học Tôi Ngủ... Hoa Khôi Lạnh Lùng! | TTD Vietsub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/ah7C33NWM_E/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDWVyz_HoSi8pVsb87TLDju5rt6ow",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 49
+    },
+    {
       "id": "Tsqd2gDxtLE",
       "title": "Phát hiện mình còn một cô con gái, tổng tài dùng cả gia sản chỉ để đổi lấy hai mẹ con cô trở về",
       "episodes": "Full",
@@ -4847,6 +5547,20 @@
       "tags": "Khác",
       "rating": "N/A",
       "sortOrder": 49
+    },
+    {
+      "id": "0xyXa5z15kc",
+      "title": "(Full) Thiếu Gia 10 TỆ Xiên Bẩn! | TTD Vietsub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/0xyXa5z15kc/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAo-SCXKOdb_Ir4sGCSDIqyxewy8Q",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 50
     },
     {
       "id": "Pk85yknde_w",
@@ -4905,6 +5619,20 @@
       "sortOrder": 50
     },
     {
+      "id": "_TkRLvaC9b4",
+      "title": "(Full) Kế Hoạch \"Ăn\" Hoa Khôi Nghèo! | TTD Vietsub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/_TkRLvaC9b4/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCPFdV6FNPQIMSbJoFXk00pMxuIKA",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 51
+    },
+    {
       "id": "-dt6BYfgKc4",
       "title": "Bé con chạy vào nhà tài phiệt tìm bố ai dè nhờ vậy mà se lại duyên xưa cho bố mẹ mình",
       "episodes": "Full",
@@ -4961,6 +5689,20 @@
       "sortOrder": 51
     },
     {
+      "id": "naRfQjsLzEM",
+      "title": "(Full) Không Làm THiếu Gia Giả Nữa, Về Làm Chồng Chị Đi! | TTD Vietsub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/naRfQjsLzEM/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLD0bDe2m4oQbTdF9KiCIkPeAZ5vwA",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 52
+    },
+    {
       "id": "34JUqf6ruwU",
       "title": "Nữ đế sống lại trong thân xác của một em bé mà không ngờ bố của đứa trẻ lại là kẻ thù kiếp trước",
       "episodes": "Full",
@@ -5001,6 +5743,20 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 52
+    },
+    {
+      "id": "9XI5SfU5xYw",
+      "title": "(Full) Nguyện Chết Chỉ Để Báo Thù CHo CHị! | TTD Vietsub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/9XI5SfU5xYw/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCtBG_Wh5AT9p-vwsrt6PCxbim1Ew",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 53
     },
     {
       "id": "-zeeLLKB5uE",
@@ -5045,6 +5801,20 @@
       "sortOrder": 53
     },
     {
+      "id": "88ZM-XVEwYg",
+      "title": "(Full 1-100) Tổng Tài Yandere DÙng Hàng NÓng Ép Tôi ẤY ẤY! | TTD Vietsub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/88ZM-XVEwYg/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCLyPGAXDxMTrX8-tqjIfkJzKViUw",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 54
+    },
+    {
       "id": "IvcBIdTEZWI",
       "title": "Bé con phúc tinh được nhận nuôi, nào ngờ chỉ nhờ một nồi lẩu mà giúp cả gia đình lội ngược dòng",
       "episodes": "Full",
@@ -5085,6 +5855,20 @@
       "tags": "Tu Tiên",
       "rating": "N/A",
       "sortOrder": 54
+    },
+    {
+      "id": "3kgZtsABI1c",
+      "title": "(Full) Hôn Tớ Đi! Thì Tớ Không Nói Nữa | TTD Vietsub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/3kgZtsABI1c/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDZIyApFmq3jKglEzFYU48HzcBq0g",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 55
     },
     {
       "id": "PPUuJwHxIcA",
@@ -5129,6 +5913,20 @@
       "sortOrder": 55
     },
     {
+      "id": "RkRIC3N_suo",
+      "title": "(Full) Vợ Bắt Tôi Chết Thay Cho Bạch Nguyệt Quang! | TTD Vietsub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/RkRIC3N_suo/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDiPVyWmoEOUrua2SigzTEQfHwhWQ",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 56
+    },
+    {
       "id": "X3TdcGS_DLQ",
       "title": "Tiểu phúc tinh ba tuổi nhờ nghe được tiếng của cây cỏ mà dùng y thuật xoay chuyển thế cục ngoạn mục",
       "episodes": "Full",
@@ -5171,6 +5969,20 @@
       "sortOrder": 56
     },
     {
+      "id": "2jeoG9Z2Weg",
+      "title": "(Full 1-80) Mối Tình Đầu Mùa Hạ Năm Ấy...! | TTD Vietsub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/2jeoG9Z2Weg/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLASQFUCuZaY3cYfykkIfHRJULZCCw",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 57
+    },
+    {
       "id": "6Q0zva4FPKc",
       "title": "Bé con 6 tuổi mang theo không gian thần kỳ giúp mẹ thoát cảnh khốn cùng thay đổi số phận",
       "episodes": "Full",
@@ -5211,6 +6023,20 @@
       "tags": "Hệ Thống",
       "rating": "N/A",
       "sortOrder": 57
+    },
+    {
+      "id": "yzSFRvow8i8",
+      "title": "(Full) Kiếp Trước Tôi Liếm, Kiếp Này Thì Biến! | TTD Vietsub",
+      "episodes": "Full",
+      "episodeLabel": "Full",
+      "episodeNumber": null,
+      "type": "full",
+      "seriesKey": "",
+      "views": "NaNK views",
+      "thumbnail": "https://i.ytimg.com/vi/yzSFRvow8i8/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBILlFMxdqCZh4iksQH0Tfb5Mm_gQ",
+      "tags": "Khác",
+      "rating": "N/A",
+      "sortOrder": 58
     },
     {
       "id": "JNjR8gpKrjs",
