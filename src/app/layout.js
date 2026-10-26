@@ -4,7 +4,7 @@ import Header from '@/components/Header/Header';
 import { SITE_DESCRIPTION, SITE_NAME, getSiteUrl } from '@/lib/seo';
 import { getCategoryMenu } from '@/lib/data';
 import AutoRefresh from '@/components/AutoRefresh/AutoRefresh';
-import MonetagAd from '@/components/MonetagAd/MonetagAd';
+import AdOrchestrator from '@/components/AdOrchestrator/AdOrchestrator';
 
 const inter = Inter({ subsets: ['latin', 'vietnamese'], weight: ['300', '400', '600', '700'] });
 
@@ -40,7 +40,7 @@ export default async function RootLayout({ children }) {
       <body className={inter.className}>
         <Header initialCategoryMenu={categoryMenu} />
         <AutoRefresh />
-        <MonetagAd />
+        <AdOrchestrator />
         <div>{children}</div>
       </body>
     </html>

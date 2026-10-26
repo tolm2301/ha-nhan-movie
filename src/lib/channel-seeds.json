@@ -113,5 +113,35 @@
     "priority": 50,
     "qualityScore": 5,
     "lastCrawledAt": null
+  },
+  {
+    "id": "tedevietsub",
+    "slug": "tedevietsub",
+    "channelUrl": "https://www.youtube.com/@tedevietsub",
+    "displayName": "Tede - Vietsub hoạt hình 2D",
+    "category": "khac",
+    "status": "active",
+    "enabled": true,
+    "trustedBrand": false,
+    "allowed": true,
+    "blocked": false,
+    "priority": 50,
+    "qualityScore": 5,
+    "lastCrawledAt": null
+  },
+  {
+    "id": "amysub-ml5hp",
+    "slug": "amysub-ml5hp",
+    "channelUrl": "https://www.youtube.com/@AmySub-ml5hp",
+    "displayName": "AmySub - film AI",
+    "category": "khac",
+    "status": "active",
+    "enabled": true,
+    "trustedBrand": false,
+    "allowed": true,
+    "blocked": false,
+    "priority": 50,
+    "qualityScore": 5,
+    "lastCrawledAt": null
   }
 ]
