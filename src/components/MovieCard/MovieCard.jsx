@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { buildFallbackThumbnailUrl, hasRenderableThumbnail } from '@/lib/thumbnailFilters';
+import { hasRenderableThumbnail, markMovieUnavailable } from '@/lib/thumbnailFilters';
 import styles from './MovieCard.module.css';
 
 export default function MovieCard({
@@ -11,7 +11,6 @@ export default function MovieCard({
   removeMovieLabel = 'Xóa khỏi danh sách tiếp tục xem',
 }) {
   const displayTitle = movie?.displayTitle || movie?.title || 'Phim đang cập nhật tên';
-  const fallbackThumbnail = buildFallbackThumbnailUrl(movie);
 
   const [prevMovieId, setPrevMovieId] = useState(movie?.id);
   const [hasError, setHasError] = useState(false);
@@ -23,20 +22,22 @@ export default function MovieCard({
 
   const canRemove = typeof onRemoveMovie === 'function';
 
-  if (!movie?.id) {
+  // ponytail: hide broken/unavailable movies completely rather than rendering synthetic fallback cards
+  if (!movie?.id || hasError || !hasRenderableThumbnail(movie)) {
     return null;
   }
 
-  const thumbSrc = hasError
-    ? fallbackThumbnail
-    : (hasRenderableThumbnail(movie) && movie?.thumbnail ? movie.thumbnail : fallbackThumbnail);
+  const thumbSrc = movie.thumbnail;
 
   const handleImageError = () => {
+    markMovieUnavailable(movie.id);
     setHasError(true);
   };
 
   const handleImageLoad = (event) => {
+    // YouTube's unavailable / broken placeholder image has dimensions 120x90
     if (event.currentTarget.naturalWidth <= 120) {
+      markMovieUnavailable(movie.id);
       setHasError(true);
     }
   };

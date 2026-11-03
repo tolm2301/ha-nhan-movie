@@ -2,12 +2,11 @@
 /* eslint-disable @next/next/no-img-element */
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { buildFallbackThumbnailUrl, getRenderableThumbnail } from '@/lib/thumbnailFilters';
+import { hasRenderableThumbnail, markMovieUnavailable } from '@/lib/thumbnailFilters';
 import styles from './Hero.module.css';
 
-export default function Hero({ featuredMovie }) {
+export default function Hero({ featuredMovie, onMovieUnavailable }) {
   const featuredTitle = featuredMovie?.displayTitle || featuredMovie?.title;
-  const fallbackThumbnail = buildFallbackThumbnailUrl(featuredMovie);
 
   const [prevMovieId, setPrevMovieId] = useState(featuredMovie?.id);
   const [hasError, setHasError] = useState(false);
@@ -19,14 +18,14 @@ export default function Hero({ featuredMovie }) {
 
   const router = useRouter();
 
-  const featuredThumbnail = hasError
-    ? fallbackThumbnail
-    : getRenderableThumbnail(featuredMovie);
+  if (!featuredMovie?.id || hasError || !hasRenderableThumbnail(featuredMovie)) {
+    return null;
+  }
+
+  const featuredThumbnail = featuredMovie.thumbnail;
 
   const handleWatch = () => {
-    if (featuredMovie?.id) {
-      router.push(`/watch/${featuredMovie.id}`);
-    }
+    router.push(`/watch/${featuredMovie.id}`);
   };
 
   const handleExploreCategory = () => {
@@ -37,33 +36,39 @@ export default function Hero({ featuredMovie }) {
     router.push('/search');
   };
 
-  const handleImageError = () => {
+  const markBroken = () => {
+    markMovieUnavailable(featuredMovie.id);
     setHasError(true);
+    if (typeof onMovieUnavailable === 'function') {
+      onMovieUnavailable(featuredMovie.id);
+    }
+  };
+
+  const handleImageError = () => {
+    markBroken();
   };
 
   const handleImageLoad = (event) => {
     if (event.currentTarget.naturalWidth <= 120) {
-      setHasError(true);
+      markBroken();
     }
   };
 
   return (
     <section className={styles.hero}>
-      {featuredMovie && (
-        <div className={styles.background}>
-          <img
-            src={featuredThumbnail}
-            alt={featuredTitle || 'Phim tâm điểm'}
-            className={styles.bgImage}
-            loading="eager"
-            fetchPriority="high"
-            decoding="async"
-            onError={handleImageError}
-            onLoad={handleImageLoad}
-          />
-          <div className={styles.overlay}></div>
-        </div>
-      )}
+      <div className={styles.background}>
+        <img
+          src={featuredThumbnail}
+          alt={featuredTitle || 'Phim tâm điểm'}
+          className={styles.bgImage}
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
+          onError={handleImageError}
+          onLoad={handleImageLoad}
+        />
+        <div className={styles.overlay}></div>
+      </div>
 
       <div className={styles.content}>
         <div className={styles.metaRow}>
@@ -76,9 +81,7 @@ export default function Hero({ featuredMovie }) {
           )}
         </div>
 
-        <h1 className={styles.title}>
-          {featuredMovie ? featuredTitle : "Đang chuẩn bị phim tâm điểm..."}
-        </h1>
+        <h1 className={styles.title}>{featuredTitle}</h1>
 
         <p className={styles.description}>
           Tuyển chọn phim hoạt hình 3D, tu tiên, xuyên không và trọng sinh đặc sắc nhất. Trải nghiệm trọn bộ chất lượng cao, cập nhật liên tục mỗi ngày.

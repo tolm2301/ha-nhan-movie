@@ -76,4 +76,20 @@ assert.ok(watchJsx.includes('Danh Sách Tập'), 'WatchClient.jsx must display "
 assert.ok(watchJsx.includes('Phim Cùng Thể Loại Đề Xuất'), 'WatchClient.jsx must display "Phim Cùng Thể Loại Đề Xuất"');
 assert.ok(!watchJsx.includes('Chua co du lieu phim de phat'), 'WatchClient.jsx must not contain unaccented Vietnamese error text');
 
-console.log('✓ All UI, UX, and Copywriting contract checks passed.');
+// 6. Verify hide-unavailable-videos bug fix invariants
+const thumbFilters = read('src/lib/thumbnailFilters.js');
+assert.ok(thumbFilters.includes('Pk85yknde_w'), 'thumbnailFilters.js must block known removed video Pk85yknde_w');
+assert.ok(thumbFilters.includes('export function markMovieUnavailable'), 'thumbnailFilters.js must export markMovieUnavailable');
+assert.ok(thumbFilters.includes('export function isMovieUnavailable'), 'thumbnailFilters.js must export isMovieUnavailable');
+
+const movieCardJsx = read('src/components/MovieCard/MovieCard.jsx');
+assert.ok(!movieCardJsx.includes('buildFallbackThumbnailUrl'), 'MovieCard.jsx must not render synthetic fallback thumbnail');
+assert.ok(movieCardJsx.includes('markMovieUnavailable(movie.id)'), 'MovieCard.jsx must mark broken thumbnail movies unavailable');
+
+const carouselCss = read('src/components/MovieCarousel/MovieCarousel.module.css');
+assert.ok(carouselCss.includes('.slideItem:empty'), 'MovieCarousel.module.css must collapse empty slideItem wrappers');
+
+assert.ok(watchJsx.includes('onError:'), 'WatchClient.jsx must handle YT.Player onError event');
+assert.ok(watchJsx.includes('markMovieUnavailable(movie.id)'), 'WatchClient.jsx must mark errored videos unavailable');
+
+console.log('✓ All UI, UX, Copywriting, and Unavailable-Video Filtering checks passed.');

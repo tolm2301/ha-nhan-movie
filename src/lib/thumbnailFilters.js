@@ -11,7 +11,79 @@ const BROKEN_THUMBNAIL_IDS = new Set([
   'jygfwGrRvtw',
   'cT4f_09O5NE',
   'fF8qkLjnRuA',
+  'Pk85yknde_w',
 ]);
+
+const UNAVAILABLE_STORAGE_KEY = 'hanhan:unavailable-movie-ids';
+const WATCHED_HISTORY_STORAGE_KEY = 'hanhan:watched-history';
+const runtimeUnavailableIds = new Set();
+let storageHydrated = false;
+
+function hydrateUnavailableIds() {
+  if (storageHydrated || typeof window === 'undefined') return;
+  storageHydrated = true;
+
+  try {
+    const raw = window.localStorage.getItem(UNAVAILABLE_STORAGE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      for (const id of parsed) {
+        if (typeof id === 'string' && id.trim()) {
+          runtimeUnavailableIds.add(id.trim());
+        }
+      }
+    }
+  } catch {
+    // Ignore storage read errors in restricted environments.
+  }
+}
+
+export function isMovieUnavailable(movieId = '') {
+  const id = String(movieId || '').trim();
+  if (!id) return true;
+  if (BROKEN_THUMBNAIL_IDS.has(id)) return true;
+  hydrateUnavailableIds();
+  return runtimeUnavailableIds.has(id);
+}
+
+export function markMovieUnavailable(movieId = '') {
+  const id = String(movieId || '').trim();
+  if (!id) return;
+
+  hydrateUnavailableIds();
+  const isNew = !runtimeUnavailableIds.has(id);
+  runtimeUnavailableIds.add(id);
+
+  if (typeof window === 'undefined') return;
+
+  try {
+    if (isNew) {
+      window.localStorage.setItem(
+        UNAVAILABLE_STORAGE_KEY,
+        JSON.stringify(Array.from(runtimeUnavailableIds).slice(-500))
+      );
+    }
+
+    const rawWatched = window.localStorage.getItem(WATCHED_HISTORY_STORAGE_KEY);
+    if (rawWatched) {
+      const parsedWatched = JSON.parse(rawWatched);
+      if (Array.isArray(parsedWatched)) {
+        const filteredWatched = parsedWatched.filter(item => item?.id !== id);
+        if (filteredWatched.length !== parsedWatched.length) {
+          window.localStorage.setItem(WATCHED_HISTORY_STORAGE_KEY, JSON.stringify(filteredWatched));
+          window.dispatchEvent(new Event('hanhan:watched-history-updated'));
+        }
+      }
+    }
+
+    if (isNew) {
+      window.dispatchEvent(new CustomEvent('hanhan:unavailable-movies-updated', { detail: { id } }));
+    }
+  } catch {
+    // Ignore storage write errors.
+  }
+}
 
 const YOUTUBE_IMAGE_HOSTS = new Set(['i.ytimg.com', 'img.youtube.com']);
 const ALLOWED_THUMBNAIL_FILENAMES = new Set([
@@ -82,7 +154,7 @@ export function hasRenderableThumbnail(movie) {
   if (!thumbnail) return false;
 
   const movieId = String(safeMovie.id || '').trim();
-  if (BROKEN_THUMBNAIL_IDS.has(movieId)) return false;
+  if (isMovieUnavailable(movieId)) return false;
   if (BROKEN_THUMBNAIL_URLS.has(thumbnail)) return false;
 
   let url;
@@ -132,5 +204,5 @@ export function getRenderableThumbnail(movie) {
     return thumbnail;
   }
 
-  return buildFallbackThumbnailUrl(safeMovie);
+  return '';
 }

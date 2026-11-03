@@ -4,6 +4,7 @@ import MovieCard from '@/components/MovieCard/MovieCard';
 import { subscribeCatalog, getCatalogMoviesSnapshot, getServerCatalogSnapshot, refreshClientCatalog } from '@/lib/clientCatalog';
 import { useRouter } from 'next/navigation';
 import { getWatchProgress, pushWatchedMovie, setWatchProgress } from '@/lib/watchHistory';
+import { hasRenderableThumbnail, markMovieUnavailable } from '@/lib/thumbnailFilters';
 import AdSlot from '@/components/Adsense/AdSlot';
 import styles from './Watch.module.css';
 
@@ -285,7 +286,7 @@ export default function WatchClient({ movieId = '', initialMovies = [], initialR
       ? cachedAllMovies
       : null;
 
-    if (!pool) return initialRelatedMovies;
+    if (!pool) return (initialRelatedMovies || []).filter(hasRenderableThumbnail);
 
     const sameCategory = pool.filter(m => {
       if (m.id === movie?.id) return false;
@@ -298,7 +299,7 @@ export default function WatchClient({ movieId = '', initialMovies = [], initialR
     if (movie?.id) candidateIds.add(movie.id);
 
     const filler = pool.filter(m => !candidateIds.has(m.id));
-    return [...sameCategory, ...filler].slice(0, 20);
+    return [...sameCategory, ...filler].filter(hasRenderableThumbnail).slice(0, 20);
   }, [cachedAllMovies, initialRelatedMovies, movie]);
 
   const episodes = useMemo(() => {
@@ -352,10 +353,7 @@ export default function WatchClient({ movieId = '', initialMovies = [], initialR
     armControlsAutoHide();
   }, [armControlsAutoHide, isReady]);
 
-  useEffect(() => {
-    if (!movie) return;
-    pushWatchedMovie(movie);
-  }, [movie]);
+  // ponytail: pushWatchedMovie only after playback confirmed in onStateChange so dead videos never enter watched history
 
   useEffect(() => {
     if (!movie || !playerMountRef.current) return;
@@ -466,6 +464,11 @@ export default function WatchClient({ movieId = '', initialMovies = [], initialR
             if (isCancelled) return;
             setCurrentQuality(normalizeQualityValue(event.data));
           },
+          onError: () => {
+            if (isCancelled) return;
+            markMovieUnavailable(movie.id);
+            setPlayerLoadError('Bộ phim này đã ngừng hoạt động từ nguồn phát.');
+          },
           onStateChange: event => {
             if (isCancelled) return;
             forceDisableYouTubeCaptions(event.target);
@@ -476,6 +479,7 @@ export default function WatchClient({ movieId = '', initialMovies = [], initialR
             if (playing && !playableMarkedRef.current) {
               playableMarkedRef.current = true;
               setIsPlayable(true);
+              pushWatchedMovie(movie);
 
               if (typeof performance !== 'undefined' && performance.mark) {
                 performance.mark('watch-playable');

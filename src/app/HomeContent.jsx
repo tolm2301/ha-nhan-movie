@@ -1,10 +1,11 @@
 "use client";
 
-import { useSyncExternalStore, useMemo } from "react";
+import { useSyncExternalStore, useMemo, useState } from "react";
 import Hero from "@/components/Hero/Hero";
 import MovieCarousel from "@/components/MovieCarousel/MovieCarousel";
 import RecentWatchedSection from "@/components/RecentWatchedSection/RecentWatchedSectionLazy";
 import { buildCategoryBuckets } from "@/lib/movieCategories";
+import { hasRenderableThumbnail } from "@/lib/thumbnailFilters";
 import {
   subscribeCatalog,
   getCatalogMoviesSnapshot,
@@ -16,6 +17,8 @@ export default function HomeContent({
   initialTrendingMovies = [],
   initialCategoryBuckets = [],
 }) {
+  const [unavailableIds, setUnavailableIds] = useState([]);
+
   const cachedAllMovies = useSyncExternalStore(
     subscribeCatalog,
     getCatalogMoviesSnapshot,
@@ -27,10 +30,13 @@ export default function HomeContent({
       return null;
     }
 
-    const categoryBuckets = buildCategoryBuckets(cachedAllMovies);
+    const validMovies = cachedAllMovies.filter(
+      (movie) => hasRenderableThumbnail(movie) && !unavailableIds.includes(movie.id)
+    );
+    const categoryBuckets = buildCategoryBuckets(validMovies);
     const haNhanBucket = categoryBuckets.find((cat) => cat.slug === "ha-nhan");
-    const featuredMovie = haNhanBucket?.movies?.[0] || cachedAllMovies[0] || null;
-    const trendingMovies = cachedAllMovies.slice(0, 15);
+    const featuredMovie = haNhanBucket?.movies?.[0] || validMovies[0] || null;
+    const trendingMovies = validMovies.slice(0, 15);
     const homeCategories = categoryBuckets.filter((cat) => cat.movies && cat.movies.length > 0);
 
     return {
@@ -38,15 +44,29 @@ export default function HomeContent({
       trendingMovies,
       homeCategories,
     };
-  }, [cachedAllMovies]);
+  }, [cachedAllMovies, unavailableIds]);
 
-  const featuredMovie = clientData ? clientData.featuredMovie : initialFeaturedMovie;
+  const fallbackFeatured =
+    initialFeaturedMovie &&
+    hasRenderableThumbnail(initialFeaturedMovie) &&
+    !unavailableIds.includes(initialFeaturedMovie.id)
+      ? initialFeaturedMovie
+      : initialTrendingMovies.find(
+          (movie) => hasRenderableThumbnail(movie) && !unavailableIds.includes(movie.id)
+        ) || null;
+
+  const featuredMovie = clientData ? clientData.featuredMovie : fallbackFeatured;
   const trendingMovies = clientData ? clientData.trendingMovies : initialTrendingMovies;
   const homeCategories = clientData ? clientData.homeCategories : initialCategoryBuckets;
 
+  const handleMovieUnavailable = (movieId) => {
+    if (!movieId) return;
+    setUnavailableIds((prev) => (prev.includes(movieId) ? prev : [...prev, movieId]));
+  };
+
   return (
     <>
-      <Hero featuredMovie={featuredMovie} />
+      <Hero featuredMovie={featuredMovie} onMovieUnavailable={handleMovieUnavailable} />
 
       <RecentWatchedSection />
 
