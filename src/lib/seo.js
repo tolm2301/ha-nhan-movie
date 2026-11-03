@@ -24,7 +24,7 @@ function resolveImageUrl(image = '') {
 }
 
 export const SITE_NAME = 'Hanhan Movie / Hà Nhân';
-export const SITE_DESCRIPTION = 'Hanhan Movie / Hà Nhân cập nhật phim theo các bucket hiện có: Xuyên Không, Trọng Sinh, Liễu Như Yên, Hệ Thống và Khác.';
+export const SITE_DESCRIPTION = 'Thưởng thức phim hoạt hình 3D, tu tiên, xuyên không và trọng sinh chọn lọc chất lượng cao, cập nhật liên tục mỗi ngày tại Hà Nhân Movie.';
 
 export function getSiteUrl() {
   return normalizeSiteUrl(

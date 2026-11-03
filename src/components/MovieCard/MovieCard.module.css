@@ -2,13 +2,13 @@
   position: relative;
   width: 100%;
   display: block;
-  transition: transform 0.2s ease;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   content-visibility: auto;
-  contain-intrinsic-size: 1px 360px;
+  contain-intrinsic-size: 1px 320px;
 }
 
 .card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-5px);
 }
 
 .cardLink {
@@ -22,11 +22,18 @@
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   overflow: hidden;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   background: var(--color-surface);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.card:hover .imageContainer {
+  border-color: rgba(245, 197, 24, 0.45);
+  box-shadow: var(--shadow-card);
 }
 
 .image {
@@ -34,11 +41,11 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.25s ease;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .card:hover .image {
-  transform: scale(1.03);
+  transform: scale(1.04);
 }
 
 .removeButton {
@@ -48,9 +55,10 @@
   z-index: 3;
   width: 30px;
   height: 30px;
-  border: 0;
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(11, 13, 18, 0.85);
+  backdrop-filter: blur(8px);
   color: #fff;
   font-size: 1.1rem;
   line-height: 1;
@@ -59,12 +67,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s ease, transform 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
 .removeButton:hover {
-  background: rgba(220, 38, 38, 0.95);
-  transform: scale(1.04);
+  background: var(--color-accent-red);
+  transform: scale(1.06);
 }
 
 .removeButton:focus-visible {
@@ -72,41 +80,20 @@
   outline-offset: 2px;
 }
 
-.placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  background: linear-gradient(135deg, rgba(255, 222, 0, 0.14), rgba(255, 255, 255, 0.05));
-  color: var(--color-text-main);
-  text-align: center;
-}
-
-.placeholderIcon {
-  font-size: 1.4rem;
-  line-height: 1;
-}
-
-.placeholderText {
-  font-size: 0.82rem;
-  font-weight: 600;
-}
-
 .tagBadge {
   position: absolute;
   top: 8px;
   left: 8px;
-  background: rgba(0, 0, 0, 0.75);
-  color: #fff;
-  padding: 4px 8px;
-  border-radius: 4px;
+  background: rgba(11, 13, 18, 0.78);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #f5f7fa;
+  padding: 4px 10px;
+  border-radius: 999px;
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 600;
   z-index: 2;
-  max-width: calc(100% - 16px);
+  max-width: calc(100% - 52px);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -116,47 +103,52 @@
   position: absolute;
   right: 8px;
   bottom: 8px;
-  background: rgba(0, 0, 0, 0.88);
-  color: #fff;
-  padding: 4px 8px;
-  border-radius: 4px;
+  background: rgba(11, 13, 18, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--color-accent-yellow);
+  padding: 3px 8px;
+  border-radius: 6px;
   font-size: 0.72rem;
   font-weight: 700;
+  letter-spacing: 0.3px;
   z-index: 2;
 }
 
 .info {
-  padding: 0 2px;
+  padding: 0 4px;
 }
 
 .title {
-  font-size: 0.98rem;
+  font-size: 0.96rem;
   font-weight: 600;
   margin-bottom: 6px;
-  line-height: 1.35;
+  line-height: 1.4;
+  min-height: 2.8em;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #f1f1f1;
+  color: var(--color-text-main);
+  transition: color 0.2s ease;
 }
 
 .card:hover .title {
-  color: #fff;
-}
-
-.channel,
-.meta {
-  font-size: 0.82rem;
-  color: #a8a8a8;
-  line-height: 1.3;
-}
-
-.channel {
-  margin-bottom: 2px;
+  color: var(--color-accent-yellow);
 }
 
 .meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 0.8rem;
+  color: var(--color-text-muted);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dot {
+  color: var(--color-text-subtle);
 }

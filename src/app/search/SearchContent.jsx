@@ -1,9 +1,10 @@
-﻿"use client";
+"use client";
 
-import { useSyncExternalStore, useMemo } from "react";
+import { useSyncExternalStore, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import MovieCard from "@/components/MovieCard/MovieCard";
-import AdSlot from "@/components/Adsense/AdSlot";
+import { buildCategoryBuckets } from "@/lib/movieCategories";
 import {
   subscribeCatalog,
   getCatalogMoviesSnapshot,
@@ -68,6 +69,15 @@ function getMatchScore(movie, normalizedQuery, compactQuery) {
 }
 
 export default function SearchContent({ query = "", movies = [] }) {
+  const router = useRouter();
+  const [prevQuery, setPrevQuery] = useState(query);
+  const [inputQuery, setInputQuery] = useState(query);
+
+  if (query !== prevQuery) {
+    setPrevQuery(query);
+    setInputQuery(query);
+  }
+
   const cachedMovies = useSyncExternalStore(
     subscribeCatalog,
     getCatalogMoviesSnapshot,
@@ -78,6 +88,12 @@ export default function SearchContent({ query = "", movies = [] }) {
   const normalizedQuery = normalizeSearchText(query);
   const compactQuery = compactSearchText(query);
   const hasQuery = Boolean(normalizedQuery);
+
+  const categoryShortcuts = useMemo(() => {
+    return buildCategoryBuckets(activeMovies).filter(
+      (cat) => cat.movies && cat.movies.length > 0
+    );
+  }, [activeMovies]);
 
   const results = useMemo(() => {
     if (!hasQuery) return activeMovies;
@@ -108,42 +124,102 @@ export default function SearchContent({ query = "", movies = [] }) {
   const isEmptySearch = hasQuery && results.length === 0;
   const isBrowseState = !hasQuery;
 
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    const trimmed = inputQuery.trim();
+    if (!trimmed) {
+      router.push("/search");
+      return;
+    }
+    router.push(`/search?q=${encodeURIComponent(trimmed)}`);
+  };
+
+  const handleClear = () => {
+    setInputQuery("");
+    router.push("/search");
+  };
+
   return (
     <main className={styles.page}>
-      <h1 className={styles.heading}>
-        {query ? (
-          <>
-            Kết quả cho: <span className="comic-text-yellow">&quot;{query}&quot;</span>
-          </>
-        ) : (
-          "Tìm phim"
+      <section className={styles.searchHeader}>
+        <div className={styles.titleBlock}>
+          <span className={styles.eyebrow}>Tra cứu kho phim</span>
+          <h1 className={styles.heading}>
+            {query ? (
+              <>
+                Kết quả cho: <span className="comic-text-yellow">&quot;{query}&quot;</span>
+              </>
+            ) : (
+              "Khám Phá & Tìm Kiếm Phim"
+            )}
+          </h1>
+          <p className={styles.count}>
+            {hasQuery
+              ? `Tìm thấy ${results.length} bộ phim phù hợp`
+              : `${activeMovies.length} bộ phim tuyển chọn sẵn sàng thưởng thức`}
+          </p>
+        </div>
+
+        <form className={styles.searchBar} onSubmit={handleSubmit} role="search">
+          <input
+            type="search"
+            value={inputQuery}
+            onChange={(event) => setInputQuery(event.target.value)}
+            placeholder="Nhập tên phim, thể loại (Xuyên Không, Trọng Sinh, Hệ Thống...)"
+            aria-label="Nhập từ khóa tìm kiếm phim"
+            className={styles.searchInput}
+          />
+          {inputQuery && (
+            <button
+              type="button"
+              className={styles.clearBtn}
+              onClick={handleClear}
+              aria-label="Xóa từ khóa tìm kiếm"
+              title="Xóa từ khóa"
+            >
+              ×
+            </button>
+          )}
+          <button type="submit" className={styles.submitBtn}>
+            Tìm Phim
+          </button>
+        </form>
+
+        {categoryShortcuts.length > 0 && (
+          <div className={styles.shortcutRow} aria-label="Lối tắt danh mục phim">
+            <span className={styles.shortcutLabel}>Danh mục nổi bật:</span>
+            {categoryShortcuts.map((category) => (
+              <Link
+                key={category.slug}
+                href={`/category/${category.slug}`}
+                className={styles.shortcutChip}
+              >
+                {category.tag}
+              </Link>
+            ))}
+          </div>
         )}
-      </h1>
-      <p className={styles.count}>
-        {hasQuery
-          ? `${results.length} bộ phim tìm được`
-          : `${activeMovies.length} bộ phim sẵn có để duyệt`}
-      </p>
+      </section>
 
       {isBrowseState && (
         <p className={styles.helperText}>
-          Nhập tên phim, tag, thể loại hoặc từ khóa gần đúng để tìm nhanh hơn.
+          Gợi ý: Bạn có thể gõ tên phim không dấu, tên nhân vật hoặc chọn nhanh một danh mục ở trên.
         </p>
       )}
 
       {isEmptySearch ? (
         <div className={styles.empty}>
-          <p>
-            Không tìm thấy phim nào cho &quot;<strong>{query}</strong>&quot;
+          <p className={styles.emptyTitle}>
+            Chưa tìm thấy bộ phim nào khớp với &quot;<strong>{query}</strong>&quot;
           </p>
           <p className={styles.emptyHint}>
-            Đã thử khớp theo tiêu đề, tag, thể loại và các từ liên quan.
+            Hệ thống đã tra cứu theo tên phim, thể loại và từ khóa liên quan. Hãy thử rút ngắn từ khóa hoặc khám phá các danh mục bên dưới.
           </p>
           <div className={styles.emptyActions}>
             <Link className="btn-secondary" href="/search">
-              Xoá từ khoá
+              Xem Toàn Bộ Kho Phim
             </Link>
-            <Link className="btn-secondary" href="/">
+            <Link className="btn-primary" href="/">
               Về Trang Chủ
             </Link>
           </div>
@@ -166,11 +242,11 @@ export default function SearchContent({ query = "", movies = [] }) {
         </>
       ) : (
         <div className={styles.empty}>
-          <p>Chưa có dữ liệu để hiển thị.</p>
+          <p className={styles.emptyTitle}>Kho phim đang được đồng bộ dữ liệu.</p>
           <p className={styles.emptyHint}>
-            Thử tải lại trang hoặc quay về trang chủ để duyệt nội dung.
+            Vui lòng tải lại trang sau giây lát hoặc quay về trang chủ để tiếp tục khám phá.
           </p>
-          <Link className="btn-secondary" href="/">
+          <Link className="btn-primary" href="/">
             Về Trang Chủ
           </Link>
         </div>

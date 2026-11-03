@@ -51,13 +51,13 @@ export default function HomeContent({
       <RecentWatchedSection />
 
       {trendingMovies.length > 0 && (
-        <MovieCarousel title="🔥 Mới cập nhật" movies={trendingMovies} />
+        <MovieCarousel title="Mới Cập Nhật" movies={trendingMovies} />
       )}
 
       {homeCategories.map((category) => (
         <div key={category.slug}>
           <MovieCarousel
-            title={`🏷️ ${category.tag}`}
+            title={category.tag}
             movies={category.movies.slice(0, 20)}
             viewAllHref={`/category/${category.slug}`}
           />

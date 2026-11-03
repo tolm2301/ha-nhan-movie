@@ -1,20 +1,20 @@
 .hero {
   position: relative;
-  height: 85vh;
-  min-height: 600px;
+  min-height: 76vh;
+  max-height: 820px;
   width: 100%;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   margin-top: -70px;
-  border-bottom: 4px solid #fff;
+  padding-top: 120px;
+  padding-bottom: 56px;
+  border-bottom: 1px solid var(--color-border);
+  overflow: hidden;
 }
 
 .background {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   z-index: 0;
 }
 
@@ -23,20 +23,17 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 20%;
+  object-position: center 22%;
+  transform: scale(1.02);
+  filter: saturate(1.08) contrast(1.04);
 }
 
 .overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.4);
-  /* A nice halftone pattern overlay for comic effect */
-  background-image: radial-gradient(rgba(0,0,0,0.6) 20%, transparent 20%), radial-gradient(rgba(0,0,0,0.6) 20%, transparent 20%);
-  background-position: 0 0, 4px 4px;
-  background-size: 8px 8px;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(11, 13, 18, 0.94) 0%, rgba(11, 13, 18, 0.76) 48%, rgba(11, 13, 18, 0.28) 100%),
+    linear-gradient(180deg, rgba(11, 13, 18, 0.55) 0%, rgba(11, 13, 18, 0.12) 38%, rgba(11, 13, 18, 0.98) 100%);
 }
 
 .content {
@@ -46,68 +43,88 @@
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 24px;
-  padding-top: 70px;
-  animation: fadeUp 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
 }
 
 .badge {
-  display: inline-block;
-  background: var(--color-accent-red);
-  color: #fff;
-  padding: 8px 20px;
-  border-radius: 4px;
-  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  background: linear-gradient(135deg, #e50914 0%, #b80710 100%);
+  color: #ffffff;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 0.82rem;
   font-weight: 800;
-  margin-bottom: 24px;
-  border: 3px solid #000;
-  box-shadow: 4px 4px 0 #000;
-  letter-spacing: 1px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  box-shadow: 0 6px 20px rgba(229, 9, 20, 0.35);
+}
+
+.categoryPill,
+.durationPill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: var(--color-text-main);
+  backdrop-filter: blur(8px);
+}
+
+.durationPill {
+  color: var(--color-accent-yellow);
+  border-color: rgba(245, 197, 24, 0.32);
 }
 
 .title {
-  font-size: 5rem;
-  font-weight: 900;
-  line-height: 1.1;
-  margin-bottom: 24px;
-  color: #fff;
-  -webkit-text-stroke: 2px #000;
-  text-shadow: 6px 6px 0 #000;
-  text-transform: uppercase;
+  font-size: clamp(2rem, 4vw, 3.35rem);
+  font-weight: 800;
+  line-height: 1.16;
+  margin-bottom: 18px;
+  max-width: 860px;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  text-shadow: 0 6px 24px rgba(0, 0, 0, 0.65);
 }
 
 .description {
-  font-size: 1.2rem;
-  color: #fff;
-  font-weight: 600;
-  max-width: 600px;
-  margin-bottom: 40px;
-  line-height: 1.6;
-  background: rgba(0, 0, 0, 0.7);
-  padding: 20px;
-  border: 3px solid #000;
-  border-radius: 8px;
-  box-shadow: 4px 4px 0 var(--color-accent-blue);
+  font-size: 1.05rem;
+  color: rgba(245, 247, 250, 0.88);
+  font-weight: 400;
+  max-width: 640px;
+  margin-bottom: 30px;
+  line-height: 1.65;
+  background: rgba(20, 24, 33, 0.68);
+  padding: 16px 20px;
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-accent-yellow);
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(12px);
 }
 
 .actions {
   display: flex;
-  gap: 16px;
-}
-
-.bookmarked {
-  background: #fff;
-  color: var(--color-accent-red);
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
 }
 
 @media (max-width: 900px) {
   .hero {
-    height: auto;
-    min-height: 540px;
-    padding-bottom: 36px;
-  }
-
-  .title {
-    font-size: 3.8rem;
+    min-height: 520px;
+    padding-top: 104px;
+    padding-bottom: 40px;
   }
 
   .description {
@@ -117,32 +134,28 @@
 
 @media (max-width: 640px) {
   .hero {
-    min-height: 460px;
-    margin-top: -56px;
+    min-height: 440px;
+    margin-top: -64px;
+    padding-top: 92px;
+    padding-bottom: 32px;
   }
 
   .content {
     padding: 0 16px;
-    padding-top: 56px;
-  }
-
-  .badge {
-    font-size: 0.85rem;
-    padding: 7px 14px;
   }
 
   .title {
-    font-size: 2.5rem;
-    margin-bottom: 18px;
+    font-size: 1.85rem;
+    margin-bottom: 14px;
   }
 
   .description {
-    font-size: 1rem;
-    margin-bottom: 28px;
-    padding: 16px;
+    font-size: 0.95rem;
+    margin-bottom: 22px;
+    padding: 14px 16px;
   }
 
   .actions {
-    flex-wrap: wrap;
+    width: 100%;
   }
 }

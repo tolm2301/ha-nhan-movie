@@ -6,7 +6,6 @@ import { buildFallbackThumbnailUrl, getRenderableThumbnail } from '@/lib/thumbna
 import styles from './Hero.module.css';
 
 export default function Hero({ featuredMovie }) {
-  const [isBookmarked, setIsBookmarked] = useState(false);
   const featuredTitle = featuredMovie?.displayTitle || featuredMovie?.title;
   const fallbackThumbnail = buildFallbackThumbnailUrl(featuredMovie);
 
@@ -25,13 +24,17 @@ export default function Hero({ featuredMovie }) {
     : getRenderableThumbnail(featuredMovie);
 
   const handleWatch = () => {
-    if (featuredMovie) {
+    if (featuredMovie?.id) {
       router.push(`/watch/${featuredMovie.id}`);
     }
   };
 
-  const handleBookmark = () => {
-    setIsBookmarked(!isBookmarked);
+  const handleExploreCategory = () => {
+    if (featuredMovie?.categorySlug) {
+      router.push(`/category/${featuredMovie.categorySlug}`);
+      return;
+    }
+    router.push('/search');
   };
 
   const handleImageError = () => {
@@ -39,7 +42,6 @@ export default function Hero({ featuredMovie }) {
   };
 
   const handleImageLoad = (event) => {
-    // YouTube's unavailable / broken placeholder image has dimensions 120x90
     if (event.currentTarget.naturalWidth <= 120) {
       setHasError(true);
     }
@@ -51,7 +53,7 @@ export default function Hero({ featuredMovie }) {
         <div className={styles.background}>
           <img
             src={featuredThumbnail}
-            alt={featuredTitle}
+            alt={featuredTitle || 'Phim tâm điểm'}
             className={styles.bgImage}
             loading="eager"
             fetchPriority="high"
@@ -62,23 +64,36 @@ export default function Hero({ featuredMovie }) {
           <div className={styles.overlay}></div>
         </div>
       )}
-      
+
       <div className={styles.content}>
-        <span className={styles.badge}>🔥 PHIM NỔI BẬT</span>
-        <h1 className={styles.title} style={{ fontSize: '3.5rem' }}>
-          {featuredMovie ? featuredTitle : "Đang tải dữ liệu..."}
+        <div className={styles.metaRow}>
+          <span className={styles.badge}>Tâm Điểm Hôm Nay</span>
+          {featuredMovie?.tags && (
+            <span className={styles.categoryPill}>{featuredMovie.tags}</span>
+          )}
+          {featuredMovie?.episodes && (
+            <span className={styles.durationPill}>{featuredMovie.episodes}</span>
+          )}
+        </div>
+
+        <h1 className={styles.title}>
+          {featuredMovie ? featuredTitle : "Đang chuẩn bị phim tâm điểm..."}
         </h1>
+
         <p className={styles.description}>
-          Tổng hợp phim hoạt hình, tu tiên, xuyên không và trọng sinh chọn lọc chất lượng cao. Cập nhật liên tục các tập phim mới nhất.
+          Tuyển chọn phim hoạt hình 3D, tu tiên, xuyên không và trọng sinh đặc sắc nhất. Trải nghiệm trọn bộ chất lượng cao, cập nhật liên tục mỗi ngày.
         </p>
-        
+
         <div className={styles.actions}>
-          <button className="btn-primary" onClick={handleWatch}>▶ XEM PHIM</button>
-          <button 
-            className={`btn-secondary ${isBookmarked ? styles.bookmarked : ''}`} 
-            onClick={handleBookmark}
+          <button type="button" className="btn-primary" onClick={handleWatch}>
+            ▶ Xem Ngay
+          </button>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={handleExploreCategory}
           >
-            {isBookmarked ? '✓ ĐÃ LƯU' : '+ LƯU PHIM'}
+            Khám Phá Thể Loại
           </button>
         </div>
       </div>

@@ -15,13 +15,13 @@ export default function MovieCarousel({ title, movies, viewAllHref, onRemoveMovi
 
   const scrollLeft = () => {
     if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: -600, behavior: 'smooth' });
+      scrollRef.current.scrollBy({ left: -640, behavior: 'smooth' });
     }
   };
 
   const scrollRight = () => {
     if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: 600, behavior: 'smooth' });
+      scrollRef.current.scrollBy({ left: 640, behavior: 'smooth' });
     }
   };
 
@@ -30,16 +30,32 @@ export default function MovieCarousel({ title, movies, viewAllHref, onRemoveMovi
       <div className={styles.header}>
         <h2 className={styles.title}>{title}</h2>
         <div className={styles.controls}>
-          <button className={styles.navBtn} onClick={scrollLeft}>❮</button>
-          <button className={styles.navBtn} onClick={scrollRight}>❯</button>
+          <div className={styles.navGroup}>
+            <button
+              type="button"
+              className={styles.navBtn}
+              onClick={scrollLeft}
+              aria-label={`Cuộn danh sách ${title} sang trái`}
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              className={styles.navBtn}
+              onClick={scrollRight}
+              aria-label={`Cuộn danh sách ${title} sang phải`}
+            >
+              ›
+            </button>
+          </div>
           {viewAllHref ? (
             <Link className={styles.viewAll} href={viewAllHref}>
-              Tất cả ➔
+              Xem tất cả ›
             </Link>
           ) : null}
         </div>
       </div>
-      
+
       <div className={styles.slider} ref={scrollRef}>
         {visibleMovies.map((movie) => (
           <div key={movie.id} className={styles.slideItem}>

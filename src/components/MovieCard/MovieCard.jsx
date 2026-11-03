@@ -5,11 +5,14 @@ import Link from 'next/link';
 import { buildFallbackThumbnailUrl, hasRenderableThumbnail } from '@/lib/thumbnailFilters';
 import styles from './MovieCard.module.css';
 
-export default function MovieCard({ movie, onRemoveMovie, removeMovieLabel = 'Xóa khỏi danh sách đã xem gần đây' }) {
-  const displayTitle = movie?.displayTitle || movie?.title || 'Không rõ tên phim';
+export default function MovieCard({
+  movie,
+  onRemoveMovie,
+  removeMovieLabel = 'Xóa khỏi danh sách tiếp tục xem',
+}) {
+  const displayTitle = movie?.displayTitle || movie?.title || 'Phim đang cập nhật tên';
   const fallbackThumbnail = buildFallbackThumbnailUrl(movie);
-  
-  // Điều chỉnh state khi movie prop thay đổi mà không cần useEffect (Chuẩn React.dev)
+
   const [prevMovieId, setPrevMovieId] = useState(movie?.id);
   const [hasError, setHasError] = useState(false);
 
@@ -33,7 +36,6 @@ export default function MovieCard({ movie, onRemoveMovie, removeMovieLabel = 'X�
   };
 
   const handleImageLoad = (event) => {
-    // YouTube's unavailable / broken placeholder image has dimensions 120x90
     if (event.currentTarget.naturalWidth <= 120) {
       setHasError(true);
     }
@@ -45,7 +47,13 @@ export default function MovieCard({ movie, onRemoveMovie, removeMovieLabel = 'X�
     onRemoveMovie(movie.id);
   };
 
-  const viewsLabel = movie.views && !movie.views.includes('NaN') ? movie.views : 'Mới cập nhật';
+  const rawViews = movie.views ? String(movie.views) : '';
+  const viewsLabel =
+    rawViews && !rawViews.includes('NaN') && !rawViews.includes('undefined')
+      ? rawViews
+      : 'Mới cập nhật';
+  const durationLabel = movie.episodes ? String(movie.episodes) : 'Trọn bộ';
+  const categoryLabel = movie.tags || 'Tuyển chọn';
 
   return (
     <div className={styles.card}>
@@ -60,14 +68,17 @@ export default function MovieCard({ movie, onRemoveMovie, removeMovieLabel = 'X�
             onError={handleImageError}
             onLoad={handleImageLoad}
           />
-          <span className={styles.tagBadge}>{movie.tags || 'Khác'}</span>
-          <span className={styles.durationBadge}>{movie.episodes || 'Full'}</span>
+          <span className={styles.tagBadge}>{categoryLabel}</span>
+          {durationLabel && <span className={styles.durationBadge}>{durationLabel}</span>}
         </div>
 
         <div className={styles.info}>
           <h3 className={styles.title}>{displayTitle}</h3>
-          <p className={styles.channel}>{movie.tags || 'Danh mục khác'}</p>
-          <p className={styles.meta}>{viewsLabel} • {movie.episodes || 'Full'}</p>
+          <p className={styles.meta}>
+            <span>{categoryLabel}</span>
+            <span className={styles.dot}>•</span>
+            <span>{viewsLabel}</span>
+          </p>
         </div>
       </Link>
 

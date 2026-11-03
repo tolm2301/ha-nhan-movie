@@ -51,7 +51,7 @@ function loadYouTubeApi() {
     };
 
     const handleError = () => {
-      finish(() => reject(new Error('YouTube API failed to load.')));
+      finish(() => reject(new Error('Không thể kết nối nguồn phát video.')));
     };
 
     if (!existing) {
@@ -70,7 +70,7 @@ function loadYouTubeApi() {
     };
 
     timeoutId = window.setTimeout(() => {
-      finish(() => reject(new Error('YouTube API load timed out.')));
+      finish(() => reject(new Error('Quá thời gian kết nối nguồn phát video.')));
     }, YOUTUBE_API_LOAD_TIMEOUT_MS);
 
     if (window.YT?.Player) {
@@ -536,7 +536,7 @@ export default function WatchClient({ movieId = '', initialMovies = [], initialR
     }).catch(error => {
       if (isCancelled) return;
 
-      setPlayerLoadError(error?.message || 'Không tải được trình phát YouTube.');
+      setPlayerLoadError(error?.message || 'Trình phát tạm thời gián đoạn.');
     });
 
     return () => {
@@ -899,7 +899,7 @@ export default function WatchClient({ movieId = '', initialMovies = [], initialR
     return (
       <div className={styles.watchLayout}>
         <div className={styles.container}>
-          <p>Đang tải dữ liệu phim...</p>
+          <p>Đang chuẩn bị nội dung phim...</p>
         </div>
       </div>
     );
@@ -909,7 +909,7 @@ export default function WatchClient({ movieId = '', initialMovies = [], initialR
     return (
       <div className={styles.watchLayout}>
         <div className={styles.container}>
-          <p>Chua co du lieu phim de phat.</p>
+          <p>Bộ phim này hiện chưa sẵn sàng để phát.</p>
         </div>
       </div>
     );
@@ -949,7 +949,7 @@ export default function WatchClient({ movieId = '', initialMovies = [], initialR
                 background: 'radial-gradient(circle at top, rgba(255, 222, 0, 0.16), rgba(0, 0, 0, 0.96))',
                 zIndex: 5,
               }}>
-                <strong>Không tải được trình phát YouTube.</strong>
+                <strong>Trình phát tạm thời gián đoạn</strong>
                 <p style={{ margin: 0, maxWidth: 520, color: 'rgba(255, 255, 255, 0.78)' }}>
                   {playerLoadError} Vui lòng tải lại trang để thử lại.
                 </p>
@@ -1067,7 +1067,7 @@ export default function WatchClient({ movieId = '', initialMovies = [], initialR
 
         {shouldShowEpisodes && episodes.length > 1 && (
           <div className={styles.episodeSection}>
-            <h3 className={styles.sectionTitle}>Chọn Tập Phim</h3>
+            <h3 className={styles.sectionTitle}>Danh Sách Tập</h3>
             <div className={styles.episodeGrid}>
               {episodes.map(ep => (
                 <button
@@ -1087,7 +1087,7 @@ export default function WatchClient({ movieId = '', initialMovies = [], initialR
           <section className={styles.relatedSection} aria-label="Phim đề xuất">
             <div className={styles.relatedHeader}>
               <h2 className={styles.relatedTitle}>
-                <span>🎬</span> Có Thể Bạn Thích Xem
+                Phim Cùng Thể Loại Đề Xuất
               </h2>
             </div>
             <div className={styles.relatedGrid}>
@@ -1102,7 +1102,7 @@ export default function WatchClient({ movieId = '', initialMovies = [], initialR
                   className={styles.loadMoreBtn}
                   onClick={() => setVisibleCount(relatedMovies.length)}
                 >
-                  Xem thêm phim khác ▾
+                  Xem Thêm Phim Đề Xuất ▾
                 </button>
               </div>
             )}

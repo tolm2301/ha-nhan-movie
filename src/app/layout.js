@@ -6,7 +6,11 @@ import { getCategoryMenu } from '@/lib/data';
 import AutoRefresh from '@/components/AutoRefresh/AutoRefresh';
 import AdOrchestrator from '@/components/AdOrchestrator/AdOrchestrator';
 
-const inter = Inter({ subsets: ['latin', 'vietnamese'], weight: ['300', '400', '600', '700'] });
+const inter = Inter({
+  subsets: ['latin', 'vietnamese'],
+  weight: ['400', '500', '600', '700', '800'],
+  display: 'swap',
+});
 
 export const metadata = {
   applicationName: SITE_NAME,

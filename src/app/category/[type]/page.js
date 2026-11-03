@@ -33,7 +33,7 @@ export async function generateMetadata({ params, searchParams }) {
   const currentPage = Math.min(Math.max(Number.isNaN(requestedPage) ? 1 : requestedPage, 1), totalPages);
   const pagePath = currentPage > 1 ? `/category/${category.slug}?page=${currentPage}` : `/category/${category.slug}`;
   const pageMovies = category.movies.slice((currentPage - 1) * PAGE_SIZE, (currentPage - 1) * PAGE_SIZE + PAGE_SIZE);
-  const movieCountText = `${category.count} video`;
+  const movieCountText = `${category.count} bộ phim`;
 
   return buildMetadata({
     title: `Hanhan Movie / Hà Nhân | ${category.tag} - Xem phim`,

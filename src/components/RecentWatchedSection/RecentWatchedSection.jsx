@@ -1,4 +1,5 @@
 "use client";
+
 import { useSyncExternalStore } from 'react';
 import MovieCarousel from '@/components/MovieCarousel/MovieCarousel';
 import { getCleanWatchedHistory, removeWatchedMovie } from '@/lib/watchHistory';
@@ -6,14 +7,19 @@ import { getCleanWatchedHistory, removeWatchedMovie } from '@/lib/watchHistory';
 const EMPTY_SNAPSHOT = [];
 let cachedSnapshot = EMPTY_SNAPSHOT;
 
-function isSameHistory(next, prev) {
-  if (next === prev) return true;
-  if (!Array.isArray(next) || !Array.isArray(prev)) return false;
-  if (next.length !== prev.length) return false;
+function isSameHistory(a = [], b = []) {
+  if (a.length !== b.length) return false;
 
-  for (let i = 0; i < next.length; i += 1) {
-    if (next[i]?.id !== prev[i]?.id) return false;
-    if (next[i]?.watchedAt !== prev[i]?.watchedAt) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    if (
+      a[i]?.id !== b[i]?.id ||
+      a[i]?.watchedAt !== b[i]?.watchedAt ||
+      a[i]?.thumbnail !== b[i]?.thumbnail ||
+      a[i]?.title !== b[i]?.title ||
+      a[i]?.displayTitle !== b[i]?.displayTitle
+    ) {
+      return false;
+    }
   }
 
   return true;
@@ -53,10 +59,10 @@ export default function RecentWatchedSection() {
 
   return (
     <MovieCarousel
-      title="🕘 Đã xem gần đây"
+      title="Tiếp Tục Xem"
       movies={watchedMovies}
       onRemoveMovie={removeWatchedMovie}
-      removeMovieLabel="Xóa khỏi danh sách đã xem gần đây"
+      removeMovieLabel="Xóa khỏi danh sách tiếp tục xem"
     />
   );
 }

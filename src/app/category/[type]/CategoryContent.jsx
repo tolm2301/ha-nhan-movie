@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useSyncExternalStore, useMemo } from "react";
 import Link from "next/link";
@@ -55,10 +55,14 @@ export default function CategoryContent({
   return (
     <>
       <div className={styles.header}>
-        <span className={styles.emoji}>🏷️</span>
-        <h1 className={styles.title}>{initialCategory?.tag}</h1>
-        <p className={styles.count}>{activeTotal} video</p>
-        <p className={styles.pageInfo}>Trang {currentPage}/{activeTotalPages}</p>
+        <div className={styles.headingGroup}>
+          <span className={styles.eyebrow}>Danh mục phim</span>
+          <h1 className={styles.title}>{initialCategory?.tag}</h1>
+        </div>
+        <div className={styles.metaGroup}>
+          <p className={styles.count}>{activeTotal} bộ phim</p>
+          <p className={styles.pageInfo}>Trang {currentPage} / {activeTotalPages}</p>
+        </div>
       </div>
 
       <div className={styles.grid}>
@@ -68,14 +72,14 @@ export default function CategoryContent({
       </div>
 
       {activeTotalPages > 1 && (
-        <nav className={styles.pagination} aria-label={`Phân trang ${initialCategory?.tag}`}>
+        <nav className={styles.pagination} aria-label={`Phân trang danh mục ${initialCategory?.tag}`}>
           <Link
             className={`${styles.pageLink} ${currentPage === 1 ? styles.pageLinkDisabled : ""}`}
             href={`${pageBaseHref}?page=${Math.max(1, currentPage - 1)}`}
             aria-disabled={currentPage === 1}
             tabIndex={currentPage === 1 ? -1 : 0}
           >
-            ‹ Trước
+            ‹ Trang trước
           </Link>
 
           <div className={styles.pageNumbers}>
@@ -97,7 +101,7 @@ export default function CategoryContent({
             aria-disabled={currentPage === activeTotalPages}
             tabIndex={currentPage === activeTotalPages ? -1 : 0}
           >
-            Sau ›
+            Trang sau ›
           </Link>
         </nav>
       )}
